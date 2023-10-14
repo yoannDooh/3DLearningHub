@@ -72,10 +72,6 @@ int main()
 	glShaderSource(fragmentShader, 1, &fragmentShaderSrc1, NULL);
 	glCompileShader(fragmentShader);
 
-	unsigned int fragmentShader2(glCreateShader(GL_FRAGMENT_SHADER));
-	glShaderSource(fragmentShader2, 1, &fragmentShaderSrc2, NULL);
-	glCompileShader(fragmentShader2);
-
 	//vertex shader
 	unsigned int vertexShader(glCreateShader(GL_VERTEX_SHADER));
 	glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
@@ -109,11 +105,21 @@ int main()
 	glAttachShader(shaderProgram, vertexShader);
 	glLinkProgram(shaderProgram);
 
+	//bind and debug fragment shader 2
+	glShaderSource(fragmentShader, 1, &fragmentShaderSrc2, NULL);
+	glCompileShader(fragmentShader);
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::FRAGMENT::VERTEX::COMPILATION_FAILED\n" <<
+			infoLog << std::endl;
+	}
+
 
 	unsigned int shaderProgram2(glCreateProgram());
-	glAttachShader(shaderProgram2, fragmentShader2);
 	glAttachShader(shaderProgram2, vertexShader);
-	glLinkProgram(shaderProgram);
+	glAttachShader(shaderProgram2, fragmentShader);
 
 	//debug shader program
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
@@ -123,16 +129,16 @@ int main()
 			infoLog << std::endl;
 	}
 
+
 	//delete shaders
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
-	glDeleteShader(fragmentShader2);
 
 
-	//initialize VAO1
-	unsigned int VAO1{};
-	glGenVertexArrays(1,&VAO1);
-	glBindVertexArray(VAO1);
+	//initialize VAO
+	unsigned int VAO{};
+	glGenVertexArrays(1,&VAO);
+	glBindVertexArray(VAO);
 
 	//init VBO
 	unsigned int VBO{};
@@ -156,9 +162,12 @@ int main()
 
 		//activate shader program
 		glUseProgram(shaderProgram);
-		glBindVertexArray(VAO1);
+		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
+		
+		glLinkProgram(shaderProgram2);
 		glUseProgram(shaderProgram2);
+		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 3, 3);
 		glBindVertexArray(0);
 
