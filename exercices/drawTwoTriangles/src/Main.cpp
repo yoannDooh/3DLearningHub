@@ -1,9 +1,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <string>
+#include <fstream>
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+static void readGlslFile(std::string filePath);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -12,13 +16,20 @@ float vertices[]{
 					//first triangle (on the left)
 					0.0f,-0.5f,0.0f,//bottom right
 					-0.5f,-0.5f,0.0f, //bottom left
-					-0.25f,0.5f,0.0f, //top
-					
-					//second triangle (on the right)
+					-0.25f,0.5f,0.0f //top			
+};
+
+float vertices2[]{
+				//second triangle (on the right)
 					0.0f,-0.5f,0.0f,	//bottom left
 					0.5f,-0.5f,0.0f, //bottom right
-					0.25f,0.5f,0.0f, //top
+					0.25f,0.5f,0.0f //top
 };
+
+namespace Shader
+{
+	std::string shader{};
+}
 
 const char* vertexShaderSrc = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
@@ -41,10 +52,21 @@ const char* fragmentShaderSrc2 = "#version 330 core\n"
 "FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);\n"
 "}\0";
 
-
-
 int main()
 {
+	std::cout << fragmentShaderSrc1 << '\n';
+
+	readGlslFile("C:\\Users\\yoann\\OneDrive\\Bureau\\Proggramation\\apprendre\\openGL\\exercices\\drawTwoTriangles\\src\\vertexShader.glsl");
+	vertexShaderSrc = Shader::shader.c_str();
+	std::cout << vertexShaderSrc << '\n';
+
+	readGlslFile("C:\\Users\\yoann\\OneDrive\\Bureau\\Proggramation\\apprendre\\openGL\\exercices\\drawTwoTriangles\\src\\fragmentShader.glsl");
+	fragmentShaderSrc1 = Shader::shader.c_str();
+
+	std::cout << fragmentShaderSrc1;
+
+
+
 	//init glfw
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -94,8 +116,8 @@ int main()
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::FRAGMENT::VERTEX::COMPILATION_FAILED\n" <<
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR::FRAGMENT::COMPILATION_FAILED\n" <<
 			infoLog << std::endl;
 	}
 
@@ -120,6 +142,7 @@ int main()
 	unsigned int shaderProgram2(glCreateProgram());
 	glAttachShader(shaderProgram2, vertexShader);
 	glAttachShader(shaderProgram2, fragmentShader);
+	glLinkProgram(shaderProgram2);
 
 	//debug shader program
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
@@ -149,8 +172,20 @@ int main()
 	//link vertex to shader attribute 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	
+	//init VAO2
+	unsigned int VAO2{};
+	glGenVertexArrays(1, &VAO2);
+	glBindVertexArray(VAO2);
 
+	//init VBO2
+	unsigned int VBO2{};
+	glGenBuffers(1, &VBO2);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
 
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 	
 	//render loop 
 	while (!glfwWindowShouldClose(window))
@@ -165,10 +200,10 @@ int main()
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		
-		glLinkProgram(shaderProgram2);
+		
 		glUseProgram(shaderProgram2);
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 3, 3);
+		glBindVertexArray(VAO2);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
@@ -179,8 +214,23 @@ int main()
 	return 0;
 }
 
+static void readGlslFile(std::string filePath)
+{
+	Shader::shader.erase(Shader::shader.begin(), Shader::shader.end() );
+	std::string offStream{};
+	std::ifstream shaderFile(filePath);
 
-void processInput(GLFWwindow* window)
+	while (std::getline(shaderFile, offStream))
+	{
+		if (offStream != "")
+		{
+			Shader::shader = Shader::shader + '\n' + offStream;
+		}
+	}
+	Shader::shader = Shader::shader + '\0';
+}
+
+void processInput(GLFWwindow* window) 
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
