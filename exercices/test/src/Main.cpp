@@ -1,12 +1,9 @@
-#include <glad/glad.h>
+#include "../header/shader.h"
+#include "../header/glfwInit.h"
 #include <GLFW/glfw3.h>
-#include <fstream>
-#include <string>
-#include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-static std::string readGlslFile(std::string filePath);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -16,22 +13,15 @@ const float vertices[]{
                         0.5f, -0.5f, 0.0f, // bottom right
                         -0.5f, -0.5f, 0.0f, // bottom left
                         -0.5f, 0.5f, 0.0f // top left
-                    };
+};
 
-unsigned int indices[]  { 
+unsigned int indices[]{
 0, 1, 3, // first triangle
 1, 2, 3// second triangle
 };
 
 int main()
 {
-
-    std::string vertexShaderCppStr{ readGlslFile("C:\\Users\\yoann\\OneDrive\\Bureau\\Proggramation\\apprendre\\openGL\\exercices\\test\\src\\vertexShader.glsl") };
-    const char* vertexShaderSrc{ vertexShaderCppStr.c_str() };
-
-    std::string fragmentShaderCppStr{ readGlslFile("C:\\Users\\yoann\\OneDrive\\Bureau\\Proggramation\\apprendre\\openGL\\exercices\\test\\src\\fragmentShader.glsl") };
-    const char* fragmentShaderSrc{ fragmentShaderCppStr.c_str() };
-    
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -60,62 +50,21 @@ int main()
         return -1;
     }
 
-
-    //fragment shader 
-    unsigned int fragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
-    glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
-    glCompileShader(fragmentShader);
-    
-    //vertex shader
-    unsigned int vertexShader{ glCreateShader(GL_VERTEX_SHADER) };
-    glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
-    glCompileShader(vertexShader);
-    
- 
-    //debug shader and fragment
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
-            infoLog << std::endl;
-
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" <<
-            infoLog << std::endl;
-    }
-    
-    //link shaders
-    unsigned int shaderProgram{ glCreateProgram() };
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    //debug shader program
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" <<
-            infoLog << std::endl;
-    }
-
-    //delete shaders
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    const char* vertexPath{ "C:\\Users\\yoann\\Desktop\\Prog\\apprendre\\learningOpenGL\\exercices\\test\\src\\vertexShader.glsl" };
+    const char* fragmentPath{ "C:\\Users\\yoann\\Desktop\\Prog\\apprendre\\learningOpenGL\\exercices\\test\\src\\fragmentShader.glsl" };
+    Shader shader (vertexPath, fragmentPath);
 
     // initialize VAO
     unsigned int VAO{};
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-    
+
     // initialize EBO
     unsigned int EBO;
     glGenBuffers(1, &EBO);
     //copy our index array in a element buffer for OpenGL to use
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //initialize and bind GL_ARRAY_BUFFER 
     unsigned int VBO{};
@@ -137,16 +86,16 @@ int main()
     {
         processInput(window);
 
-        glClearColor(1.0f, 72.0f/255.0f, 95.0f/255.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT); 
+        glClearColor(1.0f, 72.0f / 255.0f, 95.0f / 255.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         //activate program object 
-        glUseProgram(shaderProgram);
+        shader.use();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-       
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -173,21 +122,4 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
-}
-
-static std::string readGlslFile(std::string filePath)
-{
-    std::string shader {};
-    std::string offStream{};
-    std::ifstream shaderFile(filePath);
-
-    while (std::getline(shaderFile, offStream))
-    {
-        if (offStream != "")
-        {
-            shader = shader + '\n' + offStream;
-        }
-    }
-
-    return shader;
 }
