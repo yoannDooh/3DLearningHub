@@ -133,14 +133,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\Downloads\glad.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
     <ClCompile Include="src\window.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\window.h" />
-    <ClInclude Include="header\shader.h" />
+    <ClInclude Include="src\shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

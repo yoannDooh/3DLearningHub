@@ -11,6 +11,6 @@ public:
 
 	int didWindowFailed{};
 	GLFWwindow* windowPtr;
-
+	
 };
 #endif

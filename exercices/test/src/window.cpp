@@ -20,7 +20,7 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
     // glfw window creation
     // --------------------
     GLFWwindow* window = glfwCreateWindow(windowW, windowH, "LearnOpenGL", NULL, NULL);
-    windowPtr = window;
+     windowPtr=window;
 
     if (window == NULL)
     {
@@ -39,3 +39,4 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
         didWindowFailed = -1;
     }
 }
+
