@@ -1,4 +1,4 @@
-#include "../header/glfwInit.h"
+#include "../header/window.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -7,8 +7,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void initGlfwAndWindow(const unsigned int windowWidth, const unsigned int windowHeight,const char* windowTitle)
+Window::Window(const unsigned int windowW, const unsigned int windowH, const char* windowTitle)
 {
+    // glfw: initialize and configure
+      // ------------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -17,22 +19,23 @@ void initGlfwAndWindow(const unsigned int windowWidth, const unsigned int window
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowW, windowH, "LearnOpenGL", NULL, NULL);
+    windowPtr = window;
+
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
-        return -1;
+        didWindowFailed = -1;
     }
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwMakeContextCurrent(windowPtr);
+    glfwSetFramebufferSizeCallback(windowPtr, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
+        didWindowFailed = -1;
     }
 }
-

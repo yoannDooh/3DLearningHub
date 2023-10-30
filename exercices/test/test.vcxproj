@@ -134,12 +134,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\Downloads\glad.c" />
-    <ClCompile Include="src\glfwInit.cpp" />
+    <ClCompile Include="src\window.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="header\glfwInit.h" />
+    <ClInclude Include="header\window.h" />
     <ClInclude Include="header\shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

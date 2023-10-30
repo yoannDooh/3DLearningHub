@@ -24,8 +24,6 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
     std::string fragmentShaderCppStr{ readGlslFile(fragmentPath) };
     const char* fragmentShaderSrc{ fragmentShaderCppStr.c_str() };
-
-
     //fragment shader 
     unsigned int fragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
     glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
@@ -81,7 +79,6 @@ void Shader::setBool(const std::string& name, bool value) const
 {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
-
 void Shader::setInt(const std::string& name, int value) const
 {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
