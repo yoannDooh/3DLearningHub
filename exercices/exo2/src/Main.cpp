@@ -56,6 +56,8 @@ int main()
 
      //setup rotation matrix 
     glm::mat4 model{ glm::mat4(1.0f) };
+    glm::mat4 transModel{ glm::mat4(1.0f) };
+    glm::mat4 rotModel{ glm::mat4(1.0f) };
     float bottomLeftCoord{ -0.5 };
     float fps{ 60 };
     float transPerFrame{ ( (1.0f-bottomLeftCoord)/2.0f) /fps }; 
@@ -79,13 +81,27 @@ int main()
             while (currentFrame <= 60)
             {
                 if (glfwGetTime() >= t1 + 1/fps)
-                {  
-                    //translation matrix
-                    model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
+                {   
+                    //put to origin
+                    if (currentFrame != 1)
+                    {
+                        model = glm::translate(model, glm::vec3(-transPerFrame * currentFrame, 0.0f, 0.0f));
+                    }
 
                     //rotation matrix
-                    //model = glm::rotate(model, glm::radians(1.5f), glm::vec3(0.0f, 0.0f, 1.0f));
-
+                    rotModel = glm::rotate(transModel, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+                    
+                   
+                    //put to original position
+                    if (currentFrame != 1)
+                    {
+                        model = glm::translate(model, glm::vec3(transPerFrame * currentFrame, 0.0f, 0.0f));
+                    }
+                  
+                   //translation matrix
+                    model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
+                    model = rotModel * model;
                     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
                     
                     //background color
@@ -127,9 +143,30 @@ int main()
             {
                 if (glfwGetTime() >= t1 + 1 / fps)
                 {
+
+                    //put to origin
+                    if (currentFrame != 1)
+                    {
+                        model = glm::translate(model, glm::vec3(-transPerFrame * currentFrame, 0.0f, 0.0f));
+                    }
+
+                    //rotation matrix
+                    model = glm::rotate(model, glm::radians(3.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+
+                    //put to original position
+                    if (currentFrame != 1)
+                    {
+                        model = glm::translate(model, glm::vec3(transPerFrame * currentFrame, 0.0f, 0.0f));
+                    }
+
                     //translation matrix
                     model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
-                    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+                    if (currentFrame != 1)
+                        //model = glm::translate(model, glm::vec3(0.0, -0.1f, 0.0f));
+                        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
                     //background color
                     glClearColor(107.0f / 255.0f, 142.0f / 255.0f, 35.0f / 255.0f, 1.0f);
@@ -143,13 +180,13 @@ int main()
                     glfwSwapBuffers(window.windowPtr);
                     glfwPollEvents();
 
+
                     ++currentFrame;
                     std::cout << count << '\n';
                     ++count;
                     t1 = glfwGetTime();
                 }
             }
-
             ++currentSec;
          }
      }   
