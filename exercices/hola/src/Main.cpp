@@ -69,7 +69,7 @@ int main()
     float transPerFrame{ ((1.0f - bottomLeftCoord) / 2.0f) / fps };
     bool isItFirstLoop{ true };
 
-    //init texture 
+    //init texture cat
     stbi_set_flip_vertically_on_load(true);
     unsigned int texture{};
     glGenTextures(1, &texture);
@@ -99,7 +99,36 @@ int main()
     else
         std::cout << "Failed to load texture" << std::endl;
 
+    //grass texture 
 
+    unsigned int grassTex{};
+    glGenTextures(1, &grassTex);
+    glBindTexture(GL_TEXTURE_2D, grassTex);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    data = stbi_load("ressource\\grassTexture.jpg",&width,&height,&nrChannels,0) ;
+
+    //load texture
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        stbi_image_free(data);
+    }
+
+    else
+        std::cout << "Failed to load texture" << std::endl;
+
+    shader.use();
+    shader.setInt("catTexture", 0);
+    shader.setInt("grassTexture", 1);
 
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
@@ -130,8 +159,12 @@ int main()
                         shader.use();
 
                         //activate program object
-                        glBindVertexArray(VAO);
+                        glActiveTexture(GL_TEXTURE0);
                         glBindTexture(GL_TEXTURE_2D, texture);
+                        glActiveTexture(GL_TEXTURE1);
+                        glBindTexture(GL_TEXTURE_2D, grassTex);
+
+                        glBindVertexArray(VAO);
                         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                         glBindVertexArray(0);
                         glfwSwapBuffers(window.windowPtr);
@@ -176,8 +209,12 @@ int main()
                         shader.use();
 
                         //activate program object 
-                        glBindVertexArray(VAO);
+                        glActiveTexture(GL_TEXTURE0);
                         glBindTexture(GL_TEXTURE_2D, texture);
+                        glActiveTexture(GL_TEXTURE1);
+                        glBindTexture(GL_TEXTURE_2D, grassTex);
+
+                        glBindVertexArray(VAO);
                         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                         glBindVertexArray(0);
                         glfwSwapBuffers(window.windowPtr);
