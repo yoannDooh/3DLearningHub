@@ -119,6 +119,7 @@ int main()
     // initialize EBO
     unsigned int EBO;
     glGenBuffers(1, &EBO);
+
     //copy our index array in a element buffer for OpenGL to use
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,GL_STATIC_DRAW);
