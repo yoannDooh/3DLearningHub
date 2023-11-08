@@ -78,8 +78,8 @@ int main()
     //texture filtering 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     //prepare texture
     int width{}, height{}, nrChannels{};
@@ -99,27 +99,35 @@ int main()
     else
         std::cout << "Failed to load texture" << std::endl;
 
-
+    float mixValue{0.2};
+    shader.use();
+    shader.setFloat("mixValue", mixValue);
 
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
     {
+       
         if (isItFirstLoop)
         {
+            processInput(window.windowPtr);
+
             int currentSec{ 0 };
             int count{ 1 };
 
             while (currentSec < 2)
             {
+                processInput(window.windowPtr);
+
                 int currentFrame{ 1 };
                 glfwSetTime(0);
                 double t1{ glfwGetTime() };
                 std::cerr << 1 / fps;
                 while (currentFrame <= 60)
                 {
+                    processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
                     {
- 
+
                         //translation matrix
                         model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
                         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -151,17 +159,23 @@ int main()
 
         else
         {
+            processInput(window.windowPtr);
+
             model = glm::translate(model, glm::vec3(-3, 0.0f, 0.0f));
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
             int currentSec{ 0 };
             int count{ 1 };
+
             while (currentSec < 4)
             {
+                processInput(window.windowPtr);
+
                 int currentFrame{ 1 };
                 glfwSetTime(0);
                 double t1{ glfwGetTime() };
                 while (currentFrame <= 60)
                 {
+                    processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
                     {
                      
