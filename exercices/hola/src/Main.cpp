@@ -1,6 +1,5 @@
 #include "../header/stb_image.h"
-#include "../header/shader.h"
-#include "../header/window.h"
+#include "../header/openGL.h"
 #include "../header/stb_image.h"
 #include <cmath>
 #include <chrono>
@@ -129,19 +128,41 @@ int main()
 
     //view 
     glm::mat4 view{ glm::mat4(1.0f) };
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -2.0f));
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
     //projection 
     glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-
-    //setup rotation matrix 
+    //local
     glm::mat4 localModel{ glm::mat4(1.0f) };
-    float bottomLeftCoord{ -0.5 };
+
+    //bottomRightCoord calculation
+    glm::vec4 bottomRightCoord( vertices[8] , vertices[9], vertices[10], 1.0f );
+    bottomRightCoord = projection* view* model* bottomRightCoord;
+    float bottomRightXCoord{ bottomRightCoord.x };
+    
+    //bottomLeftCoord calculation
+    glm::vec4 bottomLeftCoord(vertices[8 * 2], vertices[(8 * 2) + 1], vertices[(8 * 2) + 2], 1.0f);
+    bottomLeftCoord = projection * view * model * bottomLeftCoord;
+    float bottomLeftXCoord{ bottomLeftCoord.x };
+    
+
+    float absoluteValueLeftXCoord{ bottomLeftXCoord };
+    if (absoluteValueLeftXCoord < 0)
+        absoluteValueLeftXCoord = -absoluteValueLeftXCoord;
+    
+    if (bottomRightXCoord < 0)
+        bottomRightXCoord= - bottomRightXCoord;
+
+
+    float rightXLeftXDist{ bottomRightXCoord + absoluteValueLeftXCoord };
+
     float fps{ 60 };
-    float transPerFrame{ ((1.0f - bottomLeftCoord) / 2.0f) / fps };
+    float velocity{ 0.5 };
+    float transPerFrame{ (2/fps)*velocity}; //it takes 1 sec to go through whole screen width with a velocity of 1
+    float offset{};
     bool isItFirstLoop{ true };
 
     // render loop
@@ -155,7 +176,7 @@ int main()
             int currentSec{ 0 };
             int count{ 1 };
 
-            while (currentSec < 2)
+            while (bottomLeftXCoord <= 1)
             {
                 processInput(window.windowPtr);
 
@@ -163,12 +184,12 @@ int main()
                 glfwSetTime(0);
                 double t1{ glfwGetTime() };
                 std::cerr << 1 / fps;
-                while (currentFrame <= 60)
+                while (currentFrame <= fps)
                 {
                     processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
                     {
-                        localModel = glm::scale(localModel, glm::vec3(1.0f, 1.0f, 2.0f));
+                        //localModel = glm::scale(localModel, glm::vec3(1.0f, 1.0f, 2.0f));
 
 
                         //translation matrix
@@ -191,8 +212,8 @@ int main()
                         glBindVertexArray(0);
                         glfwSwapBuffers(window.windowPtr);
                         glfwPollEvents();
-
-
+                        
+                        bottomLeftXCoord = bottomLeftXCoord + transPerFrame;             
                         ++currentFrame;
                         std::cout << count << '\n';
                         ++count;
@@ -202,23 +223,28 @@ int main()
                 ++currentSec;
             }
             isItFirstLoop = false;
+            std::cout << "Took " << currentSec << " seconds\n";
+            offset = bottomLeftXCoord + rightXLeftXDist ;
         }
 
         else
         {
-            localModel = glm::translate(localModel, glm::vec3(-3, 0.0f, 0.0f));
+            localModel = glm::translate(localModel, glm::vec3((- 1 - offset), 0.0f, 0.0f));
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
-            int currentSec{ 0 };
+           
+            bottomLeftXCoord = -1 - rightXLeftXDist;
             int count{ 1 };
 
-            while (currentSec < 4)
+            std::cout << ( - 1 - offset ) << "\n" << bottomLeftXCoord << "\n\n";
+
+            while (bottomLeftXCoord <= 1)
             {
                 processInput(window.windowPtr);
 
                 int currentFrame{ 1 };
                 glfwSetTime(0);
                 double t1{ glfwGetTime() };
-                while (currentFrame <= 60)
+                while (currentFrame <= fps)
                 {
                     processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
@@ -227,8 +253,6 @@ int main()
                         //translation matrix
                         localModel = glm::translate(localModel, glm::vec3(transPerFrame, 0.0f, 0.0f));
                         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
-
-                      
 
                         //background color
                         glClearColor(107.0f / 255.0f, 142.0f / 255.0f, 35.0f / 255.0f, 1.0f);
@@ -247,14 +271,13 @@ int main()
                         glfwSwapBuffers(window.windowPtr);
                         glfwPollEvents();
 
-
+                        bottomLeftXCoord = bottomLeftXCoord + transPerFrame;
                         ++currentFrame;
-                        std::cout << count << '\n';
+                        //std::cout << count << '\n';
                         ++count;
                         t1 = glfwGetTime();
                     }
                 }
-                ++currentSec;
             }
         }
     }

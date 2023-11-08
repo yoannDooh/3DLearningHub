@@ -139,18 +139,16 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\Downloads\glad.c" />
     <ClCompile Include="src\stb_image.cpp" />
-    <ClCompile Include="src\window.cpp" />
     <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\openGL.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\GLAD\include\glad\glad.h" />
     <ClInclude Include="dependencies\GLAD\include\KHR\khrplatform.h" />
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3.h" />
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3native.h" />
-    <ClInclude Include="header\shader.h" />
+    <ClInclude Include="header\openGL.h" />
     <ClInclude Include="header\stb_image.h" />
-    <ClInclude Include="header\window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="openGl.props" />
