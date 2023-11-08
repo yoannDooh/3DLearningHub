@@ -60,16 +60,8 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-     //setup rotation matrix 
-    glm::mat4 model{ glm::mat4(1.0f) };
-    glm::mat4 transModel{ glm::mat4(1.0f) };
-    glm::mat4 rotModel{ glm::mat4(1.0f) };
-    float bottomLeftCoord{ -0.5 };
-    float fps{ 60 }; 
-    float transPerFrame{ ((1.0f - bottomLeftCoord) / 2.0f) / fps };
-    bool isItFirstLoop{ true };
 
-    //init texture 
+    //init texture cat
     stbi_set_flip_vertically_on_load(true);
     unsigned int texture{};
     glGenTextures(1, &texture);
@@ -99,9 +91,58 @@ int main()
     else
         std::cout << "Failed to load texture" << std::endl;
 
-    float mixValue{0.2};
+    //grass texture 
+
+    unsigned int grassTex{};
+    glGenTextures(1, &grassTex);
+    glBindTexture(GL_TEXTURE_2D, grassTex);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    data = stbi_load("ressource\\grassTexture.jpg",&width,&height,&nrChannels,0) ;
+
+    //load texture
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        stbi_image_free(data);
+    }
+
+    else
+        std::cout << "Failed to load texture" << std::endl;
+
     shader.use();
-    shader.setFloat("mixValue", mixValue);
+    shader.setInt("catTexture", 0);
+    shader.setInt("grassTexture", 1);
+
+    //world coordinates
+    glm::mat4 model{ glm::mat4(1.0f) };
+    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    //view 
+    glm::mat4 view{ glm::mat4(1.0f) };
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+    //projection 
+    glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+
+    //setup rotation matrix 
+    glm::mat4 localModel{ glm::mat4(1.0f) };
+    float bottomLeftCoord{ -0.5 };
+    float fps{ 60 };
+    float transPerFrame{ ((1.0f - bottomLeftCoord) / 2.0f) / fps };
+    bool isItFirstLoop{ true };
 
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
@@ -127,10 +168,12 @@ int main()
                     processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
                     {
+                        localModel = glm::scale(localModel, glm::vec3(1.0f, 1.0f, 2.0f));
+
 
                         //translation matrix
-                        model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
-                        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+                        localModel = glm::translate(localModel, glm::vec3(transPerFrame, 0.0f, 0.0f));
+                        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
 
                         //background color
                         glClearColor(107.0f / 255.0f, 142.0f / 255.0f, 35.0f / 255.0f, 1.0f);
@@ -138,8 +181,12 @@ int main()
                         shader.use();
 
                         //activate program object
-                        glBindVertexArray(VAO);
+                        glActiveTexture(GL_TEXTURE0);
                         glBindTexture(GL_TEXTURE_2D, texture);
+                        glActiveTexture(GL_TEXTURE1);
+                        glBindTexture(GL_TEXTURE_2D, grassTex);
+
+                        glBindVertexArray(VAO);
                         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                         glBindVertexArray(0);
                         glfwSwapBuffers(window.windowPtr);
@@ -159,10 +206,8 @@ int main()
 
         else
         {
-            processInput(window.windowPtr);
-
-            model = glm::translate(model, glm::vec3(-3, 0.0f, 0.0f));
-            glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            localModel = glm::translate(localModel, glm::vec3(-3, 0.0f, 0.0f));
+            glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
             int currentSec{ 0 };
             int count{ 1 };
 
@@ -178,11 +223,12 @@ int main()
                     processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
                     {
-                     
+                   
                         //translation matrix
-                        model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
-                        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+                        localModel = glm::translate(localModel, glm::vec3(transPerFrame, 0.0f, 0.0f));
+                        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
 
+                      
 
                         //background color
                         glClearColor(107.0f / 255.0f, 142.0f / 255.0f, 35.0f / 255.0f, 1.0f);
@@ -190,8 +236,12 @@ int main()
                         shader.use();
 
                         //activate program object 
-                        glBindVertexArray(VAO);
+                        glActiveTexture(GL_TEXTURE0);
                         glBindTexture(GL_TEXTURE_2D, texture);
+                        glActiveTexture(GL_TEXTURE1);
+                        glBindTexture(GL_TEXTURE_2D, grassTex);
+
+                        glBindVertexArray(VAO);
                         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
                         glBindVertexArray(0);
                         glfwSwapBuffers(window.windowPtr);

@@ -56,7 +56,7 @@ int main()
 
      //setup rotation matrix 
     glm::mat4 model{ glm::mat4(1.0f) };
-    glm::mat4 transModel{ glm::mat4(1.0f) };
+    glm::mat4 localOrigin{ glm::mat4(1.0f) };
     glm::mat4 rotModel{ glm::mat4(1.0f) };
     float bottomLeftCoord{ -0.5 };
     float fps{ 60 };
@@ -82,24 +82,26 @@ int main()
             {
                 if (glfwGetTime() >= t1 + 1/fps)
                 {   
+                    /*
                     //put to origin
                     if (currentFrame != 1)
                     {
                         model = glm::translate(model, glm::vec3(-transPerFrame * currentFrame, 0.0f, 0.0f));
                     }
-
+                    */
                     //rotation matrix
-                    rotModel = glm::rotate(transModel, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                    rotModel = glm::rotate(localOrigin, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
                     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
                     
-                   
+                    /*
                     //put to original position
                     if (currentFrame != 1)
                     {
                         model = glm::translate(model, glm::vec3(transPerFrame * currentFrame, 0.0f, 0.0f));
                     }
-                  
-                   //translation matrix
+                    */
+
+                    //translation matrix
                     model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
                     model = rotModel * model;
                     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
