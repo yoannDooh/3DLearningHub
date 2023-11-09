@@ -1,7 +1,6 @@
 #include "../header/stb_image.h"
 #include "../header/openGL.h"
 #include <cmath>
-#include <chrono>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -157,8 +156,8 @@ int main()
 
     float rightXLeftXDist{ bottomRightXCoord + absoluteValueLeftXCoord };
 
-    float fps{60};
-    float velocity{ 0.5 };
+    float fps{80};
+    float velocity{1};
     float transPerFrame{ (2/fps)*velocity}; //it takes 1 sec to go through whole screen width with a velocity of 1
     float offset{};
     bool isItFirstLoop{ true };
@@ -186,7 +185,7 @@ int main()
                     processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
                     {
-                        //localModel = glm::scale(localModel, glm::vec3(1.0f, 1.0f, 2.0f));
+                       // localModel = glm::scale(localModel, glm::vec3(1.05f, 1.0f, 2.0f));
 
 
                         //translation matrix

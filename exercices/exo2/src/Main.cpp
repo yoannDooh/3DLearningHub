@@ -82,24 +82,25 @@ int main()
             {
                 if (glfwGetTime() >= t1 + 1/fps)
                 {   
-                    /*
                     //put to origin
                     if (currentFrame != 1)
                     {
                         model = glm::translate(model, glm::vec3(-transPerFrame * currentFrame, 0.0f, 0.0f));
                     }
-                    */
+                   
                     //rotation matrix
-                    rotModel = glm::rotate(localOrigin, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                    rotModel = glm::rotate(model, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
                     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
                     
-                    /*
+                    
                     //put to original position
                     if (currentFrame != 1)
                     {
                         model = glm::translate(model, glm::vec3(transPerFrame * currentFrame, 0.0f, 0.0f));
+                        rotModel = glm::rotate(model, glm::radians(-3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
                     }
-                    */
+                    
 
                     //translation matrix
                     model = glm::translate(model, glm::vec3(transPerFrame, 0.0f, 0.0f));
