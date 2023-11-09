@@ -8,6 +8,8 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include "../header/stb_image.h"
+
 
 class Shader
 {
@@ -39,7 +41,22 @@ public:
 };
 
 
+class Texture
+{
+public:
+	Texture(const char* path);
+	unsigned int ID{};
+	unsigned char* data{};
 
+	enum  gl_Texture{twoD,threeD};
+	enum wrapMethod {repeat,mirror,clampEdge, clampBorder};
+	enum filterMethod {linear, nearest};
+
+	gl_Texture stringToEnumTexture (std::string  input);
+	wrapMethod stringToEnumWrap (std::string input);
+	filterMethod stringToEnumFilter (std::string  input);
+
+};
 #endif
 
 

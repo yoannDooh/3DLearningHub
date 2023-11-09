@@ -1,5 +1,6 @@
 #include "../header/openGL.h"
 
+
 /*--SHADER CLASSE--*/
 static std::string readGlslFile(std::string filePath)
 {
@@ -25,6 +26,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
     std::string fragmentShaderCppStr{ readGlslFile(fragmentPath) };
     const char* fragmentShaderSrc{ fragmentShaderCppStr.c_str() };
+    
     //fragment shader 
     unsigned int fragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
     glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
@@ -138,5 +140,33 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
 }
 
 /*--TEXTURE CLASSE--*/
+Texture::gl_Texture Texture::stringToEnumTexture(std::string  input)
+{
+    if (input == "2D") return twoD;
+    if (input == "3D") return threeD;
+}
+
+Texture::wrapMethod Texture::stringToEnumWrap(std::string  input)
+{
+    if (input == "repeat") return repeat;
+    if (input == "mirror") return mirror;
+    if (input == "clampEdge") return clampEdge;
+    if (input == "clampBorder") return clampBorder;
+}
+
+Texture::filterMethod Texture::stringToEnumFilter(std::string  input)
+{
+    if (input == "linear") return linear;
+    if (input == "nearest") return nearest;
+}
+
+
+Texture::Texture(const char* path)
+{
+    glGenTextures(1, &ID);
+    int width{}, height{}, nrChannels{};
+    data = stbi_load(path,&width,&height,&nrChannels,0) ;
+
+}
 
 

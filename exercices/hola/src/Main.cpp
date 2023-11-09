@@ -1,6 +1,5 @@
 #include "../header/stb_image.h"
 #include "../header/openGL.h"
-#include "../header/stb_image.h"
 #include <cmath>
 #include <chrono>
 #include <glm/glm.hpp>
@@ -33,12 +32,12 @@ int main()
     const char* fragmentPath{ ".\\src\\fragmentShader.glsl" };
     Shader shader(vertexPath, fragmentPath);
 
-    // initialize VAO
+    //VAO
     unsigned int VAO{};
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
-    //initialize and bind GL_ARRAY_BUFFER 
+    //VBO
     unsigned int VBO{};
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -50,17 +49,16 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    //link position attribute 
+    //position attribute 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    //link color attribute 
-    //link position attribute 
+    //color attribute 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
 
-    //init texture cat
+    //cat texture 
     stbi_set_flip_vertically_on_load(true);
     unsigned int texture{};
     glGenTextures(1, &texture);
@@ -69,8 +67,8 @@ int main()
     //texture filtering 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     //prepare texture
     int width{}, height{}, nrChannels{};
@@ -159,7 +157,7 @@ int main()
 
     float rightXLeftXDist{ bottomRightXCoord + absoluteValueLeftXCoord };
 
-    float fps{ 60 };
+    float fps{60};
     float velocity{ 0.5 };
     float transPerFrame{ (2/fps)*velocity}; //it takes 1 sec to go through whole screen width with a velocity of 1
     float offset{};
@@ -168,7 +166,6 @@ int main()
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
     {
-       
         if (isItFirstLoop)
         {
             processInput(window.windowPtr);
@@ -224,23 +221,19 @@ int main()
             }
             isItFirstLoop = false;
             std::cout << "Took " << currentSec << " seconds\n";
-            offset = bottomLeftXCoord + rightXLeftXDist ;
         }
 
         else
         {
+            offset = bottomLeftXCoord + rightXLeftXDist;
             localModel = glm::translate(localModel, glm::vec3((- 1 - offset), 0.0f, 0.0f));
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
-           
             bottomLeftXCoord = -1 - rightXLeftXDist;
             int count{ 1 };
-
-            std::cout << ( - 1 - offset ) << "\n" << bottomLeftXCoord << "\n\n";
 
             while (bottomLeftXCoord <= 1)
             {
                 processInput(window.windowPtr);
-
                 int currentFrame{ 1 };
                 glfwSetTime(0);
                 double t1{ glfwGetTime() };
@@ -249,7 +242,6 @@ int main()
                     processInput(window.windowPtr);
                     if (glfwGetTime() >= t1 + 1 / fps)
                     {
-                   
                         //translation matrix
                         localModel = glm::translate(localModel, glm::vec3(transPerFrame, 0.0f, 0.0f));
                         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
@@ -273,9 +265,10 @@ int main()
 
                         bottomLeftXCoord = bottomLeftXCoord + transPerFrame;
                         ++currentFrame;
-                        //std::cout << count << '\n';
+                        std::cout << count << '\n';
                         ++count;
                         t1 = glfwGetTime();
+
                     }
                 }
             }
