@@ -4,7 +4,7 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\openGL.cpp" />
     <ClCompile Include="src\stb_image.cpp" />
-    <ClCompile Include="..\..\..\..\..\..\Downloads\glad.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\GLAD\include\glad\glad.h" />
