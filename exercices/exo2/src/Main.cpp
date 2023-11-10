@@ -131,7 +131,6 @@ int main()
             {
                 if (glfwGetTime() >= t1 + 1 / fps)
                 {
-
                     //rotation matrix
                     rotModel = glm::rotate(model, glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
