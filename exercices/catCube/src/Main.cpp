@@ -1,9 +1,9 @@
 #include "../header/stb_image.h"
 #include "../header/openGL.h"
-#include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <array>
 
 void processInput(GLFWwindow* window);
 
@@ -70,14 +70,51 @@ unsigned int indices[]{
 
 };
 
+void constructCube(unsigned int vertices[], unsigned int indces[],float cote, std::array<float,3> originCoord)
+//originCoord should be coordinates of the top left of the bottom face of the cube 
+{
+    std::array<float,24>points{}; //24 because 8 points in a cube with 3 float coord each
+    //value are stored in this order : topLeft -> bottomLeft -> bottomRight -> topRight
+    // and we have in order : bottomFace -> topFace -> rightFace -> leftFace -> backFace ->frontFace
+       
+    int index{};
+    for (float coord : originCoord)
+    {
+        points[index] = coord;
+        ++index;
+    }
+
+    for (index; index < 24; ++index)
+    {
+        int currentFace{};
+        for (int pointOnFaceIndex{1}; pointOnFaceIndex <=4;++pointOnFaceIndex)
+        {
+            if (index == 2)
+            {
+                ++pointOnFaceIndex; //because the A point has already been set
+            }
+
+            points[currentFace * 4 + pointOnFaceIndex * 3] = points[currentFace * 4 - 3]; //x value of current point
+        }
+
+        if ((index + 1) % 4 == 0)
+            ++currentFace;
+    }
+
+    
+
+
+}
+
 int main()
 {
+    //glfwWindowHint(GLFW_SAMPLES, 4);
     Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
     const char* vertexPath{ ".\\src\\vertexShader.glsl" };
     const char* fragmentPath{ ".\\src\\fragmentShader.glsl" };
     Shader shader(vertexPath, fragmentPath);
     glEnable(GL_DEPTH_TEST);
-
+    glEnable(GL_MULTISAMPLE);
 
     //VAO
     unsigned int VAO{};
@@ -125,7 +162,7 @@ int main()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+            glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
         stbi_image_free(data);
     }
