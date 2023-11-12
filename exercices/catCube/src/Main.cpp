@@ -7,49 +7,59 @@
 
 void processInput(GLFWwindow* window);
 
+struct Point
+{
+    std::array<float, 3> coord;     //vertices coord, in order : xyz
+    std::array<float, 3> coolors;   //vertices coolors in order : rgb 
+};
+
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-const float vertices[]{ 
-    //face 1  (in order: GCBH): 
+const float vertices2[]{ 
+   
+    //face 6 (ABCD) :
+             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 1.0f,        // top left
+             -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 0.0f,      0.0f, 0.0f,       // bottom left
+             0.5f, -0.5f, 0.5f,    1.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
+             0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 1.0f,      // top right
+
+    //face 5 (EHGF) :
+             -0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+             -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 0.0f,       // bottom left
+             0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 0.0f,      // bottom right
+             0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
+
+    //face 1  (HBCG): 
             //coordinates        //colors               //texture coord
-            0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 1.0f,      1.0f, 1.0f,       // top right
-            0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
-            -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f,      0.0f, 0.0f,        // bottom left
-            -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 1.0f,      0.0f, 1.0f,        // top left
+            -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+            -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
+            0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
+            0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 1.0f,       // top right
 
     //face 2 (FDAE) :
-            0.5f, 0.5f,  -0.5f,   0.0f, 1.0f, 0.0f,     1.0f, 1.0f,       // top right
-            0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 0.0f,      1.0f, 0.0f,       // bottom right
-            -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,       0.0f, 0.0f,        // bottom left
-            -0.5f, 0.5f, -0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+            -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
+            0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
+            0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,       1.0f, 1.0f,       // top right
 
     //face 3 (HBAE) :
-             -0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 1.0f,       // top right
-             -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
-             -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
-             -0.5f, 0.5f, -0.5f,   1.0f, 1.0f, 0.0f,     0.0f, 1.0f,        // top left
-
+             -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
+             -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 0.0f,      1.0f, 0.0f,       // bottom right
+             -0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 0.0f,      1.0f, 1.0f,       // top right
+    
     //face 4 (GCDF) :
-             0.5f, 0.5f, 0.5f,   0.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
-             0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-             0.5f, -0.5f,-0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,       // bottom left
-             0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 0.0f,     0.0f, 1.0f,        // top left
+             0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 1.0f,      0.0f, 1.0f,        // top left
+             0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,     0.0f, 0.0f,       // bottom left
+             0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
+             0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
 
-    //face 5 (FGHE) :
-             0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      1.0f, 1.0f,      // top right
-             0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-             -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 1.0f,      0.0f, 0.0f,       // bottom left
-             -0.5f, 0.5f, -0.5f,  1.0f, 1.0f, 0.0f,     0.0f, 1.0f,        // top left
+   
 
-     //face 6 (DCBA) :
-             0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 0.0f,      1.0f, 1.0f,      // top right
-             0.5f, -0.5f, 0.5f,    0.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-             -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 1.0f,      0.0f, 0.0f,       // bottom left
-             -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,     0.0f, 1.0f,        // top left
+     
 };
-
-unsigned int indices[]{
+unsigned int indices2[]{
 0, 1, 3, // first triangle
 1, 2, 3,// second triangle
 
@@ -67,48 +77,253 @@ unsigned int indices[]{
 
 20, 21, 23, // first triangle
 21, 22, 23,// second triangle
-
 };
 
-void constructCube(unsigned int vertices[], unsigned int indces[],float cote, std::array<float,3> originCoord)
-//originCoord should be coordinates of the top left of the bottom face of the cube 
+void constructCube(float vertices[192], unsigned int indices[36],float cote, std::array<float,3>& originCoord)//originCoord should be coordinates of the top left of the bottom face of the cube 
 {
-    std::array<float,24>points{}; //24 because 8 points in a cube with 3 float coord each
-    //value are stored in this order : topLeft -> bottomLeft -> bottomRight -> topRight
-    // and we have in order : bottomFace -> topFace -> rightFace -> leftFace -> backFace ->frontFace
-       
+    std::array<Point,8>point{};
+    //in order :  topLeft -> bottomLeft -> bottomRight -> topRight
+    //bottom face ->  top face 
+
     int index{};
-    for (float coord : originCoord)
+    for (float value : originCoord)
     {
-        points[index] = coord;
+        point[0].coord[index] = value;
         ++index;
     }
 
-    for (index; index < 24; ++index)
+    for (int face{1}; face <=2; ++face)
     {
-        int currentFace{};
-        for (int pointOnFaceIndex{1}; pointOnFaceIndex <=4;++pointOnFaceIndex)
+        if (face==1)
         {
-            if (index == 2)
+            for (int pointIndex{1};pointIndex<=4;++pointIndex)
             {
-                ++pointOnFaceIndex; //because the A point has already been set
-            }
+                switch (pointIndex)
+                {
+                    case 1: //bottomLeft
+                        point[1].coord[0] = point[pointIndex - 1].coord[0];
+                        point[1].coord[1] = point[pointIndex - 1].coord[1];
+                        point[1].coord[2] = cote + point[pointIndex - 1].coord[2];
+                        break;
 
-            points[currentFace * 4 + pointOnFaceIndex * 3] = points[currentFace * 4 - 3]; //x value of current point
+                    case 2: //bottomRight
+                        point[2].coord[0] = cote + point[pointIndex - 1].coord[0];
+                        point[2].coord[1] = point[pointIndex - 1].coord[1];
+                        point[2].coord[2] = point[pointIndex - 1].coord[2];
+                        break;
+
+                    case 3: //topRight
+                        point[3].coord[0] = point[pointIndex - 1].coord[0];
+                        point[3].coord[1] = point[pointIndex - 1].coord[1];
+                        point[3].coord[2] = point[pointIndex - 1].coord[2] - cote;
+                        break;
+                }
+            }
+            continue;
         }
 
-        if ((index + 1) % 4 == 0)
-            ++currentFace;
+        for (int pointIndex{ 0 }; pointIndex < 4; ++pointIndex)
+        {
+            switch (pointIndex)
+            {
+            
+            case 0: //topLeft
+                point[4].coord[0] = point[0].coord[0];
+                point[4].coord[1] = cote + point[0].coord[1];
+                point[4].coord[2] = point[0].coord[2];
+                break;
+
+            case 1: //bottomLeft
+                point[5].coord[0] = point[1].coord[0];
+                point[5].coord[1] = cote + point[1].coord[1];
+                point[5].coord[2] = point[1].coord[2];
+                break;
+
+            case 2: //bottomRight
+                point[6].coord[0] = point[2].coord[0];
+                point[6].coord[1] = cote + point[2].coord[1];
+                point[6].coord[2] = point[2].coord[2];
+                break;
+
+            case 3: //topRight
+                point[7].coord[0] = point[3].coord[0];
+                point[7].coord[1] = cote + point[3].coord[1];
+                point[7].coord[2] = point[3].coord[2];
+                break;
+            }
+        }
+    }
+   
+    int pointIndex{0};
+    for (Point& pointValue : point)
+    {
+        int coolorIndex{};
+        for (int coordIndex{2}; coordIndex>=0;--coordIndex)
+        {
+            if (pointValue.coord[coordIndex]== point[0].coord[coordIndex])
+                pointValue.coolors[coolorIndex] = 0.0f;
+
+            else
+                pointValue.coolors[coolorIndex] = 1.0f;
+
+            ++coolorIndex; 
+        }
+        ++pointIndex;
     }
 
+    pointIndex = 0;
+
+    int verticeIndex{};
+    auto assignValue = [&vertices,&point,&verticeIndex](int pointIndex,int facePoint)
+    {
+            //facePoint point on the face is : 0=topLeft; 1=bottomLeft; 2=bottomRight 3=topRight
+            if (verticeIndex == 0)
+                vertices[verticeIndex] = point[pointIndex].coord[0];
+            else
+                vertices[++verticeIndex] = point[pointIndex].coord[0];
+
+            vertices[++verticeIndex] = point[pointIndex].coord[1];
+            vertices[++verticeIndex] = point[pointIndex].coord[2];
+
+            vertices[++verticeIndex] = point[pointIndex].coolors[0];
+            vertices[++verticeIndex] = point[pointIndex].coolors[1];
+            vertices[++verticeIndex] = point[pointIndex].coolors[2];
+            
+
+            switch (facePoint)
+            {
+            case 0: 
+                vertices[++verticeIndex] = 0.0f;
+                vertices[++verticeIndex] = 1.0f;
+                break;
+
+            case 1:
+                vertices[++verticeIndex] = 0.0f;
+                vertices[++verticeIndex] = 0.0f;
+                break;
+
+            case 2:
+                vertices[++verticeIndex] = 1.0f;
+                vertices[++verticeIndex] = 0.0f;
+                break;
+
+            case 3:
+                vertices[++verticeIndex] = 1.0f;
+                vertices[++verticeIndex] = 1.0f;
+                break;
+
+            }    
+    };
+
+    while (verticeIndex < 192)
+    {
+        for (int faceindex{}; faceindex < 6; ++faceindex)
+        {
+            switch (faceindex)
+            {
+            case 0 : //bottomFace 
+                for (int pointIndex{}; pointIndex < 4; ++pointIndex)
+                {
+                    assignValue(pointIndex, pointIndex);
+                }
+                break;
+
+            case 1: //topFace 
+                for (int pointIndex{4}; pointIndex < 8; ++pointIndex)
+                {
+                    assignValue(pointIndex, pointIndex-4);
+                }
+                break;
+
+            case 2: //frontFace 
+                assignValue(5,0); //topFace bottomLeft
+                assignValue(1,1); //bottomFace bottomLeft
+                assignValue(2,2); //bottomFace bottomRight
+                assignValue(6,3); //topFace bottomRight
+                break;
+
+            case 3: //backFace 
+                assignValue(4,0); //topFace topLeft
+                assignValue(0,1); //bottomFace topLeft
+                assignValue(3,2); //bottomFace topRight
+                assignValue(7,3); //topFace topRight
+                break;
+
+            case 4: //leftFace 
+                assignValue(4,0); //topFace topLeft
+                assignValue(0,1); //bottomFace topLeft
+                assignValue(1,2); //bottomFace bottomLeft
+                assignValue(5,3); //topFace bottomLeft
+                break;
+
+            case 5: //rightFace 
+                assignValue(7,0); //topFace topRight
+                assignValue(3,1); //bottomFace topRight
+                assignValue(2,2); //bottomFace bottomRight
+                assignValue(6,3); //topFace bottomRight
+                break;
+            }
+        }
+    }
+
+
+    int indicesIndex{};
+    int currentFace{0};
+    while (indicesIndex<36)
+    {
+        for (int count{}; count < 3;++count) //first triangle indice
+        {
+            if (count == 2)
+                indices[indicesIndex] = (currentFace * 4) + count+1;
+            else
+                indices[indicesIndex] = (currentFace * 4) + count;
+
+            ++indicesIndex;
+        }
+
+        for (int count{ (currentFace * 4) +1}; count <= currentFace * 4 + 3; ++count) //first triangle indice
+        {
+            indices[indicesIndex] = count;
+            ++indicesIndex;
+        }
+
+        if ( indicesIndex%6==0)
+        {
+            ++currentFace;
+        }
+    }    
+}
+
+void test(const float vertices1[192], float vertices2[192], unsigned int indices1[36], unsigned int indice2[36] )
+{
     
+    for (int index{}; index < 192; ++index)
+    {
+        if (vertices2[index]!= vertices1[index])
+        {
+            std::cout << "vertices1 : " << vertices1[index] << " et vertices2 :" << vertices2[index]<< " a index : " << index << "\n";
+        }
+    }
 
+    std::cout << "\n";
 
+    for (int index{}; index < 36; ++index)
+    {
+        if (indices1[index] != indices2[index])
+        {
+            std::cout << "vertices diff a ligne : " << index << "\n";
+        }
+    }
 }
 
 int main()
 {
-    //glfwWindowHint(GLFW_SAMPLES, 4);
+    float vertices[192]{};
+    unsigned int indices[36]{};
+    std::array<float, 3> cubeOriginCoord { -0.5f, -0.5f, -0.5f };
+    constructCube(vertices, indices, 1, cubeOriginCoord);
+
+    glfwWindowHint(GLFW_SAMPLES, 4);
     Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
     const char* vertexPath{ ".\\src\\vertexShader.glsl" };
     const char* fragmentPath{ ".\\src\\fragmentShader.glsl" };
@@ -171,7 +386,6 @@ int main()
         std::cout << "Failed to load texture" << std::endl;
 
     //grass texture 
-
     unsigned int grassTex{};
     glGenTextures(1, &grassTex);
     glBindTexture(GL_TEXTURE_2D, grassTex);
@@ -201,10 +415,6 @@ int main()
     shader.setInt("catTexture", 0);
     shader.setInt("grassTexture", 1);
 
-    //local
-    glm::mat4 localModel{ glm::mat4(1.0f) };
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "localModel"), 1, GL_FALSE, glm::value_ptr(localModel));
-
     //world coordinates
     glm::mat4 model{ glm::mat4(1.0f) };
     model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
@@ -220,25 +430,92 @@ int main()
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 
+    //all animation 
+    glm::mat4 localOrigin{ glm::mat4(1.0f) };
+    glm::mat4 yTransModel{ glm::mat4(1.0f) };
+
+    float topFaceTopLeftYCoord{ vertices[33] };
+    float bottomFaceBottomLeftYCoord{ vertices[9] };
+
+
+    float highestPoint{ topFaceTopLeftYCoord+0.02f};
+    float lowestPoint{ bottomFaceBottomLeftYCoord - 0.02f };
+    float fps{ 60 };
+    float yTransModelVelocity{ 0.3 };
+    float yTranstransPerFrame{ (highestPoint / fps) * yTransModelVelocity }; 
+    
+    bool isItFirstLoop{ true };
+
+    auto draw = [&shader, &texture, &grassTex, &VAO, &window]()
+        {
+            //background color
+            glClearColor(107.0f / 255.0f, 142.0f / 255.0f, 35.0f / 255.0f, 1.0f);
+            glEnable(GL_MULTISAMPLE);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader.use();
+
+            //activate program object
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, grassTex);
+
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
+            glfwSwapBuffers(window.windowPtr);
+            glfwPollEvents();
+        };
+
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
-    {
-        //background color
-        glClearColor(107.0f / 255.0f, 142.0f / 255.0f, 35.0f / 255.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        shader.use();
+    { 
+        draw();
+        while (topFaceTopLeftYCoord <= highestPoint)
+        {
+            int currentFrame{ 1 };
+            glfwSetTime(0);
+            double t1{ glfwGetTime() };            
+            while (currentFrame <= fps)
+            {
+                if (glfwGetTime() >= t1 + 1 / fps)
+                {
+                    yTransModel = glm::translate(model, glm::vec3(0.0f, yTranstransPerFrame, 0.0f));
+                    model = yTransModel;
+                    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+                    draw();
 
-        //activate program object
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, grassTex);
+                    topFaceTopLeftYCoord = yTransModelVelocity +topFaceTopLeftYCoord;
+                    std::cerr << currentFrame << '\n';
+                    ++currentFrame;
+                    t1 = glfwGetTime();
+                }
+            }
+        }
+        topFaceTopLeftYCoord = highestPoint - 0.02f;
 
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-        glfwSwapBuffers(window.windowPtr);
-        glfwPollEvents();
+        while (bottomFaceBottomLeftYCoord >= lowestPoint )
+        {
+            int currentFrame{ 1 };
+            glfwSetTime(0);
+            double t1{ glfwGetTime() };
+            while (currentFrame <= fps)
+            {
+                if (glfwGetTime() >= t1 + 1 / fps)
+                {
+                    yTransModel = glm::translate(model, glm::vec3(0.0f, -yTranstransPerFrame, 0.0f));
+                    model = yTransModel;
+                    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+                    draw();
+
+                    bottomFaceBottomLeftYCoord = -yTransModelVelocity + bottomFaceBottomLeftYCoord;
+                    ++currentFrame;
+                    t1 = glfwGetTime();
+                }
+            }
+        }
+
+        bottomFaceBottomLeftYCoord = lowestPoint + 0.02f;
     }
 
     glfwTerminate();
