@@ -12,8 +12,8 @@
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3.h" />
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3native.h" />
     <ClInclude Include="header\openGL.h" />
-    <ClInclude Include="header\stb_image.h" />
     <ClInclude Include="header\geometry.h" />
+    <ClInclude Include="header\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\fragmentShader.glsl" />
