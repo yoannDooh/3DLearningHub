@@ -471,6 +471,20 @@ int main()
     while (!glfwWindowShouldClose(window.windowPtr))
     { 
         draw();
+
+        int currentFrame{ 1 };
+        glfwSetTime(0);
+        double t1{ glfwGetTime() };
+        while (currentFrame <= fps)
+        {
+            
+            std::cerr << currentFrame << '\n';
+            ++currentFrame;
+            t1 = glfwGetTime();
+        }
+
+
+        
         while (topFaceTopLeftYCoord <= highestPoint)
         {
             int currentFrame{ 1 };
@@ -517,6 +531,7 @@ int main()
 
         bottomFaceBottomLeftYCoord = lowestPoint + 0.02f;
     }
+    
 
     glfwTerminate();
     return 0;
