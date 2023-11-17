@@ -16,55 +16,55 @@ struct Point
 
 struct Model3D
 {
-    glm::vec3 coord;   
+    glm::vec3 coord;
     glm::mat4 matrix;
 };
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-const float vertices2[]{ 
-   
+const float vertices2[]{
+
     //face 6 (ABCD) :
              -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 1.0f,        // top left
              -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 0.0f,      0.0f, 0.0f,       // bottom left
              0.5f, -0.5f, 0.5f,    1.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
              0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 1.0f,      // top right
 
-    //face 5 (EHGF) :
-             -0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-             -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 0.0f,       // bottom left
-             0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-             0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
+             //face 5 (EHGF) :
+                      -0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+                      -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 0.0f,       // bottom left
+                      0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 0.0f,      // bottom right
+                      0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
 
-    //face 1  (HBCG): 
-            //coordinates        //colors               //texture coord
-            -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-            -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
-            0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
-            0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 1.0f,       // top right
+                      //face 1  (HBCG): 
+                              //coordinates        //colors               //texture coord
+                              -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+                              -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
+                              0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
+                              0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 1.0f,       // top right
 
-    //face 2 (FDAE) :
-            -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
-            0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
-            0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,       1.0f, 1.0f,       // top right
+                              //face 2 (FDAE) :
+                                      -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+                                      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
+                                      0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
+                                      0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,       1.0f, 1.0f,       // top right
 
-    //face 3 (HBAE) :
-             -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
-             -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 0.0f,      1.0f, 0.0f,       // bottom right
-             -0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 0.0f,      1.0f, 1.0f,       // top right
-    
-    //face 4 (GCDF) :
-             0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 1.0f,      0.0f, 1.0f,        // top left
-             0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,     0.0f, 0.0f,       // bottom left
-             0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-             0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
+                                      //face 3 (HBAE) :
+                                               -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
+                                               -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
+                                               -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 0.0f,      1.0f, 0.0f,       // bottom right
+                                               -0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 0.0f,      1.0f, 1.0f,       // top right
 
-   
+                                               //face 4 (GCDF) :
+                                                        0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 1.0f,      0.0f, 1.0f,        // top left
+                                                        0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,     0.0f, 0.0f,       // bottom left
+                                                        0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
+                                                        0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
 
-     
+
+
+
 };
 unsigned int indices2[]{
 0, 1, 3, // first triangle
@@ -86,9 +86,9 @@ unsigned int indices2[]{
 21, 22, 23,// second triangle
 };
 
-void constructCube(float vertices[192], unsigned int indices[36],float cote, std::array<float,3>& originCoord)//originCoord should be coordinates of the top left of the bottom face of the cube 
+void constructCube(float vertices[192], unsigned int indices[36], float cote, std::array<float, 3>& originCoord)//originCoord should be coordinates of the top left of the bottom face of the cube 
 {
-    std::array<Point,8>point{};
+    std::array<Point, 8>point{};
     //in order :  topLeft -> bottomLeft -> bottomRight -> topRight
     //bottom face ->  top face 
 
@@ -99,31 +99,31 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
         ++index;
     }
 
-    for (int face{1}; face <=2; ++face)
+    for (int face{ 1 }; face <= 2; ++face)
     {
-        if (face==1)
+        if (face == 1)
         {
-            for (int pointIndex{1};pointIndex<=4;++pointIndex)
+            for (int pointIndex{ 1 }; pointIndex <= 4; ++pointIndex)
             {
                 switch (pointIndex)
                 {
-                    case 1: //bottomLeft
-                        point[1].coord[0] = point[pointIndex - 1].coord[0];
-                        point[1].coord[1] = point[pointIndex - 1].coord[1];
-                        point[1].coord[2] = cote + point[pointIndex - 1].coord[2];
-                        break;
+                case 1: //bottomLeft
+                    point[1].coord[0] = point[pointIndex - 1].coord[0];
+                    point[1].coord[1] = point[pointIndex - 1].coord[1];
+                    point[1].coord[2] = cote + point[pointIndex - 1].coord[2];
+                    break;
 
-                    case 2: //bottomRight
-                        point[2].coord[0] = cote + point[pointIndex - 1].coord[0];
-                        point[2].coord[1] = point[pointIndex - 1].coord[1];
-                        point[2].coord[2] = point[pointIndex - 1].coord[2];
-                        break;
+                case 2: //bottomRight
+                    point[2].coord[0] = cote + point[pointIndex - 1].coord[0];
+                    point[2].coord[1] = point[pointIndex - 1].coord[1];
+                    point[2].coord[2] = point[pointIndex - 1].coord[2];
+                    break;
 
-                    case 3: //topRight
-                        point[3].coord[0] = point[pointIndex - 1].coord[0];
-                        point[3].coord[1] = point[pointIndex - 1].coord[1];
-                        point[3].coord[2] = point[pointIndex - 1].coord[2] - cote;
-                        break;
+                case 3: //topRight
+                    point[3].coord[0] = point[pointIndex - 1].coord[0];
+                    point[3].coord[1] = point[pointIndex - 1].coord[1];
+                    point[3].coord[2] = point[pointIndex - 1].coord[2] - cote;
+                    break;
                 }
             }
             continue;
@@ -133,7 +133,7 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
         {
             switch (pointIndex)
             {
-            
+
             case 0: //topLeft
                 point[4].coord[0] = point[0].coord[0];
                 point[4].coord[1] = cote + point[0].coord[1];
@@ -160,20 +160,20 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
             }
         }
     }
-   
-    int pointIndex{0};
+
+    int pointIndex{ 0 };
     for (Point& pointValue : point)
     {
         int coolorIndex{};
-        for (int coordIndex{2}; coordIndex>=0;--coordIndex)
+        for (int coordIndex{ 2 }; coordIndex >= 0; --coordIndex)
         {
-            if (pointValue.coord[coordIndex]== point[0].coord[coordIndex])
+            if (pointValue.coord[coordIndex] == point[0].coord[coordIndex])
                 pointValue.coolors[coolorIndex] = 0.0f;
 
             else
                 pointValue.coolors[coolorIndex] = 1.0f;
 
-            ++coolorIndex; 
+            ++coolorIndex;
         }
         ++pointIndex;
     }
@@ -181,8 +181,8 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
     pointIndex = 0;
 
     int verticeIndex{};
-    auto assignValue = [&vertices,&point,&verticeIndex](int pointIndex,int facePoint)
-    {
+    auto assignValue = [&vertices, &point, &verticeIndex](int pointIndex, int facePoint)
+        {
             //facePoint point on the face is : 0=topLeft; 1=bottomLeft; 2=bottomRight 3=topRight
             if (verticeIndex == 0)
                 vertices[verticeIndex] = point[pointIndex].coord[0];
@@ -195,11 +195,11 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
             vertices[++verticeIndex] = point[pointIndex].coolors[0];
             vertices[++verticeIndex] = point[pointIndex].coolors[1];
             vertices[++verticeIndex] = point[pointIndex].coolors[2];
-            
+
 
             switch (facePoint)
             {
-            case 0: 
+            case 0:
                 vertices[++verticeIndex] = 0.0f;
                 vertices[++verticeIndex] = 1.0f;
                 break;
@@ -219,8 +219,8 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
                 vertices[++verticeIndex] = 1.0f;
                 break;
 
-            }    
-    };
+            }
+        };
 
     while (verticeIndex < 192)
     {
@@ -228,7 +228,7 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
         {
             switch (faceindex)
             {
-            case 0 : //bottomFace 
+            case 0: //bottomFace 
                 for (int pointIndex{}; pointIndex < 4; ++pointIndex)
                 {
                     assignValue(pointIndex, pointIndex);
@@ -236,38 +236,38 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
                 break;
 
             case 1: //topFace 
-                for (int pointIndex{4}; pointIndex < 8; ++pointIndex)
+                for (int pointIndex{ 4 }; pointIndex < 8; ++pointIndex)
                 {
-                    assignValue(pointIndex, pointIndex-4);
+                    assignValue(pointIndex, pointIndex - 4);
                 }
                 break;
 
             case 2: //frontFace 
-                assignValue(5,0); //topFace bottomLeft
-                assignValue(1,1); //bottomFace bottomLeft
-                assignValue(2,2); //bottomFace bottomRight
-                assignValue(6,3); //topFace bottomRight
+                assignValue(5, 0); //topFace bottomLeft
+                assignValue(1, 1); //bottomFace bottomLeft
+                assignValue(2, 2); //bottomFace bottomRight
+                assignValue(6, 3); //topFace bottomRight
                 break;
 
             case 3: //backFace 
-                assignValue(4,0); //topFace topLeft
-                assignValue(0,1); //bottomFace topLeft
-                assignValue(3,2); //bottomFace topRight
-                assignValue(7,3); //topFace topRight
+                assignValue(4, 0); //topFace topLeft
+                assignValue(0, 1); //bottomFace topLeft
+                assignValue(3, 2); //bottomFace topRight
+                assignValue(7, 3); //topFace topRight
                 break;
 
             case 4: //leftFace 
-                assignValue(4,0); //topFace topLeft
-                assignValue(0,1); //bottomFace topLeft
-                assignValue(1,2); //bottomFace bottomLeft
-                assignValue(5,3); //topFace bottomLeft
+                assignValue(4, 0); //topFace topLeft
+                assignValue(0, 1); //bottomFace topLeft
+                assignValue(1, 2); //bottomFace bottomLeft
+                assignValue(5, 3); //topFace bottomLeft
                 break;
 
             case 5: //rightFace 
-                assignValue(7,0); //topFace topRight
-                assignValue(3,1); //bottomFace topRight
-                assignValue(2,2); //bottomFace bottomRight
-                assignValue(6,3); //topFace bottomRight
+                assignValue(7, 0); //topFace topRight
+                assignValue(3, 1); //bottomFace topRight
+                assignValue(2, 2); //bottomFace bottomRight
+                assignValue(6, 3); //topFace bottomRight
                 break;
             }
         }
@@ -275,40 +275,40 @@ void constructCube(float vertices[192], unsigned int indices[36],float cote, std
 
 
     int indicesIndex{};
-    int currentFace{0};
-    while (indicesIndex<36)
+    int currentFace{ 0 };
+    while (indicesIndex < 36)
     {
-        for (int count{}; count < 3;++count) //first triangle indice
+        for (int count{}; count < 3; ++count) //first triangle indice
         {
             if (count == 2)
-                indices[indicesIndex] = (currentFace * 4) + count+1;
+                indices[indicesIndex] = (currentFace * 4) + count + 1;
             else
                 indices[indicesIndex] = (currentFace * 4) + count;
 
             ++indicesIndex;
         }
 
-        for (int count{ (currentFace * 4) +1}; count <= currentFace * 4 + 3; ++count) //first triangle indice
+        for (int count{ (currentFace * 4) + 1 }; count <= currentFace * 4 + 3; ++count) //first triangle indice
         {
             indices[indicesIndex] = count;
             ++indicesIndex;
         }
 
-        if ( indicesIndex%6==0)
+        if (indicesIndex % 6 == 0)
         {
             ++currentFace;
         }
-    }    
+    }
 }
 
-void test(const float vertices1[192], float vertices2[192], unsigned int indices1[36], unsigned int indice2[36] )
+void test(const float vertices1[192], float vertices2[192], unsigned int indices1[36], unsigned int indice2[36])
 {
-    
+
     for (int index{}; index < 192; ++index)
     {
-        if (vertices2[index]!= vertices1[index])
+        if (vertices2[index] != vertices1[index])
         {
-            std::cout << "vertices1 : " << vertices1[index] << " et vertices2 :" << vertices2[index]<< " a index : " << index << "\n";
+            std::cout << "vertices1 : " << vertices1[index] << " et vertices2 :" << vertices2[index] << " a index : " << index << "\n";
         }
     }
 
@@ -327,8 +327,8 @@ int main()
 {
     float vertices[192]{};
     unsigned int indices[36]{};
-    float cubeEdge {1.0f};
-    std::array<float, 3> cubeOriginCoord { -cubeEdge/2, -cubeEdge / 2, -cubeEdge / 2 };
+    float cubeEdge{ 1.0f };
+    std::array<float, 3> cubeOriginCoord{ -cubeEdge / 2, -cubeEdge / 2, -cubeEdge / 2 };
     constructCube(vertices, indices, cubeEdge, cubeOriginCoord);
 
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -357,7 +357,7 @@ int main()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //position attribute 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     //color attribute 
@@ -378,14 +378,14 @@ int main()
 
     int width{}, height{}, nrChannels{};
     unsigned char* data{ stbi_load("ressource\\catTexture.jpg",&width,&height,&nrChannels,0) };
-    
+
     //load texture
     if (data)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-            glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
         stbi_image_free(data);
     }
@@ -403,7 +403,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    data = stbi_load("ressource\\grassTexture.jpg",&width,&height,&nrChannels,0) ;
+    data = stbi_load("ressource\\grassTexture.jpg", &width, &height, &nrChannels, 0);
 
     //load texture
     if (data)
@@ -431,7 +431,7 @@ int main()
         { glm::vec3(2.0f, 5.0f, -15.0f), glm::mat4(1.0f)},
         { glm::vec3(-1.5f, -2.2f, -2.5f), glm::mat4(1.0f)},
         { glm::vec3(-3.8f, -2.0f, -12.3f), glm::mat4(1.0f)},
-        { glm::vec3(2.4f, -0.4f, -3.5f), glm::mat4(1.0f)}, 
+        { glm::vec3(2.4f, -0.4f, -3.5f), glm::mat4(1.0f)},
         { glm::vec3(-1.7f, 3.0f, -7.5f), glm::mat4(1.0f)},
         { glm::vec3(1.3f, -2.0f, -2.5f), glm::mat4(1.0f)},
         { glm::vec3(1.5f, 2.0f, -2.5f), glm::mat4(1.0f)},
@@ -439,43 +439,6 @@ int main()
         { glm::vec3(-1.3f, 1.0f, -1.5f), glm::mat4(1.0f)}
         */
     };
-
-
-    //all animation 
-    glm::mat4 localOrigin{ glm::mat4(1.0f) };
-    glm::mat4 yTransModel{ glm::mat4(1.0f) };
-    glm::mat4 xyRotation{ glm::mat4(1.0f) };
-    glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
-    float fps{ 60 };
-
-    float topFaceTopLeftYCoord{ vertices[33] };
-    float bottomFaceBottomLeftYCoord{ vertices[9] };
-    float highestPoint{ topFaceTopLeftYCoord + 0.02f };
-    float lowestPoint{ bottomFaceBottomLeftYCoord - 0.02f };
-    float yTransModelVelocity{ 1 };
-    float yTranstransPerFrame{ (highestPoint / fps) * yTransModelVelocity };
-
-    float xyRotationPerFrame{ -0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
-
-    //elipse
-    std::array<float, 3> elipseCenterCoord{ 0.0f,0.0f,0.0f };
-    float aValue{ 0.4f };
-    float bValue{ 0.2f };
-
-    //models
-    glm::mat4 model{ glm::mat4(1.0f) };
-    model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-    //view 
-    glm::mat4 view{ glm::mat4(1.0f) };
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-
-    //projection 
-    glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     auto draw = [&shader, &texture, &grassTex, &VAO, &window]()
         {
@@ -498,50 +461,69 @@ int main()
             glfwPollEvents();
         };
 
+    //models
+    glm::mat4 model{ glm::mat4(1.0f) };
+    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    //view 
+    glm::mat4 view{ glm::mat4(1.0f) };
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+    //projection 
+    glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    //all animation 
+    glm::mat4 localOrigin{ glm::mat4(1.0f) };
+    glm::mat4 yTransModel{ glm::mat4(1.0f) };
+    glm::mat4 xyRotation{ glm::mat4(1.0f) };
+    glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
+    float fps{ 60 };
+
+    //yTrans variables
+    float topFaceTopLeftYCoord{ vertices[33] };
+    float highestPoint{ topFaceTopLeftYCoord + 0.02f };
+    float yTransModelVelocity{ 1 };
+
+    float yTranstransMax { 0.02f };
+
+    float xyRotationPerFrame{ -0.25f }; //how much radian it rotates by frame for the y value (x is the half of y value)
+
+    //elipse variables
+    std::array<float, 3> elipseCenterCoord{ 0.0f,0.0f,0.0f };
+    float aValue{ 0.4f };
+    float bValue{ 0.2f };
+    float xElipse{ aValue };
+    float yElipse{ bValue };
+
+
+    glfwSetTime(0);
     // render loop
-    float xElipse{aValue};
-    float yElipse{bValue};
-
     while (!glfwWindowShouldClose(window.windowPtr))
-    { 
-        double currenTime{ };
-        double previousTime{};
+    {
+        double currenTime{ glfwGetTime() };
+        float yTrans{};
+        float previousYTrans{};
         draw();
-
-        while (topFaceTopLeftYCoord <= highestPoint)
-        {
-            int currentFrame{ 1 };
-            
-            while (currentFrame <= fps)
+        
+        int currentFrame{ 1 };
+        while (currentFrame <= fps)
             {
-                glfwSetTime(0);
-                currenTime = glfwGetTime() ;
-             
-                //put back to orignal position
-                if (currentFrame > 1)
-                {
-                    ellipticOrbit = glm::translate( localOrigin, glm::vec3( -xElipse*currentFrame, 0.0f, -yElipse*currentFrame) );
-                    model = yTransModel * ellipticOrbit * xyRotation;
-                    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-                }
+                currenTime = glfwGetTime();
+                yTrans = (yTranstransMax * sin(currenTime * yTransModelVelocity));
+                std::cerr << currentFrame << " : " << yTrans << "\n";
 
-                xElipse = aValue * cos(currenTime);
-                yElipse = -(bValue * sin(currenTime));
-
-                ellipticOrbit = glm::translate( localOrigin, glm::vec3(xElipse,0.0f, yElipse) );
-                yTransModel = glm::translate( localOrigin, glm::vec3(0.0f, (0.1f/60)*sin(currenTime * yTransModelVelocity), 0.0f));
-                xyRotation = model = glm::rotate( model, glm::radians(xyRotationPerFrame), glm::vec3(0.7f, 1.0f, 0.0f));
-                model = yTransModel * ellipticOrbit* xyRotation;
+                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, yTrans, 0.0f) );
+                xyRotation = glm::rotate(model, glm::radians(xyRotationPerFrame), glm::vec3(0.7f, 1.0f, 0.0f));
+                model = model*yTransModel;
                 glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
                 draw();
-                std::cerr << currentFrame << " : " << 0.02 * yTransModelVelocity * sin(currenTime) << "\n";
-                previousTime = currenTime;
                 ++currentFrame;
             }
         }
-    }
-    
 
     glfwTerminate();
     return 0;
