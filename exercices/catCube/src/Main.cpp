@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <array>
+#include <cmath>
 
 void processInput(GLFWwindow* window);
 
@@ -11,6 +12,12 @@ struct Point
 {
     std::array<float, 3> coord;     //vertices coord, in order : xyz
     std::array<float, 3> coolors;   //vertices coolors in order : rgb 
+};
+
+struct Model3D
+{
+    glm::vec3 coord;   
+    glm::mat4 matrix;
 };
 
 // settings
@@ -320,8 +327,9 @@ int main()
 {
     float vertices[192]{};
     unsigned int indices[36]{};
-    std::array<float, 3> cubeOriginCoord { -0.5f, -0.5f, -0.5f };
-    constructCube(vertices, indices, 1, cubeOriginCoord);
+    float cubeEdge {1.0f};
+    std::array<float, 3> cubeOriginCoord { -cubeEdge/2, -cubeEdge / 2, -cubeEdge / 2 };
+    constructCube(vertices, indices, cubeEdge, cubeOriginCoord);
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
@@ -415,36 +423,59 @@ int main()
     shader.setInt("catTexture", 0);
     shader.setInt("grassTexture", 1);
 
-    //world coordinates
-    glm::mat4 model{ glm::mat4(1.0f) };
-    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-    //view 
-    glm::mat4 view{ glm::mat4(1.0f) };
-    view = glm::translate(view, glm::vec3(-0.0f, 0.0f, -3.0f));
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-
-    //projection 
-    glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    //cubes 
+    std::array<Model3D, 10> cubePositions
+    {
+        /*
+        { glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f) },
+        { glm::vec3(2.0f, 5.0f, -15.0f), glm::mat4(1.0f)},
+        { glm::vec3(-1.5f, -2.2f, -2.5f), glm::mat4(1.0f)},
+        { glm::vec3(-3.8f, -2.0f, -12.3f), glm::mat4(1.0f)},
+        { glm::vec3(2.4f, -0.4f, -3.5f), glm::mat4(1.0f)}, 
+        { glm::vec3(-1.7f, 3.0f, -7.5f), glm::mat4(1.0f)},
+        { glm::vec3(1.3f, -2.0f, -2.5f), glm::mat4(1.0f)},
+        { glm::vec3(1.5f, 2.0f, -2.5f), glm::mat4(1.0f)},
+        { glm::vec3(1.5f, 0.2f, -1.5f), glm::mat4(1.0f)},
+        { glm::vec3(-1.3f, 1.0f, -1.5f), glm::mat4(1.0f)}
+        */
+    };
 
 
     //all animation 
     glm::mat4 localOrigin{ glm::mat4(1.0f) };
     glm::mat4 yTransModel{ glm::mat4(1.0f) };
+    glm::mat4 xyRotation{ glm::mat4(1.0f) };
+    glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
+    float fps{ 60 };
 
     float topFaceTopLeftYCoord{ vertices[33] };
     float bottomFaceBottomLeftYCoord{ vertices[9] };
-
-
-    float highestPoint{ topFaceTopLeftYCoord+0.02f};
+    float highestPoint{ topFaceTopLeftYCoord + 0.02f };
     float lowestPoint{ bottomFaceBottomLeftYCoord - 0.02f };
-    float fps{ 60 };
-    float yTransModelVelocity{ 0.3 };
-    float yTranstransPerFrame{ (highestPoint / fps) * yTransModelVelocity }; 
-    
-    bool isItFirstLoop{ true };
+    float yTransModelVelocity{ 1 };
+    float yTranstransPerFrame{ (highestPoint / fps) * yTransModelVelocity };
+
+    float xyRotationPerFrame{ -0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
+
+    //elipse
+    std::array<float, 3> elipseCenterCoord{ 0.0f,0.0f,0.0f };
+    float aValue{ 0.4f };
+    float bValue{ 0.2f };
+
+    //models
+    glm::mat4 model{ glm::mat4(1.0f) };
+    model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    //view 
+    glm::mat4 view{ glm::mat4(1.0f) };
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+    //projection 
+    glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     auto draw = [&shader, &texture, &grassTex, &VAO, &window]()
         {
@@ -468,68 +499,47 @@ int main()
         };
 
     // render loop
+    float xElipse{aValue};
+    float yElipse{bValue};
+
     while (!glfwWindowShouldClose(window.windowPtr))
     { 
+        double currenTime{ };
+        double previousTime{};
         draw();
 
-        int currentFrame{ 1 };
-        glfwSetTime(0);
-        double t1{ glfwGetTime() };
-        while (currentFrame <= fps)
-        {
-            
-            std::cerr << currentFrame << '\n';
-            ++currentFrame;
-            t1 = glfwGetTime();
-        }
-
-
-        
         while (topFaceTopLeftYCoord <= highestPoint)
         {
             int currentFrame{ 1 };
-            glfwSetTime(0);
-            double t1{ glfwGetTime() };            
+            
             while (currentFrame <= fps)
             {
-                if (glfwGetTime() >= t1 + 1 / fps)
+                glfwSetTime(0);
+                currenTime = glfwGetTime() ;
+             
+                //put back to orignal position
+                if (currentFrame > 1)
                 {
-                    yTransModel = glm::translate(model, glm::vec3(0.0f, yTranstransPerFrame, 0.0f));
-                    model = yTransModel;
+                    ellipticOrbit = glm::translate( localOrigin, glm::vec3( -xElipse*currentFrame, 0.0f, -yElipse*currentFrame) );
+                    model = yTransModel * ellipticOrbit * xyRotation;
                     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-                    draw();
-
-                    topFaceTopLeftYCoord = yTransModelVelocity +topFaceTopLeftYCoord;
-                    std::cerr << currentFrame << '\n';
-                    ++currentFrame;
-                    t1 = glfwGetTime();
                 }
+
+                xElipse = aValue * cos(currenTime);
+                yElipse = -(bValue * sin(currenTime));
+
+                ellipticOrbit = glm::translate( localOrigin, glm::vec3(xElipse,0.0f, yElipse) );
+                yTransModel = glm::translate( localOrigin, glm::vec3(0.0f, (0.1f/60)*sin(currenTime * yTransModelVelocity), 0.0f));
+                xyRotation = model = glm::rotate( model, glm::radians(xyRotationPerFrame), glm::vec3(0.7f, 1.0f, 0.0f));
+                model = yTransModel * ellipticOrbit* xyRotation;
+                glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+                draw();
+                std::cerr << currentFrame << " : " << 0.02 * yTransModelVelocity * sin(currenTime) << "\n";
+                previousTime = currenTime;
+                ++currentFrame;
             }
         }
-        topFaceTopLeftYCoord = highestPoint - 0.02f;
-
-        while (bottomFaceBottomLeftYCoord >= lowestPoint )
-        {
-            int currentFrame{ 1 };
-            glfwSetTime(0);
-            double t1{ glfwGetTime() };
-            while (currentFrame <= fps)
-            {
-                if (glfwGetTime() >= t1 + 1 / fps)
-                {
-                    yTransModel = glm::translate(model, glm::vec3(0.0f, -yTranstransPerFrame, 0.0f));
-                    model = yTransModel;
-                    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-                    draw();
-
-                    bottomFaceBottomLeftYCoord = -yTransModelVelocity + bottomFaceBottomLeftYCoord;
-                    ++currentFrame;
-                    t1 = glfwGetTime();
-                }
-            }
-        }
-
-        bottomFaceBottomLeftYCoord = lowestPoint + 0.02f;
     }
     
 
