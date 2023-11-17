@@ -5,7 +5,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <array>
 #include <cmath>
+#include <complex>
 
+namespace Math
+{
+    float py{ 3.14159 };
+}
 void processInput(GLFWwindow* window);
 
 struct Point
@@ -323,6 +328,26 @@ void test(const float vertices1[192], float vertices2[192], unsigned int indices
     }
 }
 
+float findYTransAmplitude (int frameNb, float translation) //frameNb : how many frame should the translation take to reach translation parameter value
+{
+    using namespace std::complex_literals;
+
+    float result{};
+
+    std::complex<float> operand1(0.0, Math::py / frameNb);
+    operand1 = ( 2.0f * exp(operand1) )/ (1.0f - exp(operand1) );
+
+    std::complex<float> operand2 (0.0, -(Math::py / frameNb) );
+    operand2 = (2.0f * exp(operand2)) / (1.0f - exp(operand2));
+
+    operand1 = operand1 - operand2;
+    operand1 = (translation / operand1) * 2.0if;
+
+    result = operand1.real();
+
+    return result;
+}
+
 int main()
 {
     float vertices[192]{};
@@ -440,6 +465,34 @@ int main()
         */
     };
 
+
+// --ALL ANIMATIONS MATRIXES--
+    glm::mat4 localOrigin{ glm::mat4(1.0f) };
+    glm::mat4 yTransModel{ glm::mat4(1.0f) };
+    glm::mat4 xyRotation{ glm::mat4(1.0f) };
+    glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
+    
+
+    int fps{ 60 };
+    float yTransModelVelocity{ 1 };
+
+ // --MODELS VIEX PROJECTION MATRIXES--
+   
+    //models
+    glm::mat4 model{ glm::mat4(1.0f) };
+    model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+    //view 
+    glm::mat4 view{ glm::mat4(1.0f) };
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+    //projection 
+    glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
     auto draw = [&shader, &texture, &grassTex, &VAO, &window]()
         {
             //background color
@@ -461,69 +514,80 @@ int main()
             glfwPollEvents();
         };
 
-    //models
-    glm::mat4 model{ glm::mat4(1.0f) };
-    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+ // --VARIABLES FOR THE ANIMATION--
+    
+    //time
+    int sec{};
+    int currentFrame{ 1 };
+    int totalFrame{};
+    double currenTime{ };
 
-    //view 
-    glm::mat4 view{ glm::mat4(1.0f) };
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    //elipses variables     
+    float aValue{ 1.0f };
+    float bValue{ 1.0f };
+    float xElipse{aValue};
+    float yElipse{bValue};
+    int orbitFrameNb{ fps*3 }; // how many frames should the animations takes 
+    int orbitFrameCurrentFrame{1};
 
-    //projection 
-    glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    
+   
+    //y axis and a little x axis rotation 
+    float xyRotationPerFrame{ -0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
+    
+    //translation on y axis variables 
+    float yTrans{ 0.3f }; //by how much it should translate (from 0 to py etc...)
+    int yTransFrameNb{fps*2}; // how many frames should the animations takes 
+    int yTransCurrentFrame{ 1 };
+    float yTransAmplitude { findYTransAmplitude(yTransFrameNb,yTrans)}; //amplitude of the sin function for yTranslation
+    int yTransPeriod{ 2 }; //modify how quick it translate
+    bool isAmplitudeNegative{ false }; // should the amplitude be negative ? 
 
-    //all animation 
-    glm::mat4 localOrigin{ glm::mat4(1.0f) };
-    glm::mat4 yTransModel{ glm::mat4(1.0f) };
-    glm::mat4 xyRotation{ glm::mat4(1.0f) };
-    glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
-    float fps{ 60 };
-
-    //yTrans variables
-    float topFaceTopLeftYCoord{ vertices[33] };
-    float highestPoint{ topFaceTopLeftYCoord + 0.02f };
-    float yTransModelVelocity{ 1 };
-
-    float yTranstransMax { 0.02f };
-
-    float xyRotationPerFrame{ -0.25f }; //how much radian it rotates by frame for the y value (x is the half of y value)
-
-    //elipse variables
-    std::array<float, 3> elipseCenterCoord{ 0.0f,0.0f,0.0f };
-    float aValue{ 0.4f };
-    float bValue{ 0.2f };
-    float xElipse{ aValue };
-    float yElipse{ bValue };
-
-
-    glfwSetTime(0);
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
-    {
-        double currenTime{ glfwGetTime() };
-        float yTrans{};
-        float previousYTrans{};
+    { 
+      
         draw();
-        
-        int currentFrame{ 1 };
-        while (currentFrame <= fps)
-            {
-                currenTime = glfwGetTime();
-                yTrans = (yTranstransMax * sin(currenTime * yTransModelVelocity));
-                std::cerr << currentFrame << " : " << yTrans << "\n";
+        currentFrame = 1;
 
-                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, yTrans, 0.0f) );
-                xyRotation = glm::rotate(model, glm::radians(xyRotationPerFrame), glm::vec3(0.7f, 1.0f, 0.0f));
-                model = model*yTransModel;
-                glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-                draw();
-                ++currentFrame;
-            }
+        if (yTransCurrentFrame >= yTransFrameNb*2)
+        {
+            yTransCurrentFrame = 1;
         }
+
+        if (orbitFrameCurrentFrame >= orbitFrameNb)
+        {
+            orbitFrameCurrentFrame = 1;
+        }
+        
+        while (currentFrame <= fps)
+        {
+            
+            glfwSetTime(0);
+            currenTime = glfwGetTime() ;
+            
+            yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, yTransAmplitude * sin( (yTransCurrentFrame * Math::py / yTransFrameNb)* yTransPeriod), 0.0f));
+            xyRotation = glm::rotate( model, glm::radians(xyRotationPerFrame), glm::vec3(0.7f, 1.0f, 0.0f));
+
+            xElipse = aValue * cos( ( (2 * Math::py) /orbitFrameNb )* orbitFrameCurrentFrame);
+            yElipse = bValue * sin( ( (2 * Math::py) / orbitFrameNb)* orbitFrameCurrentFrame);
+            ellipticOrbit = glm::translate(localOrigin, glm::vec3(xElipse,0.0f, yElipse));
+
+            model = yTransModel * xyRotation;
+            glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+            draw();
+            
+            std::cerr << "totalFrame : "<< totalFrame << " frame : " << currentFrame << " yTransCurrentFrame : " << yTransCurrentFrame << " valeur translation : " << yTransAmplitude * sin(yTransCurrentFrame * Math::py / yTransFrameNb) << "\n";
+            
+            ++yTransCurrentFrame;
+            ++orbitFrameCurrentFrame;
+            ++currentFrame;  
+            ++totalFrame;
+        }
+        ++sec;
+    }
+    
 
     glfwTerminate();
     return 0;
