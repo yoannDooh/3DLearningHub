@@ -306,7 +306,7 @@ void constructCube(float vertices[192], unsigned int indices[36], float cote, st
     }
 }
 
-void test(const float vertices1[192], float vertices2[192], unsigned int indices1[36], unsigned int indice2[36])
+void testCube(const float vertices1[192], float vertices2[192], unsigned int indices1[36], unsigned int indice2[36])
 {
 
     for (int index{}; index < 192; ++index)
@@ -353,7 +353,10 @@ int main()
     float vertices[192]{};
     unsigned int indices[36]{};
     float cubeEdge{ 1.0f };
-    std::array<float, 3> cubeOriginCoord{ -cubeEdge / 2, -cubeEdge / 2, -cubeEdge / 2 };
+
+
+    std::array<float, 3> cubeOriginCoord{ - (cubeEdge / 2.0f), - (cubeEdge / 2.0f), - (cubeEdge / 2.0f)};
+
     std::array<Point, 8> points{};
     constructCube(vertices, indices, cubeEdge, cubeOriginCoord, points);
 
@@ -364,6 +367,8 @@ int main()
     Shader shader(vertexPath, fragmentPath);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
+
+    shader.setFloat("cubeEdge", cubeEdge);
 
     //VAO
     unsigned int VAO{};
@@ -467,12 +472,15 @@ int main()
     };
 
 
+
     // --ALL ANIMATIONS MATRIXES--
     glm::mat4 localOrigin{ glm::mat4(1.0f) };
     glm::mat4 yTransModel{ glm::mat4(1.0f) };
     glm::mat4 xyRotation{ glm::mat4(1.0f) };
     glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
 
+    glm::vec4 aPointPos{ glm::vec4 (-(1.0f / 2.0f), -(1.0f / 2.0f),-(1.0f / 2.0f), 1.0) };
+    glm::vec4 aPoint{ aPointPos };
 
     int fps{ 60 };
     float yTransModelVelocity{ 1 };
@@ -521,14 +529,13 @@ int main()
     int sec{};
     int currentFrame{ 1 };
     int totalFrame{1};
-    double currenTime{ };
 
     //elipses variables    
     float aValue{ 0.8f };
     float bValue{ 0.4f };
     float xElipse{ aValue };
     float yElipse{ bValue };
-    int orbitFrameNb{ fps * 5 }; // how many frames should the animations takes
+    int orbitFrameNb{ fps*5}; // how many frames should the animations takes
     int orbitFrameCurrentFrame{ 1 };
 
 
@@ -536,13 +543,16 @@ int main()
     float xyRotationPerFrame{ 0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
 
     //translation on y axis variables
-    float yTrans{ 0.02f }; //by how much it should translate (from 0 to py etc...)
-    int yTransFrameNb{40}; // how many frames should the animations takes
+    float yTrans{ 0.08f }; //by how much it should translate (from 0 to py etc...)
+    int yTransFrameNb{60}; // how many frames should the animations takes
     int yTransCurrentFrame{ 1 };
     float yTransAmplitude{ findYTransAmplitude(yTransFrameNb,yTrans) }; //amplitude of the sin function for yTranslation
     float yTransAmplitudeTimes2 { yTransAmplitude*2}; //amplitude of the sin function for yTranslation
     bool isItFirstLoop{ true };
     bool isAmplitudeNegative{ false }; 
+
+
+    glm::vec3 barycenterCoord{};
 
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
@@ -598,16 +608,32 @@ int main()
           
             xyRotation = glm::rotate(model, glm::radians(xyRotationPerFrame), glm::vec3(0.7f, 1.0f, 0.0f));
 
-            xElipse = ( aValue * cos(((2 * Math::py) / orbitFrameNb) * orbitFrameCurrentFrame));
+            if (currentFrame==1)
+            {
+                std::cerr << "Frame 0"<< ") x : " << aPoint.x << " y : " << aPoint.y << " z : " << aPoint.z << " w : " << aPoint.w << "\n";
+            }
+
+            xElipse = ( aValue * cos( ( (2 * Math::py) / orbitFrameNb) * orbitFrameCurrentFrame) );
             yElipse = ( bValue * sin(((2 * Math::py) / orbitFrameNb) * orbitFrameCurrentFrame) );
-            ellipticOrbit = glm::translate(localOrigin, glm::vec3(xElipse/30, 0.0f, yElipse/30));
+            ellipticOrbit = glm::translate(localOrigin, glm::vec3(xElipse, 0.0f, yElipse));
+          
 
-            model = ellipticOrbit*yTransModel*xyRotation;
+            model = yTransModel * xyRotation;
+            //model = ellipticOrbit * model;
 
+
+            aPoint = projection * view * model * aPointPos;
+
+            barycenterCoord.x = aPoint.x + cubeEdge / 2;
+            barycenterCoord.y = aPoint.y + cubeEdge / 2;
+            barycenterCoord.z = aPoint.z + cubeEdge / 2;
+            
+            glUniform3f(glGetUniformLocation(shader.ID, "orbit"), barycenterCoord.x, barycenterCoord.y, barycenterCoord.z);
+            glUniformMatrix4fv(glGetUniformLocation(shader.ID, "orbit"), 1, GL_FALSE, glm::value_ptr(ellipticOrbit));
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
             draw();
 
-            std::cerr << "model x : " << model[3].x << " orbit : " << ellipticOrbit[3].y << " model : " << model[3].y << "\n";
+            std::cerr << "Frame" << currentFrame << ") x : " << aPoint.x << " y : " << aPoint.y << " z : " << aPoint.z << " w : " << aPoint.w << "\n";
 
             ++yTransCurrentFrame;
             ++orbitFrameCurrentFrame;
