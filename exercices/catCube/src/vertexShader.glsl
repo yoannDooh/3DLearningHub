@@ -2,6 +2,10 @@
 layout(location = 0) in vec3 aPos; // position has attribute position 0
 layout(location = 1) in vec3 aColor; // color has attribute position 1
 layout(location = 2) in vec2 aTextCoord;
+layout(location = 3) in int cubePoint; 
+	//in order : 
+    //topLeft -> bottomLeft -> bottomRight -> topRight
+    //bottom face ->  top face
 
 out vec3 ourColor; // output a color to the fragment shader
 out vec2 TextCoord;
@@ -26,61 +30,57 @@ mat4 BuildTranslation(vec3 delta) //from https://stackoverflow.com/questions/338
 
 void setOrbit()
 {
-	float cubeEdge5Percent = cubeEdge/100*5 ;
+	float halfCubeEdge = cubeEdge/2 ;
 	vec4 centerCoordAfterElipsTrans = orbit*vec4(centerCoord.xyz,1.0);
-	
-	if ( aPos.y == centerCoord.y - cubeEdge / 2) //bottomFace
-	{
-		if ( aPos.x == centerCoord.x - cubeEdge / 2 ) //leftEdge
-		{
-			if ( aPos.z == centerCoord.z - cubeEdge / 2) //topLeft
-				newModel = BuildTranslation( vec3(-cubeEdge/2, -cubeEdge/2, -cubeEdge/2) )*model;
 
-			else  //bottomLeft
-				newModel = BuildTranslation( vec3(-cubeEdge/2, -cubeEdge/2, cubeEdge/2) )*model;
+	switch (cubePoint)
+	{
+		case 0 : //bottomFaceTopLeft
+		{
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x-halfCubeEdge, centerCoordAfterElipsTrans.y-halfCubeEdge, centerCoordAfterElipsTrans.z-halfCubeEdge) )*model;
 		}
 
-		else  //rightEdge
+		case 1 : //bottomFaceBottomLeft
 		{
-			if ( aPos.z == (centerCoord.z - cubeEdge / 2) ) //topLeft
-				newModel = BuildTranslation( vec3(cubeEdge/2, -cubeEdge/2, -cubeEdge/2) )*model;
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x-halfCubeEdge, centerCoordAfterElipsTrans.y-halfCubeEdge, centerCoordAfterElipsTrans.z+halfCubeEdge) )*model;
+		}
+		
+		case 2 : //bottomFaceBottomRight
+		{
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x+halfCubeEdge, centerCoordAfterElipsTrans.y-halfCubeEdge, centerCoordAfterElipsTrans.z+halfCubeEdge) )*model;
+		}
 
-			else  //bottomLeft
-				newModel = BuildTranslation( vec3(cubeEdge/2, -cubeEdge/2, cubeEdge/2) )*model;
+		case 3 : //bottomFaceTopRight
+		{
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x+halfCubeEdge, centerCoordAfterElipsTrans.y-halfCubeEdge, centerCoordAfterElipsTrans.z-halfCubeEdge) )*model;
+		}
 
+		case 4 : //topFaceTopLeft
+		{
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x-halfCubeEdge, centerCoordAfterElipsTrans.y+halfCubeEdge, centerCoordAfterElipsTrans.z-halfCubeEdge) )*model;
+		}
+		
+		case 5 : //topFaceBottomLeft
+		{
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x-halfCubeEdge, centerCoordAfterElipsTrans.y+halfCubeEdge, centerCoordAfterElipsTrans.z+halfCubeEdge) )*model;
+		}
+
+		case 6 : //topFaceBottomRight
+		{
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x+halfCubeEdge, centerCoordAfterElipsTrans.y+halfCubeEdge, centerCoordAfterElipsTrans.z+halfCubeEdge) )*model;
+		}
+		
+		case 7 : //topFaceTopRight
+		{
+			newModel = BuildTranslation( vec3(centerCoordAfterElipsTrans.x+halfCubeEdge, centerCoordAfterElipsTrans.y+halfCubeEdge, centerCoordAfterElipsTrans.z-halfCubeEdge) )*model;
 		}
 	}
-
-	else //topFace 
-	{
-		if ( aPos.x == centerCoord.x - cubeEdge / 2 ) //leftEdge
-		{
-			if ( aPos.z  == centerCoord.z - cubeEdge / 2 ) //topLeft
-				newModel = BuildTranslation( vec3(-cubeEdge/2, cubeEdge/2, -cubeEdge/2) )*model;
-
-			else  //bottomLeft
-				newModel = BuildTranslation( vec3(-cubeEdge/2, cubeEdge/2, cubeEdge/2) )*model;
-		}
-
-		else  //rightEdge
-		{
-			if ( aPos.z == centerCoord.z - cubeEdge / 2 ) //topLeft
-				newModel = BuildTranslation( vec3(cubeEdge/2, cubeEdge/2, -cubeEdge/2) )*model;
-
-			else  //bottomLeft
-				newModel = BuildTranslation( vec3(cubeEdge/2, cubeEdge/2, cubeEdge/2) )*model;
-
-		}
-
-	}
-
-
-
 }
 
 void main()
 {
-	gl_Position = projection * view * model *vec4(aPos.xyz,1.0);
+	setOrbit();
+	gl_Position = projection * view * newModel *vec4(aPos.xyz,1.0);
 	ourColor = aColor+vec3(gl_Position.xyz); // set ourColor to input color from the vertex data
 	TextCoord = aTextCoord;
 }

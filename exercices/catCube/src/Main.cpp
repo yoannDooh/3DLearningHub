@@ -91,7 +91,7 @@ unsigned int indices2[]{
 21, 22, 23,// second triangle
 };
 
-void constructCube(float vertices[192], unsigned int indices[36], float cote, std::array<float, 3>& originCoord, std::array<Point, 8>& point)//originCoord should be coordinates of the top left of the bottom face of the cube
+void constructCube(float vertices[216], unsigned int indices[36], float cote, std::array<float, 3>& originCoord, std::array<Point, 8>& point)//originCoord should be coordinates of the top left of the bottom face of the cube
 {
     //point array in order : 
     //topLeft -> bottomLeft -> bottomRight -> topRight
@@ -223,8 +223,10 @@ void constructCube(float vertices[192], unsigned int indices[36], float cote, st
                 vertices[++verticeIndex] = 1.0f;
                 vertices[++verticeIndex] = 1.0f;
                 break;
-
+            
             }
+            
+            vertices[++verticeIndex] = pointIndex;
         };
 
     while (verticeIndex < 192)
@@ -350,7 +352,7 @@ float findYTransAmplitude(int frameNb, float translation) //frameNb : how many f
 
 int main()
 {
-    float vertices[192]{};
+    float vertices[216]{};
     unsigned int indices[36]{};
     float cubeEdge{ 1.0f };
 
@@ -388,11 +390,15 @@ int main()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     //color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    //point on cube attribute
+    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     //cat texture
@@ -416,7 +422,7 @@ int main()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
         stbi_image_free(data);
     }
@@ -442,7 +448,7 @@ int main()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
         stbi_image_free(data);
     }
