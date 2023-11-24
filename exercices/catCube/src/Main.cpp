@@ -477,8 +477,6 @@ int main()
         */
     };
 
-
-
     // --ALL ANIMATIONS MATRIXES--
     glm::mat4 localOrigin{ glm::mat4(1.0f) };
     glm::mat4 yTransModel{ glm::mat4(1.0f) };
@@ -488,7 +486,7 @@ int main()
     glm::vec4 aPointPos{ glm::vec4 (-(1.0f / 2.0f), -(1.0f / 2.0f),-(1.0f / 2.0f), 1.0) };
     glm::vec4 aPoint{ aPointPos };
 
-    int fps{ 60 };
+    int fps{ 90 };
     float yTransModelVelocity{ 1 };
 
     // --MODELS VIEX PROJECTION MATRIXES--
@@ -537,11 +535,11 @@ int main()
     int totalFrame{1};
 
     //elipses variables    
-    float aValue{ 0.8f };
-    float bValue{ 0.4f };
+    float aValue{ 0.9f }; 
+    float bValue{ 0.8f };//b must be greater or equal to a
     float xElipse{ aValue };
     float yElipse{ bValue };
-    int orbitFrameNb{ fps*5}; // how many frames should the animations takes
+    int orbitFrameNb{ fps*4}; // how many frames should the animations takes
     int orbitFrameCurrentFrame{ 1 };
 
 
@@ -549,8 +547,8 @@ int main()
     float xyRotationPerFrame{ 0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
 
     //translation on y axis variables
-    float yTrans{ 0.08f }; //by how much it should translate (from 0 to py etc...)
-    int yTransFrameNb{60}; // how many frames should the animations takes
+    float yTrans{ 0.2f }; //by how much it should translate (from 0 to py etc...)
+    int yTransFrameNb{90}; // how many frames should the animations takes
     int yTransCurrentFrame{ 1 };
     float yTransAmplitude{ findYTransAmplitude(yTransFrameNb,yTrans) }; //amplitude of the sin function for yTranslation
     float yTransAmplitudeTimes2 { yTransAmplitude*2}; //amplitude of the sin function for yTranslation
