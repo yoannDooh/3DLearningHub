@@ -460,22 +460,6 @@ int main()
     shader.setInt("catTexture", 0);
     shader.setInt("grassTexture", 1);
 
-    //cubes
-    std::array<Model3D, 10> cubePositions
-    {
-        /*
-        { glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f) },
-        { glm::vec3(2.0f, 5.0f, -15.0f), glm::mat4(1.0f)},
-        { glm::vec3(-1.5f, -2.2f, -2.5f), glm::mat4(1.0f)},
-        { glm::vec3(-3.8f, -2.0f, -12.3f), glm::mat4(1.0f)},
-        { glm::vec3(2.4f, -0.4f, -3.5f), glm::mat4(1.0f)},
-        { glm::vec3(-1.7f, 3.0f, -7.5f), glm::mat4(1.0f)},
-        { glm::vec3(1.3f, -2.0f, -2.5f), glm::mat4(1.0f)},
-        { glm::vec3(1.5f, 2.0f, -2.5f), glm::mat4(1.0f)},
-        { glm::vec3(1.5f, 0.2f, -1.5f), glm::mat4(1.0f)},
-        { glm::vec3(-1.3f, 1.0f, -1.5f), glm::mat4(1.0f)}
-        */
-    };
 
     // --ALL ANIMATIONS MATRIXES--
     glm::mat4 localOrigin{ glm::mat4(1.0f) };
@@ -493,7 +477,8 @@ int main()
 
     //models
     glm::mat4 model{ glm::mat4(1.0f) };
-    model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, -0.5f));
+    model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
@@ -505,6 +490,50 @@ int main()
     //projection
     glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    // --VARIABLES FOR THE ANIMATION--
+
+    //time
+    int sec{};
+    int currentFrame{ 1 };
+    int totalFrame{1};
+
+    //elipses variables    
+    float aValue{ 0.9f }; 
+    float bValue{ 0.8f }; //b must be smaller or equal to a
+    float elipsePerimeter {2.0f*Math::py* sqrt( (pow(aValue,2.0f)+ pow(bValue,2.0f) ) /2.0f) };
+    float xElipse{ aValue };
+    float yElipse{ bValue };
+    int orbitFrameNb{ fps*5}; // how many frames should the animations takes
+    int orbitFrameCurrentFrame{ 1 };
+    const int cubesNb{ 10 }; //first cube is place to (0,b)
+    float cubesSpacing { elipsePerimeter / cubesNb };  // a voir comment implémenter //1 = doing a quarter of rotation around elipse (so 4 means doing a 360) ; by default the spacing is even between the number of cube
+
+    //cubes
+    std::array<Model3D, cubesNb> cubesPos { };
+
+    cubesPos[0].coord = glm::vec3(0.0f,0.0f,bValue);
+
+    for (int cubeIndex{ 1 }; cubeIndex< cubesNb; ++cubeIndex)
+    {
+        cubesPos[cubeIndex].matrix = model;
+        cubesPos[cubeIndex].coord = glm::vec3(aValue * cos(cubesSpacing * cubeIndex), 0.0f, bValue * sin(cubesSpacing * cubeIndex));
+    }
+
+
+    //y axis and a little x axis rotation
+    float xyRotationPerFrame{ 0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
+
+    //translation on y axis variables
+    float yTrans{ 0.13f }; //by how much it should translate (from 0 to py etc...)
+    int yTransFrameNb{90}; // how many frames should the animations takes
+    int yTransCurrentFrame{ 1 };
+    float yTransAmplitude{ findYTransAmplitude(yTransFrameNb,yTrans) }; //amplitude of the sin function for yTranslation
+    float yTransAmplitudeTimes2 { yTransAmplitude*2}; //amplitude of the sin function for yTranslation
+    bool isItFirstLoop{ true };
+    bool isAmplitudeNegative{ false }; 
+
+    glm::vec3 barycenterCoord{};
 
     auto draw = [&shader, &texture, &grassTex, &VAO, &window]()
         {
@@ -527,41 +556,18 @@ int main()
             glfwPollEvents();
         };
 
-    // --VARIABLES FOR THE ANIMATION--
-
-    //time
-    int sec{};
-    int currentFrame{ 1 };
-    int totalFrame{1};
-
-    //elipses variables    
-    float aValue{ 0.9f }; 
-    float bValue{ 0.8f };//b must be greater or equal to a
-    float xElipse{ aValue };
-    float yElipse{ bValue };
-    int orbitFrameNb{ fps*4}; // how many frames should the animations takes
-    int orbitFrameCurrentFrame{ 1 };
-
-
-    //y axis and a little x axis rotation
-    float xyRotationPerFrame{ 0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
-
-    //translation on y axis variables
-    float yTrans{ 0.2f }; //by how much it should translate (from 0 to py etc...)
-    int yTransFrameNb{90}; // how many frames should the animations takes
-    int yTransCurrentFrame{ 1 };
-    float yTransAmplitude{ findYTransAmplitude(yTransFrameNb,yTrans) }; //amplitude of the sin function for yTranslation
-    float yTransAmplitudeTimes2 { yTransAmplitude*2}; //amplitude of the sin function for yTranslation
-    bool isItFirstLoop{ true };
-    bool isAmplitudeNegative{ false }; 
-
-
-    glm::vec3 barycenterCoord{};
-
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
     {
         processInput(window.windowPtr);
+        /*
+        for (int cubeIndex{}; cubeIndex < cubesNb; ++cubeIndex)
+        {
+            model = glm::translate(cubesPos[cubeIndex].matrix, cubesPos[cubeIndex].coord);
+            draw();
+        }
+        */
+
         draw();
         currentFrame = 1;
 
@@ -584,7 +590,6 @@ int main()
             {
                 orbitFrameCurrentFrame = 1;
             }
-
 
             if (isItFirstLoop)
             {
@@ -623,8 +628,6 @@ int main()
           
 
             model = yTransModel * xyRotation;
-            //model = ellipticOrbit * model;
-
 
             aPoint = projection * view * model * aPointPos;
 
@@ -646,7 +649,6 @@ int main()
         }
         ++sec;
     }
-
 
     glfwTerminate();
     return 0;
