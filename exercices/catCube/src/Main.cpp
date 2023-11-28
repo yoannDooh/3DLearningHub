@@ -10,6 +10,7 @@
 namespace Math
 {
     float py{ 3.14159 };
+    double epsilon{ 1e-6 };
 }
 void processInput(GLFWwindow* window);
 
@@ -19,81 +20,13 @@ struct Point
     std::array<float, 3> coolors;   //vertices coolors in order : rgb
 };
 
-struct Model3D
-{
-    glm::vec3 coord;
-    glm::mat4 matrix;
-};
-
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-const float vertices2[]{
-
-    //face 6 (ABCD) :
-             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 1.0f,        // top left
-             -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 0.0f,      0.0f, 0.0f,       // bottom left
-             0.5f, -0.5f, 0.5f,    1.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-             0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 1.0f,      // top right
-
-             //face 5 (EHGF) :
-                      -0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-                      -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 0.0f,       // bottom left
-                      0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-                      0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
-
-                      //face 1  (HBCG):
-                              //coordinates        //colors               //texture coord
-                              -0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-                              -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
-                              0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
-                              0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 1.0f,      1.0f, 1.0f,       // top right
-
-                              //face 2 (FDAE) :
-                                      -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-                                      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
-                                      0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,      1.0f, 0.0f,       // bottom right
-                                      0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 1.0f,       1.0f, 1.0f,       // top right
-
-                                      //face 3 (HBAE) :
-                                               -0.5f, 0.5f, -0.5f,   0.0f, 1.0f, 0.0f,      0.0f, 1.0f,        // top left
-                                               -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,      0.0f, 0.0f,        // bottom left
-                                               -0.5f, -0.5f, 0.5f,   1.0f, 0.0f, 0.0f,      1.0f, 0.0f,       // bottom right
-                                               -0.5f, 0.5f, 0.5f,    1.0f, 1.0f, 0.0f,      1.0f, 1.0f,       // top right
-
-                                               //face 4 (GCDF) :
-                                                        0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 1.0f,      0.0f, 1.0f,        // top left
-                                                        0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,     0.0f, 0.0f,       // bottom left
-                                                        0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f,      1.0f, 0.0f,      // bottom right
-                                                        0.5f, 0.5f, 0.5f,   1.0f, 1.0f, 1.0f,      1.0f, 1.0f,      // top right
-
-
-
-
-};
-unsigned int indices2[]{
-0, 1, 3, // first triangle
-1, 2, 3,// second triangle
-
-4, 5, 7, // first triangle
-5, 6, 7,// second triangle
-
-8, 9, 11, // first triangle
-9, 10, 11,// second triangle
-
-12, 13, 15, // first triangle
-13, 14, 15,// second triangle
-
-16, 17, 19, // first triangle
-17, 18, 19,// second triangle
-
-20, 21, 23, // first triangle
-21, 22, 23,// second triangle
-};
 
 void constructCube(float vertices[216], unsigned int indices[36], float cote, std::array<float, 3>& originCoord, std::array<Point, 8>& point)//originCoord should be coordinates of the top left of the bottom face of the cube
 {
-    //point array in order : 
+    //point array in order :
     //topLeft -> bottomLeft -> bottomRight -> topRight
     //bottom face ->  top face
 
@@ -223,9 +156,9 @@ void constructCube(float vertices[216], unsigned int indices[36], float cote, st
                 vertices[++verticeIndex] = 1.0f;
                 vertices[++verticeIndex] = 1.0f;
                 break;
-            
+
             }
-            
+
             vertices[++verticeIndex] = pointIndex;
         };
 
@@ -323,7 +256,7 @@ void testCube(const float vertices1[192], float vertices2[192], unsigned int ind
 
     for (int index{}; index < 36; ++index)
     {
-        if (indices1[index] != indices2[index])
+        if (indices1[index] != indice2[index])
         {
             std::cout << "vertices diff a ligne : " << index << "\n";
         }
@@ -357,7 +290,7 @@ int main()
     float cubeEdge{ 1.0f };
 
 
-    std::array<float, 3> cubeOriginCoord{ - (cubeEdge / 2.0f), - (cubeEdge / 2.0f), - (cubeEdge / 2.0f)};
+    std::array<float, 3> cubeOriginCoord{ -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), -(cubeEdge / 2.0f) }; //bottomFace topLeft 
 
     std::array<Point, 8> points{};
     constructCube(vertices, indices, cubeEdge, cubeOriginCoord, points);
@@ -415,26 +348,29 @@ int main()
 
     int width{}, height{}, nrChannels{};
     unsigned char* data{ stbi_load("ressource\\catTexture.jpg",&width,&height,&nrChannels,0) };
+    auto loadTexture = [&data, &width, &height](std::string TextureName)
+        {
+            if (data)
+            {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+
+                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+                glEnableVertexAttribArray(2);
+                stbi_image_free(data);
+            }
+
+            else
+                std::cout << "Failed to load : " << TextureName << std::endl;
+        };
 
     //load texture
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-        stbi_image_free(data);
-    }
-
-    else
-        std::cout << "Failed to load texture" << std::endl;
+    loadTexture("catTexture");
 
     //grass texture
     unsigned int grassTex{};
     glGenTextures(1, &grassTex);
     glBindTexture(GL_TEXTURE_2D, grassTex);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -443,18 +379,7 @@ int main()
     data = stbi_load("ressource\\grassTexture.jpg", &width, &height, &nrChannels, 0);
 
     //load texture
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-        stbi_image_free(data);
-    }
-
-    else
-        std::cout << "Failed to load texture" << std::endl;
+    loadTexture("grassTexture");
 
     shader.use();
     shader.setInt("catTexture", 0);
@@ -467,17 +392,50 @@ int main()
     glm::mat4 xyRotation{ glm::mat4(1.0f) };
     glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
 
-    glm::vec4 aPointPos{ glm::vec4 (-(1.0f / 2.0f), -(1.0f / 2.0f),-(1.0f / 2.0f), 1.0) };
-    glm::vec4 aPoint{ aPointPos };
+    glm::vec4 aPointPos{ glm::vec4 ( -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), 1.0f ) };
+    glm::vec4 aPoint { aPointPos };
 
     int fps{ 90 };
     float yTransModelVelocity{ 1 };
+
+    // --VARIABLES FOR THE ANIMATION--
+
+    //time/framerate variables
+    float time{};
+    int sec{};
+    int currentFrame{ 1 };
+    int totalFrame{ 1 };
+
+    //elipses variables    
+    float aValue{ 0.9f };
+    float bValue{ 0.8f }; //b must be smaller or equal to a
+    float elipsePerimeter { 2.0f * Math::py * sqrt((pow(aValue,2.0f) + pow(bValue,2.0f)) / 2.0f) };
+    float xElipse { aValue };
+    float yElipse { bValue };
+    int orbitFrameNb { fps * 5 }; // how many frames should the animations takes
+    int orbitFrameCurrentFrame { 1 };
+    const int cubesNb { 10 }; //first cube is place to (0,b)
+    float cubesSpacing { elipsePerimeter / cubesNb };  // a voir comment implémenter //1 = doing a quarter of rotation around elipse (so 4 means doing a 360) ; by default the spacing is even between the number of cube
+
+    //xY axis roation variables
+    float xyRotationPerFrame{ 0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
+
+    //translation on y axis variables
+    float yTrans{ 0.13f }; //by how much it should translate (from 0 to py etc...)
+    int yTransFrameNb{ 90 }; // how many frames should the animations takes
+    int yTransCurrentFrame{ 1 };
+    float yTransAmplitude{ findYTransAmplitude(yTransFrameNb,yTrans) }; //amplitude of the sin function for yTranslation
+    float yTransAmplitudeTimes2{ yTransAmplitude * 2 }; //amplitude of the sin function for yTranslation
+    bool isItFirstLoop{ true };
+    bool isAmplitudeNegative{ false };
+
+    glm::vec3 barycenterCoord{};
+
 
     // --MODELS VIEX PROJECTION MATRIXES--
 
     //models
     glm::mat4 model{ glm::mat4(1.0f) };
-    model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -490,50 +448,6 @@ int main()
     //projection
     glm::mat4 projection{ glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f) };
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-    // --VARIABLES FOR THE ANIMATION--
-
-    //time
-    int sec{};
-    int currentFrame{ 1 };
-    int totalFrame{1};
-
-    //elipses variables    
-    float aValue{ 0.9f }; 
-    float bValue{ 0.8f }; //b must be smaller or equal to a
-    float elipsePerimeter {2.0f*Math::py* sqrt( (pow(aValue,2.0f)+ pow(bValue,2.0f) ) /2.0f) };
-    float xElipse{ aValue };
-    float yElipse{ bValue };
-    int orbitFrameNb{ fps*5}; // how many frames should the animations takes
-    int orbitFrameCurrentFrame{ 1 };
-    const int cubesNb{ 10 }; //first cube is place to (0,b)
-    float cubesSpacing { elipsePerimeter / cubesNb };  // a voir comment implémenter //1 = doing a quarter of rotation around elipse (so 4 means doing a 360) ; by default the spacing is even between the number of cube
-
-    //cubes
-    std::array<Model3D, cubesNb> cubesPos { };
-
-    cubesPos[0].coord = glm::vec3(0.0f,0.0f,bValue);
-
-    for (int cubeIndex{ 1 }; cubeIndex< cubesNb; ++cubeIndex)
-    {
-        cubesPos[cubeIndex].matrix = model;
-        cubesPos[cubeIndex].coord = glm::vec3(aValue * cos(cubesSpacing * cubeIndex), 0.0f, bValue * sin(cubesSpacing * cubeIndex));
-    }
-
-
-    //y axis and a little x axis rotation
-    float xyRotationPerFrame{ 0.5f }; //how much radian it rotates by frame for the y value (x is the half of y value)
-
-    //translation on y axis variables
-    float yTrans{ 0.13f }; //by how much it should translate (from 0 to py etc...)
-    int yTransFrameNb{90}; // how many frames should the animations takes
-    int yTransCurrentFrame{ 1 };
-    float yTransAmplitude{ findYTransAmplitude(yTransFrameNb,yTrans) }; //amplitude of the sin function for yTranslation
-    float yTransAmplitudeTimes2 { yTransAmplitude*2}; //amplitude of the sin function for yTranslation
-    bool isItFirstLoop{ true };
-    bool isAmplitudeNegative{ false }; 
-
-    glm::vec3 barycenterCoord{};
 
     auto draw = [&shader, &texture, &grassTex, &VAO, &window]()
         {
@@ -556,20 +470,21 @@ int main()
             glfwPollEvents();
         };
 
+
+    aPointPos = model*aPointPos;
+    aPoint = aPointPos ;
+
+
     // render loop
     while (!glfwWindowShouldClose(window.windowPtr))
     {
         processInput(window.windowPtr);
-        /*
-        for (int cubeIndex{}; cubeIndex < cubesNb; ++cubeIndex)
-        {
-            model = glm::translate(cubesPos[cubeIndex].matrix, cubesPos[cubeIndex].coord);
-            draw();
-        }
-        */
 
         draw();
         currentFrame = 1;
+        time = 0;
+        glfwSetTime(0);
+
 
         while (currentFrame <= fps)
         {
@@ -594,9 +509,8 @@ int main()
             if (isItFirstLoop)
             {
                 yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, yTransAmplitude * sin((yTransCurrentFrame * Math::py / yTransFrameNb)), 0.0f));
-                //std::cerr << "totalFrame : " << totalFrame << " frame : " << currentFrame << " yTransCurrentFrame : " << yTransCurrentFrame << " valeur translation : " << yTransAmplitude * sin(yTransCurrentFrame * Math::py / yTransFrameNb) << "\n";
 
-                if (currentFrame+1 >= fps)
+                if (currentFrame + 1 >= fps)
                     isItFirstLoop = false;
             }
 
@@ -605,27 +519,20 @@ int main()
                 if (isAmplitudeNegative)
                 {
                     yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, -yTransAmplitudeTimes2 * sin((yTransCurrentFrame * Math::py / yTransFrameNb)), 0.0f));
-                    //std::cerr << "totalFrame : " << totalFrame << " frame : " << currentFrame << " yTransCurrentFrame : " << yTransCurrentFrame << " valeur translation : " << -yTransAmplitudeTimes2 * sin(yTransCurrentFrame * Math::py / yTransFrameNb) << "\n";
                 }
 
                 else
                 {
                     yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, yTransAmplitudeTimes2 * sin((yTransCurrentFrame * Math::py / yTransFrameNb)), 0.0f));
-                    //std::cerr << "totalFrame : " << totalFrame << " frame : " << currentFrame << " yTransCurrentFrame : " << yTransCurrentFrame << " valeur translation : " << yTransAmplitudeTimes2 * sin (yTransCurrentFrame * Math::py / yTransFrameNb) << "\n";
                 }
             }
-          
+
             xyRotation = glm::rotate(model, glm::radians(xyRotationPerFrame), glm::vec3(0.7f, 1.0f, 0.0f));
 
-            if (currentFrame==1)
-            {
-                std::cerr << "Frame 0"<< ") x : " << aPoint.x << " y : " << aPoint.y << " z : " << aPoint.z << " w : " << aPoint.w << "\n";
-            }
-
-            xElipse = ( aValue * cos( ( (2 * Math::py) / orbitFrameNb) * orbitFrameCurrentFrame) );
-            yElipse = ( bValue * sin(((2 * Math::py) / orbitFrameNb) * orbitFrameCurrentFrame) );
+            xElipse = (aValue * cos(((2 * Math::py) / orbitFrameNb) * orbitFrameCurrentFrame));
+            yElipse = (bValue * sin(((2 * Math::py) / orbitFrameNb) * orbitFrameCurrentFrame));
             ellipticOrbit = glm::translate(localOrigin, glm::vec3(xElipse, 0.0f, yElipse));
-          
+
 
             model = yTransModel * xyRotation;
 
@@ -634,13 +541,26 @@ int main()
             barycenterCoord.x = aPoint.x + cubeEdge / 2;
             barycenterCoord.y = aPoint.y + cubeEdge / 2;
             barycenterCoord.z = aPoint.z + cubeEdge / 2;
-            
+
             glUniform3f(glGetUniformLocation(shader.ID, "orbit"), barycenterCoord.x, barycenterCoord.y, barycenterCoord.z);
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "orbit"), 1, GL_FALSE, glm::value_ptr(ellipticOrbit));
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-            draw();
 
-            std::cerr << "Frame" << currentFrame << ") x : " << aPoint.x << " y : " << aPoint.y << " z : " << aPoint.z << " w : " << aPoint.w << "\n";
+
+            if (time == 0.0f)
+            {
+                draw();
+                glfwSetTime(0);
+                time = glfwGetTime();
+                std::cerr << "Frame" << currentFrame << ") x : " << aPoint.x << " y : " << aPoint.y << " z : " << aPoint.z << " w : " << aPoint.w << "\n";
+            }
+                
+            else
+                if ( abs( time - (1/currentFrame) ) < Math::epsilon )
+                {
+                    draw();
+                    std::cerr << "Frame" << currentFrame << ") x : " << aPoint.x << " y : " << aPoint.y << " z : " << aPoint.z << " w : " << aPoint.w << "\n";
+                }
 
             ++yTransCurrentFrame;
             ++orbitFrameCurrentFrame;
