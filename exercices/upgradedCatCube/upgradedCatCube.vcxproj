@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{fa1eccd1-fe3d-4c78-b898-03a16d6b9ad5}</ProjectGuid>
+    <ProjectGuid>{2fad0d7f-3c57-48e4-aab4-13e8dc0942dd}</ProjectGuid>
     <RootNamespace>upgradedCatCube</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -138,19 +138,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
+    <ClCompile Include="src\geometry.cpp" />
     <ClCompile Include="src\stb_image.cpp" />
-    <ClCompile Include="src\window.cpp" />
     <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\openGL.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\GLAD\include\glad\glad.h" />
     <ClInclude Include="dependencies\GLAD\include\KHR\khrplatform.h" />
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3.h" />
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3native.h" />
-    <ClInclude Include="header\shader.h" />
+    <ClInclude Include="header\geometry.h" />
+    <ClInclude Include="header\openGL.h" />
     <ClInclude Include="header\stb_image.h" />
-    <ClInclude Include="header\window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="openGl.props" />

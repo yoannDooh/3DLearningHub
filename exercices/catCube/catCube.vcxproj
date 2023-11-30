@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
+    <ClCompile Include="src\geometry.cpp" />
     <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\openGL.cpp" />
