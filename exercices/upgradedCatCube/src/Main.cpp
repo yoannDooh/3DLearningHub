@@ -170,6 +170,7 @@ int main()
 
     //time/framerate variables
     float deltaTime {}; // Time between current frame and last frame
+    float previousDelta{};
     float deltaSum{};
     float currentFrameTime{};
     float lastFrameTime {};
@@ -198,10 +199,10 @@ int main()
 
     //translation on y axis variables
     float yTrans{ 0.2f }; //by how much it should translate from 0 to py  
-    int yTransDuration{4} ;  //the number of seconds it takes for x to reach the value Py (so for the cube to starting from initial position reach it's max/min )
+    int yTransDuration{1} ;  //the number of seconds it takes for x to reach the value Py (so for the cube to starting from initial position reach it's max/min )
     
     int yTransCurrentSec{};
-    float yTransAmplitude{ findYTransAmplitude(yTransDuration,yTrans) }; //amplitude of the sin function for yTranslation
+    float yTransAmplitude{ findYTransAmplitude(30, yTrans) }; //amplitude of the sin function for yTranslation
     float yTransAmplitudeTimes2{ yTransAmplitude * 2 }; //amplitude of the sin function for yTranslation
     bool isItFirstLoop{ true };
     bool isAmplitudeNegative{ false };
@@ -262,7 +263,7 @@ int main()
     // render loop
     glfwSetTime(0);
 
-   
+    float previousAmp{};
     while (!glfwWindowShouldClose(window.windowPtr))
     {
         processInput(window.windowPtr);
@@ -270,8 +271,9 @@ int main()
         //time etc..
         float yTranslationValue{};
         currentFrameTime = glfwGetTime();
+        previousDelta = deltaTime;
         deltaTime = currentFrameTime - lastFrameTime;
-        lastFrameTime = currentFrameTime; 
+        lastFrameTime = currentFrameTime;
 
         //drawing process      
         if ( yTransCurrentSec >= yTransDuration)
@@ -288,22 +290,26 @@ int main()
 
         if (isItFirstLoop)
         {
-            if (deltaTime!=0)
+            if (currentFrame > 1 )
             {
-                yTransModel = glm::translate (localOrigin, glm::vec3(0.0f, ( yTransAmplitude * sin( (Math::py / yTransDuration) ) ), 0.0f));
+                yTransAmplitude = findYTransAmplitude(floor(1 / deltaTime), yTrans) ;
+                previousAmp = yTransAmplitude; 
+                yTransModel = glm::translate (localOrigin, glm::vec3(0.0f, ( yTransAmplitude * sin( (Math::py / deltaTime) * (currentFrame / ( floor(1 / deltaTime) * floor(1 / previousDelta) ) ) ) ), 0.0f));
                 for (auto& const cube : cubes)
                 {
                     cube.yTransModel = yTransModel;
                 }
+                std::cerr << "\nfloor(1/deltaTime)  : " << floor(1 / deltaTime) << "\n";
             }
 
             else
-            {
-                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitude * sin((Math::py / yTransDuration) * deltaSum) ), 0.0f));
+            {   /*
+                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitude * sin((Math::py / yTransDuration) ) ), 0.0f));
                 for (auto& const cube : cubes)
                 {
                     cube.yTransModel = yTransModel;
                 }
+                */
             }   
 
             /*
@@ -317,22 +323,27 @@ int main()
             
             if (isAmplitudeNegative)
             {
-                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (-yTransAmplitudeTimes2 * sin((Math::py / yTransDuration))), 0.0f));
+                yTransAmplitude = (findYTransAmplitude(floor(1 / deltaTime), yTrans) )*2;
+                previousAmp = yTransAmplitude;
+                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (-yTransAmplitude * sin((Math::py / deltaTime) * (currentFrame / (floor(1 / deltaTime) * floor(1 / previousDelta))))), 0.0f));
+
                 for (auto& const cube : cubes)
                 {
                     cube.yTransModel = yTransModel;
                 }   
-                std::cerr << "JE DEVIENS FOU NEGATIVEMENT" << "\n";
+                std::cerr << "floor(1/deltaTime) NEGATIF : " << floor(1 / deltaTime) << "\n";
             }
 
             else
             {
-                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitudeTimes2 * sin((Math::py / yTransDuration))), 0.0f));
+                yTransAmplitude = (findYTransAmplitude(floor(1 / deltaTime), yTrans)) * 2;
+                previousAmp = yTransAmplitude;
+                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitude * sin((Math::py / deltaTime) * (currentFrame / (floor(1 / deltaTime) * floor(1 / previousDelta))))), 0.0f));
                 for (auto& const cube : cubes)
                 {
                     cube.yTransModel = yTransModel;
                 }   
-                std::cerr << "JE DEVIENS FOU POSITIVEMENT" << "\n";
+                std::cerr << "floor(1/deltaTime) POSITIVEMENT : " << floor(1 / deltaTime)  << "\n";
             }
         }
 
@@ -367,10 +378,9 @@ int main()
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(cube.model));
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "orbit"), 1, GL_FALSE, glm::value_ptr(ellipticOrbit));
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
         }
 
-        aPoint = projection * view * model * aPointPos;
+        //aPoint = projection * view * model * aPointPos;
        
         swapBuffer();
 
