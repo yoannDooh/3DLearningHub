@@ -224,7 +224,7 @@ int main()
             glfwSwapBuffers(window.windowPtr);
             glfwPollEvents();
         };
-
+ 
     aPointPos = model*aPointPos;
     aPoint = aPointPos ;
 
