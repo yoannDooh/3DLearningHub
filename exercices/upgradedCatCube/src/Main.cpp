@@ -12,7 +12,8 @@ struct Cube
     glm::mat4 model;
     glm::mat4 xyRotation;
     glm::mat4 yTransModel;
-    float orbitCurrentPos;
+    float orbitStartingPos;
+    float ytransStartingPos;
 };
 
 namespace Math
@@ -171,7 +172,8 @@ int main()
     //time/framerate variables
     float deltaTime {}; // Time between current frame and last frame
     float previousDelta{};
-    float deltaSum{};
+    float deltaSum{}; // in sec 
+    float deltaSumInMilliSec{}; //in milisec
     float currentFrameTime{};
     float lastFrameTime {};
     int sec {};
@@ -188,7 +190,7 @@ int main()
     if (!rotationSens)
         rotationSens = -1;
 
-    int orbitDuration{ 10 }; //the number of seconds it takes for x to reach the value 2Py (so to do a 360)
+    float orbitDuration{ 10 }; //the number of seconds it takes for x to reach the value 2Py (so to do a 360)
     float elipsePerimeter{ 2.0f * Math::py * sqrt( (pow(aValue,2.0f) + pow(bValue,2.0f) ) / 2.0f) };
     const int cubesNb { 5 }; //first cube is place to (0,b)
     float cubesSpacingDistance { elipsePerimeter / cubesNb };  // a voir comment implémenter //1 = doing a quarter of rotation around elipse (so 4 means doing a 360) ; by default the spacing is even between the number of cube
@@ -198,11 +200,11 @@ int main()
     float xyRotationPerSec { 30.0f }; //how much radian it rotates by frame for the y value (x is the half of y value)
 
     //translation on y axis variables
-    float yTrans{ 0.2f }; //by how much it should translate from 0 to py  
-    int yTransDuration{1} ;  //the number of seconds it takes for x to reach the value Py (so for the cube to starting from initial position reach it's max/min )
-    
+    float yTrans{ 2.0f }; //by how much it should translate from 0 to py  
+    float yTransDuration{1000} ;  //the number of Milisecond it takes for x to reach the value Py (so for the cube to starting from initial position reach it's max/min )
+    float yTransDurationTimes2{ yTransDuration * 2 }; 
     int yTransCurrentSec{};
-    float yTransAmplitude{ findYTransAmplitude(30, yTrans) }; //amplitude of the sin function for yTranslation
+    float yTransAmplitude{ findYTransAmplitude(yTransDuration, yTrans) }; //amplitude of the sin function for yTranslation
     float yTransAmplitudeTimes2{ yTransAmplitude * 2 }; //amplitude of the sin function for yTranslation
     bool isItFirstLoop{ true };
     bool isAmplitudeNegative{ false };
@@ -230,7 +232,8 @@ int main()
     for (int cubeIndex { } ; cubeIndex < cubesNb; ++cubeIndex)
     {
         cubes[cubeIndex].model = model;
-        cubes[cubeIndex].orbitCurrentPos = ( cubesSpacingDistance / ( elipsePerimeter/ orbitDuration) )* (cubeIndex+1);
+        cubes[cubeIndex].orbitStartingPos = ( cubesSpacingDistance / ( elipsePerimeter/ orbitDuration) )* (cubeIndex+1);
+        cubes[cubeIndex].ytransStartingPos = (yTransDuration / cubesNb) * (cubeIndex + 1); 
     }
 
 
@@ -267,6 +270,7 @@ int main()
     while (!glfwWindowShouldClose(window.windowPtr))
     {
         processInput(window.windowPtr);
+        prepareCube();
 
         //time etc..
         float yTranslationValue{};
@@ -288,81 +292,58 @@ int main()
                 isAmplitudeNegative = false;
         }
 
+        //yTranslation
         if (isItFirstLoop)
         {
             if (currentFrame > 1 )
             {
-                yTransAmplitude = findYTransAmplitude(floor(1 / deltaTime), yTrans) ;
-                previousAmp = yTransAmplitude; 
-                yTransModel = glm::translate (localOrigin, glm::vec3(0.0f, ( yTransAmplitude * sin( (Math::py / deltaTime) * (currentFrame / ( floor(1 / deltaTime) * floor(1 / previousDelta) ) ) ) ), 0.0f));
+                //yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, ( yTransAmplitude * sin( (Math::py / yTransDuration) * deltaSumInMilliSec ) ), 0.0f));
                 for (auto& const cube : cubes)
                 {
-                    cube.yTransModel = yTransModel;
+                    cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitude * sin( (Math::py / yTransDuration) * ( /*cube.ytransStartingPos*/ + deltaSumInMilliSec))), 0.0f));;
                 }
-                std::cerr << "\nfloor(1/deltaTime)  : " << floor(1 / deltaTime) << "\n";
             }
-
-            else
-            {   /*
-                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitude * sin((Math::py / yTransDuration) ) ), 0.0f));
-                for (auto& const cube : cubes)
-                {
-                    cube.yTransModel = yTransModel;
-                }
-                */
-            }   
-
-            /*
-            if ( yTransCurrentSec+1 > secToReachPi && yTransCurrentFrame+1 > yTransFrameNb)
-                isItFirstLoop = false;
-            */
         }
 
         else
         {
-            
             if (isAmplitudeNegative)
             {
-                yTransAmplitude = (findYTransAmplitude(floor(1 / deltaTime), yTrans) )*2;
-                previousAmp = yTransAmplitude;
-                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (-yTransAmplitude * sin((Math::py / deltaTime) * (currentFrame / (floor(1 / deltaTime) * floor(1 / previousDelta))))), 0.0f));
+               // yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (-yTransAmplitudeTimes2 * sin((Math::py / yTransDurationTimes2) * deltaSumInMilliSec) ), 0.0f));
 
                 for (auto& const cube : cubes)
                 {
-                    cube.yTransModel = yTransModel;
-                }   
-                std::cerr << "floor(1/deltaTime) NEGATIF : " << floor(1 / deltaTime) << "\n";
+                    cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (-yTransAmplitudeTimes2 * sin( (Math::py / yTransDurationTimes2) * ( /*cube.ytransStartingPos*/ +deltaSumInMilliSec))), 0.0f));
+                }
             }
 
             else
             {
-                yTransAmplitude = (findYTransAmplitude(floor(1 / deltaTime), yTrans)) * 2;
-                previousAmp = yTransAmplitude;
-                yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitude * sin((Math::py / deltaTime) * (currentFrame / (floor(1 / deltaTime) * floor(1 / previousDelta))))), 0.0f));
+                //yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitudeTimes2 * sin((Math::py / yTransDurationTimes2) * deltaSumInMilliSec ) ), 0.0f));
                 for (auto& const cube : cubes)
                 {
-                    cube.yTransModel = yTransModel;
+                    cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitudeTimes2 * sin((Math::py / yTransDurationTimes2) * ( /*cube.ytransStartingPos*/ + deltaSumInMilliSec) ) ), 0.0f));
                 }   
-                std::cerr << "floor(1/deltaTime) POSITIVEMENT : " << floor(1 / deltaTime)  << "\n";
             }
         }
 
+        //xyRotation
         xyRotation = glm::rotate(model, glm::radians(xyRotationPerSec*deltaTime), glm::vec3(0.7f, 1.0f, 0.0f));
-
         for (auto& const cube : cubes)
         {
             cube.xyRotation = glm::rotate(cube.model, glm::radians(xyRotationPerSec*deltaTime), glm::vec3(0.7f, 1.0f, 0.0f));
         }
         
-        prepareCube();
 
+
+        //Elipse
         for (auto& const cube : cubes)
         {
            
             if (deltaTime != 0)
             {                                                                                 
-                xElipse = (aValue * cos( ( (2 * Math::py) / orbitDuration) * (cube.orbitCurrentPos + deltaSum) ) );
-                yElipse = (bValue * sin( ( (2 * Math::py) / orbitDuration) * (cube.orbitCurrentPos + deltaSum) ) );
+                xElipse = (aValue * cos( ( (2 * Math::py) / orbitDuration) * (cube.orbitStartingPos + deltaSum) ) );
+                yElipse = (bValue * sin( ( (2 * Math::py) / orbitDuration) * (cube.orbitStartingPos + deltaSum) ) );
             }
 
             else
@@ -373,18 +354,17 @@ int main()
 
             
             ellipticOrbit = glm::translate(localOrigin, glm::vec3(xElipse * rotationSens, 0.0f, yElipse * rotationSens));
-            cube.model = yTransModel * cube.xyRotation;
+            cube.model = cube.yTransModel * cube.xyRotation;
 
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(cube.model));
             glUniformMatrix4fv(glGetUniformLocation(shader.ID, "orbit"), 1, GL_FALSE, glm::value_ptr(ellipticOrbit));
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
-
-        //aPoint = projection * view * model * aPointPos;
        
         swapBuffer();
 
         deltaSum = deltaSum + deltaTime; 
+        deltaSumInMilliSec = deltaSum * 1000;
         std::cerr << "Seconde : " << sec << "\nFrame : " << currentFrame << "\nNombre de Frames total : " << totalFrame << "\nvaleur de delta : " << deltaTime <<" secondes" <<"\ndeltaSum : " << deltaSum << " secondes"
         << "\nisAmplitudeNegative : " << isAmplitudeNegative <<"\nyTransCurrentSec : " << yTransCurrentSec << "\n\n";
 
@@ -400,19 +380,9 @@ int main()
         {
             yTransCurrentSec = 0;
         }
-        
 
-        //all increment
-        //++yTransCurrentFrame;
-        //++orbitFrameCurrentFrame;
         ++currentFrame;
         ++totalFrame;
-        /*
-        for (auto& cube : cubes)
-        {
-            ++cube.orbitCurrentFrame;
-        }
-        */
     }
 
     glfwTerminate();
