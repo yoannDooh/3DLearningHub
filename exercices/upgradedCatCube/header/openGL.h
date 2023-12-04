@@ -5,6 +5,9 @@
 
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -38,6 +41,63 @@ public:
 	int didWindowFailed{};
 	GLFWwindow* windowPtr;
 
+};
+
+
+class Camera
+{
+public:
+	// Camera C++ Class Constructor
+	Camera (glm::vec3 pos,glm::vec3 front, glm::vec3 up,float speed)
+	{
+		this->pos = pos;
+		this->front = front;
+		this->up = up;
+		this->speed = speed;
+	}
+
+	void setCameraPos(glm::vec3 pos)
+	{
+		this->pos = pos;// set employees's name
+	}
+
+	void setCameraFront(glm::vec3 front)
+	{
+		this->front = front;// set employees's name
+	}
+
+	void setCameraUp(glm::vec3 up)
+	{
+		this->up = up;// set employees's name
+	}
+
+	void moveCamera(char keyPressed)
+	{
+		switch (keyPressed)
+		{
+			case 'z':
+				this->pos += this->speed * this->front;
+				break;
+
+			case 'q':
+				this->pos -= glm::normalize(glm::cross(this->front, this->up))* this->speed;
+				break;
+
+			case 's':
+				this->pos -= this->speed * this->front;
+				break;
+
+			case 'd':
+				this->pos += glm::normalize(glm::cross(this->front, this->up)) * this->speed;
+				break;
+
+		}
+	}
+
+	glm::vec3 pos{};
+	glm::vec3 front{};
+	glm::vec3 up{};
+	float speed{};
 };
 
 #endif

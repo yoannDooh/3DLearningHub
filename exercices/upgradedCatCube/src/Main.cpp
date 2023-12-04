@@ -1,9 +1,6 @@
 #include "../header/stb_image.h"
 #include "../header/openGL.h"
 #include "../header/geometry.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <cmath>
 #include <complex>
 
@@ -27,6 +24,7 @@ void processInput(GLFWwindow* window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.05f);
 
 float findYTransAmplitude(int frameNb, float translation) //frameNb : how many frame should the translation take to reach translation parameter value
 {
@@ -163,12 +161,8 @@ int main()
 
 
     // --VARIABLES FOR THE ANIMATION--
-
-    //camera variables 
-    glm::vec3 cameraPos { glm::vec3(0.0f, 0.0f, 3.0f) };
-    glm::vec3 cameraFront { glm::vec3(0.0f, 0.0f, -1.0f) } ;
-    glm::vec3 cameraUp { glm::vec3(0.0f, 1.0f, 0.0f) } ;
-
+   
+  
     //time/framerate variables
     float deltaTime {}; // Time between current frame and last frame
     float previousDelta{};
@@ -220,7 +214,7 @@ int main()
 
     //view
     glm::mat4 view{ glm::mat4(1.0f) };
-    view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) );
+    view = glm::lookAt(camera.pos,camera.pos+camera.front, camera.up );
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
     //projection
@@ -270,6 +264,9 @@ int main()
     while (!glfwWindowShouldClose(window.windowPtr))
     {
         processInput(window.windowPtr);
+        view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
         prepareCube();
 
         //time etc..
@@ -313,7 +310,7 @@ int main()
 
                 for (auto& const cube : cubes)
                 {
-                    cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (-yTransAmplitudeTimes2 * sin( (Math::py / yTransDurationTimes2) * ( /*cube.ytransStartingPos*/ +deltaSumInMilliSec))), 0.0f));
+                    cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (-yTransAmplitudeTimes2 * sin( (Math::py / yTransDuration) * ( /*cube.ytransStartingPos*/ +deltaSumInMilliSec))), 0.0f));
                 }
             }
 
@@ -322,7 +319,7 @@ int main()
                 //yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitudeTimes2 * sin((Math::py / yTransDurationTimes2) * deltaSumInMilliSec ) ), 0.0f));
                 for (auto& const cube : cubes)
                 {
-                    cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitudeTimes2 * sin((Math::py / yTransDurationTimes2) * ( /*cube.ytransStartingPos*/ + deltaSumInMilliSec) ) ), 0.0f));
+                    cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitudeTimes2 * sin((Math::py / yTransDuration) * ( /*cube.ytransStartingPos*/ + deltaSumInMilliSec) ) ), 0.0f));
                 }   
             }
         }
@@ -393,4 +390,17 @@ void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.moveCamera('z');
+      
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.moveCamera('q');
+
+        
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.moveCamera('s');
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.moveCamera('d');
 }

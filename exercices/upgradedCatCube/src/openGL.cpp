@@ -138,3 +138,5 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
         didWindowFailed = -1;
     }
 }
+
+/*--CAMERA CLASSE--*/
