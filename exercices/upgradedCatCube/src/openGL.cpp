@@ -139,4 +139,3 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
     }
 }
 
-/*--CAMERA CLASSE--*/

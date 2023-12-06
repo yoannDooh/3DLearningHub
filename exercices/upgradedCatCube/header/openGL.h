@@ -71,24 +71,33 @@ public:
 		this->up = up;// set employees's name
 	}
 
-	void moveCamera(char keyPressed)
+
+	void moveCamera(char keyPressed,float deltaTime)
 	{
 		switch (keyPressed)
 		{
 			case 'z':
-				this->pos += this->speed * this->front;
+				this->pos += this->speed*deltaTime * this->front;
 				break;
 
 			case 'q':
-				this->pos -= glm::normalize(glm::cross(this->front, this->up))* this->speed;
+				this->pos -= glm::normalize(glm::cross(this->front, this->up))* this->speed* deltaTime;
 				break;
 
 			case 's':
-				this->pos -= this->speed * this->front;
+				this->pos -= this->speed*deltaTime * this->front;
 				break;
 
 			case 'd':
-				this->pos += glm::normalize(glm::cross(this->front, this->up)) * this->speed;
+				this->pos += glm::normalize(glm::cross(this->front, this->up)) * this->speed*deltaTime;
+				break;
+
+			case 'u': //for up
+				this->pos += this->speed * deltaTime * this->up;
+				break;
+
+			case 'w': //for down
+				this->pos -= this->speed * deltaTime * this->up;
 				break;
 
 		}
@@ -98,6 +107,8 @@ public:
 	glm::vec3 front{};
 	glm::vec3 up{};
 	float speed{};
+	float yawAngle{-90.0f};
+	float pitchAngle{};
 };
 
 #endif
