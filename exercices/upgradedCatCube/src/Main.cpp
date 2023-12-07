@@ -73,7 +73,7 @@ float findYTransAmplitude(int frameNb, float translation) //frameNb : how many f
 
 int main()
 {
-    float vertices[216]{};
+    float vertices[216]{};  
     unsigned int indices[36]{};
     float cubeEdge{ 1.0f / 1.5 };
 
@@ -125,7 +125,7 @@ int main()
 
     //point on cube attribute
     glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     //cat texture
     stbi_set_flip_vertically_on_load(true);
