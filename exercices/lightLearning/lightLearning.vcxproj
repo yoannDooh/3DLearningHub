@@ -154,8 +154,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="openGl.props" />
-    <None Include="src\fragmentShader.glsl" />
-    <None Include="src\vertexShader.glsl" />
+    <None Include="shader\fragmentShader.glsl" />
+    <None Include="shader\lightSourceFragmentShader.glsl" />
+    <None Include="shader\lightSourceVertexShader.glsl" />
+    <None Include="shader\vertexShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

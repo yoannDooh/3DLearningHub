@@ -182,6 +182,16 @@ int main()
 
     // --ALL ANIMATIONS MATRIXES--
     glm::mat4 localOrigin{ glm::mat4(1.0f) };
+
+    glm::mat4 shiftedlocalOrigin {
+        glm::mat4(
+            1.0f,0.0f,0.0f,0.0f,
+            0.0f,cos(Math::py/3),sin(Math::py / 3),0.0f,
+            0.0f,-sin(Math::py / 3),cos(Math::py / 3),0.0f,
+            0.0f,0.0f,0.0f,1.0f
+          )
+    };
+
     glm::mat4 yTransModel{ glm::mat4(1.0f) };
     glm::mat4 xyRotation{ glm::mat4(1.0f) };
     glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
@@ -205,7 +215,7 @@ int main()
     float orbitDuration{ 10 }; //the number of seconds it takes for x to reach the value 2Py (so to do a 360)
     float elipsePerimeter{ 2.0f * Math::py * sqrt((pow(aValue,2.0f) + pow(bValue,2.0f)) / 2.0f) };
     const int cubesNb{ 5 }; //first cube is place to (0,b)
-    float cubesSpacingDistance{ elipsePerimeter / cubesNb };  // a voir comment implémenter //1 = doing a quarter of rotation around elipse (so 4 means doing a 360) ; by default the spacing is even between the number of cube
+    float cubesSpacingDistance{ elipsePerimeter / cubesNb };  // a voir comment implÃ©menter //1 = doing a quarter of rotation around elipse (so 4 means doing a 360) ; by default the spacing is even between the number of cube
 
 
     //xY axis roation variables

@@ -111,6 +111,16 @@ public:
 	float pitchAngle{};
 };
 
+class Texture
+{
+public: 
+	Texture(int textureNb, std::string textureName, const char* texturePath);
+	void activate();
+	
+	unsigned int ID{};
+	unsigned char* data{};
+	int textureNb{};
+};
 #endif
 
 

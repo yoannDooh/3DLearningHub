@@ -17,9 +17,11 @@
     <ClInclude Include="header\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\fragmentShader.glsl" />
-    <None Include="src\vertexShader.glsl" />
+    <None Include="shader\fragmentShader.glsl" />
+    <None Include="shader\vertexShader.glsl" />
     <None Include="openGl.props" />
+    <None Include="shader\lightSourceVertexShader.glsl" />
+    <None Include="shader\lightSourceFragmentShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

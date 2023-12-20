@@ -138,3 +138,72 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
         didWindowFailed = -1;
     }
 }
+
+
+/*--SHADER CLASSE--*/
+Texture::Texture(int textureNb, std::string textureName,  const char* texturePath)
+{
+
+    int width{}, height{}, nrChannels{};
+
+    unsigned int texture{};
+    Texture::textureNb = textureNb;
+    glGenTextures(1, &texture);
+    Texture::ID = texture;
+
+    Texture::data = stbi_load(texturePath, &width, &height, &nrChannels, 0);
+   
+
+    if (data)
+    {
+        GLenum format = GL_RGBA;
+        if (nrChannels == 1)
+            format = GL_RED;
+        else if (nrChannels == 3)
+            format = GL_RGB;
+        else if (nrChannels == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        //texture filtering
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+
+    else
+       std::cout << "Failed to load : " << textureName << std::endl;
+}
+
+void Texture::activate()
+{
+    switch (Texture::textureNb)
+    {
+    case 0 :
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture::ID);
+        break; 
+
+    case 1:
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, Texture::ID);
+        break;
+
+    case 2:
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, Texture::ID);
+        break;
+
+    case 3:
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, Texture::ID);
+        break;
+
+    }
+}

@@ -139,7 +139,7 @@ void constructCube(float vertices[216], unsigned int indices[36], float cote, st
             vertices[++verticeIndex] = pointIndex;
         };
 
-    while (verticeIndex < 192)
+    while (verticeIndex < 215)
     {
         for (int faceindex{}; faceindex < 6; ++faceindex)
         {
