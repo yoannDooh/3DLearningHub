@@ -14,11 +14,53 @@ struct Material {
 	float shininess;
 };
 
+struct DirectLight { //Directional light 
+	glm::vec3 color;
+	glm::vec3 direction;
+
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+};
+
+struct lightPointCube {
+	glm::vec3 color;
+	glm::vec3 pos;
+
+
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+
+	//attenuation variables
+	float constant;
+	float linearCoef;
+	float squareCoef;
+
+	glm::mat4 model{};
+	glm::mat4 shiftedlightSourcelocalOrigin{};
+
+};
+
+struct SpotLight
+{
+	glm::vec3 color;
+	glm::vec3 pos;
+	glm::vec3 direction;
+	float innercutOff; //cos(angle) of inner cone angle
+	float outercutOff; //cos(angle) outer cone angle 
+
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+};
+
 struct Light {
 	std::array<float, 3> ambient;
 	std::array<float, 3> diffuse;
 	std::array<float, 3> specular;
 };
+
 
 namespace Time
 {
@@ -158,22 +200,46 @@ int main()
 	glm::mat4 lightSourcelocalOrigin{
 		glm::mat4(
 		1.0f,0.0f,0.0f,0.0f,
-		0.0f,2.0f,0.0f,0.0f,
-		0.0f,0.0f,1.0f,0.0f,
+		0.0f,1.0f,0.0f,0.0f,
+		0.0f,0.0f,1.0f,0.0f,  
 		0.0f,0.0f,0.0f,1.0f)
 	};
 
-	glm::mat4 ShiftedlightSourcelocalOrigin{
+	glm::mat4 shiftedlightSourcelocalOrigin{
 		glm::mat4(
 		1.0f,0.0f,0.0f,0.0f,
-		0.0f,cos(M_PI / 3),sin(M_PI / 3),0.0f,
-		0.0f,-sin(M_PI / 3),cos(M_PI / 3),0.0f,
+		0.0f,cos(2*M_PI / 3),sin(2*M_PI / 3),0.0f,
+		0.0f,-sin(2*M_PI / 3),cos(2*M_PI / 3),0.0f,
 		0.0f,0.0f,0.0f,1.0f) * lightSourcelocalOrigin
 	};
 
-	glm::vec3 lightPos(0.0f, 1.0f, 0.0f);
-	lightPos = glm::vec3(ShiftedlightSourcelocalOrigin * glm::vec4(lightPos, 0.0f) );
+	//lightCubes 
+	std::array<lightPointCube, 2> lightPoints{};
+
+	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+	lightPos = glm::vec3(shiftedlightSourcelocalOrigin * glm::vec4(lightPos, 0.0f) );
 	glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
+
+	for (int index{}; index < lightPoints.size(); ++index)
+	{
+
+		if (index) //index==1
+			lightPoints[index].shiftedlightSourcelocalOrigin = glm::mat4(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, cos(2 * M_PI / 3), sin(2 * M_PI / 3), 0.0f,
+				0.0f, -sin(2 * M_PI / 3), cos(2 * M_PI / 3), 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f) * lightSourcelocalOrigin;
+
+		else
+			lightPoints[index].shiftedlightSourcelocalOrigin = glm::mat4(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, cos(M_PI / 3), sin(M_PI / 3), 0.0f,
+				0.0f, -sin(M_PI / 3), cos(M_PI / 3), 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f) * lightSourcelocalOrigin;
+
+		lightPoints[index].pos = glm::vec3 (0.0f, 0.0f, 0.0f);
+		lightPoints[index].pos = glm::vec3(lightPoints[index].shiftedlightSourcelocalOrigin * glm::vec4(lightPoints[index].pos, 0.0f));
+	}
 
 	//elipses variables    
 	float aValue{ 2.0f };
@@ -196,8 +262,10 @@ int main()
 	glUniform3f(glGetUniformLocation(shader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 	glUniform3f(glGetUniformLocation(shader.ID, "viewPos"), camera.pos.x, camera.pos.y, camera.pos.z);
 
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].pos"), lightPoints[0].pos.x, lightPoints[0].pos.y, lightPoints[0].pos.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].pos"), lightPoints[1].pos.x, lightPoints[1].pos.y, lightPoints[1].pos.z);
 
-	//material properties ²
+	//material properties ï¿½
 	shader.setFloat("material.shininess", 64.0f);
 
 
@@ -205,6 +273,15 @@ int main()
 	glUniform3f(glGetUniformLocation(shader.ID, "light.ambient"), lightSource.ambient[0], lightSource.ambient[1], lightSource.ambient[2]);
 	glUniform3f(glGetUniformLocation(shader.ID, "light.diffuse"), lightSource.diffuse[0], lightSource.diffuse[1], lightSource.diffuse[2]);
 	glUniform3f(glGetUniformLocation(shader.ID, "light.specular"), lightSource.specular[0], lightSource.specular[1], lightSource.specular[2]);
+	
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].ambient"), lightPoints[0].ambient.x, lightPoints[0].ambient.y, lightPoints[0].ambient.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].diffuse"), lightPoints[0].diffuse.x, lightPoints[0].diffuse.y, lightPoints[0].diffuse.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].specular"), lightPoints[0].specular.x, lightPoints[0].specular.y, lightPoints[0].specular.z);
+
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].ambient"), lightPoints[1].ambient.x, lightPoints[1].ambient.y, lightPoints[1].ambient.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].diffuse"), lightPoints[1].diffuse.x, lightPoints[1].diffuse.y, lightPoints[1].diffuse.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].specular"), lightPoints[1].specular.x, lightPoints[1].specular.y, lightPoints[1].specular.z);
+
 
 	//model
 	glm::mat4 model{ glm::mat4(1.0f) };
@@ -316,7 +393,7 @@ int main()
 			yElipse = (bValue * sin(2 * M_PI));
 		}
 
-		ellipticOrbit = glm::translate(ShiftedlightSourcelocalOrigin, glm::vec3(xElipse, 0.0f, yElipse));
+		ellipticOrbit = glm::translate(shiftedlightSourcelocalOrigin, glm::vec3(xElipse, 0.0f, yElipse));
 
 		lightPos.x = xElipse;
 		lightPos.z = yElipse;
