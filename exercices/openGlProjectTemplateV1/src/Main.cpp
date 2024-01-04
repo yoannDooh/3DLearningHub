@@ -6,6 +6,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <cmath>
 #include <complex>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 
 namespace Mouse
 {

@@ -5,7 +5,7 @@ in vec2 TextCoord;
 
 out vec4 FragColor;
 
-#define POINT_LIGHTS_NB 4
+#define POINT_LIGHTS_NB 2
 
 struct DirectLight { //Directional light 
     vec3 color;
@@ -68,11 +68,11 @@ struct Material {
 uniform Material material;
 uniform Light light;
 uniform int spotLightNb;
-uniform PointLight pointLight[POINT_LIGHTS_NB];
+uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform SpotLight spotLight;
-uniform vec3 lightPos;
 uniform vec3 viewPos;
-uniform float emmissionStrength;
+uniform DirectLight sunLight;
+uniform float emmissionStrength ;
 
 vec3 CalcDirLight(DirectLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
@@ -80,26 +80,19 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
 
 void main()
 {
-    
     //direction vectors and normal vector
     vec3 normVec = normalize(normal);
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 lightDir = normalize(lightPos - FragPos);
-    vec3 reflectDirection = reflect(-lightDir, normVec);
 
-    //diffuse and specular
-    float diff = max(dot(normVec, lightDir), 0.0);
-    float spec = pow(max(dot(viewDir, reflectDirection), 0.0), material.shininess);
+    //DirectLight 
+    vec3 lightning = CalcDirLight(sunLight, normVec, viewDir);
 
+    for (int index = 0; index < POINT_LIGHTS_NB; ++index)
+        lightning += CalcPointLight(pointLights[index], normVec, viewDir,FragPos);
 
-    //diffuse / specular / ambient /emmission final value
-    vec3 specular = light.specular * spec * texture(material.specular, TextCoord).rgb;
-    vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TextCoord).rgb;
-    vec3 ambient = light.ambient * texture(material.diffuse, TextCoord).rgb;
-    vec3 emmision  = texture(material.emission, TextCoord).rgb*emmissionStrength;
-
-    vec3 result = ambient + diffuse * vec3(153.0f / 255.0f, 0.0f, 0.0f) + specular + emmision;
-    FragColor = vec4(result, 1.0);
+    vec3 emission = emmissionStrength *texture(material.emission, TextCoord).rgb;
+    
+    FragColor = vec4(lightning+emission, 1.0);
    
 }
 
@@ -112,11 +105,10 @@ vec3 CalcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
     
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * vec3(texture(material.diffuse, TextCoord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TextCoord));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TextCoord)) * light.color;
     vec3 specular = light.specular * spec * vec3(texture(material.specular, TextCoord));
     return (ambient + diffuse + specular);
 }
-
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
@@ -133,7 +125,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * vec3(texture(material.diffuse, TextCoord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TextCoord));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TextCoord)) * light.color;
     vec3 specular = light.specular * spec * vec3(texture(material.specular, TextCoord));
     ambient *= attenuation;
     diffuse *= attenuation;
@@ -162,7 +154,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * vec3(texture(material.diffuse, TextCoord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TextCoord));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TextCoord)) * light.color;
     vec3 specular = light.specular * spec * vec3(texture(material.specular, TextCoord));
     ambient *= attenuation*intensity;
     diffuse *= attenuation*intensity;

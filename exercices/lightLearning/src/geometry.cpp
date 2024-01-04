@@ -702,7 +702,7 @@ void constructCube(float vertices[288], unsigned int indices[36], float cote, st
     int currentFace{ 0 };
     while (indicesIndex < 36)
     {
-        for (int count{}; count < 3; ++count) //first triangle indice
+        for (int count{}; count < 3; ++count) //first triangle indices
         {
             if (count == 2)
                 indices[indicesIndex] = (currentFace * 4) + count + 1;
@@ -712,7 +712,7 @@ void constructCube(float vertices[288], unsigned int indices[36], float cote, st
             ++indicesIndex;
         }
 
-        for (int count{ (currentFace * 4) + 1 }; count <= currentFace * 4 + 3; ++count) //first triangle indice
+        for (int count{ (currentFace * 4) + 1 }; count <= currentFace * 4 + 3; ++count) //first triangle indices
         {
             indices[indicesIndex] = count;
             ++indicesIndex;

@@ -327,7 +327,7 @@ int main()
         {
             if (Time::currentFrame > 1 )
             {
-                //yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, ( yTransAmplitude * sin( (Math::py / yTransDuration) * deltaSumInMilliSec ) ), 0.0f));
+                //ytransmodel = glm::translate(localorigin, glm::vec3(0.0f, ( ytransamplitude * sin( (math::py / ytransduration) * deltasuminmillisec ) ), 0.0f));
                 for (auto& const cube : cubes)
                 {
                     cube.yTransModel = glm::translate(localOrigin, glm::vec3(0.0f, (yTransAmplitude * sin( (Math::py / yTransDuration) * ( /*cube.ytransStartingPos*/ +Time::deltaSumInMilliSec))), 0.0f));;

@@ -140,7 +140,7 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
 }
 
 
-/*--SHADER CLASSE--*/
+/*--TEXTURE CLASSE--*/
 Texture::Texture(int textureNb, std::string textureName,  const char* texturePath)
 {
 

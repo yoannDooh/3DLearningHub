@@ -4,7 +4,6 @@
 #include "../header/openGL.h"
 #include "../header/geometry.h"
 #include <cmath>
-#include <complex>
 
 
 struct Material {
@@ -38,7 +37,8 @@ struct lightPointCube {
 	float squareCoef;
 
 	glm::mat4 model{};
-	glm::mat4 shiftedlightSourcelocalOrigin{};
+	glm::mat4 ellipticOrbit{};
+	glm::mat4 shiftedLocalOrigin{};
 
 };
 
@@ -60,7 +60,6 @@ struct Light {
 	std::array<float, 3> diffuse;
 	std::array<float, 3> specular;
 };
-
 
 namespace Time
 {
@@ -86,6 +85,8 @@ namespace Mouse
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+glm::vec3 rgb(float red, float blue, float green);
+
 
 
 // settings
@@ -95,16 +96,14 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::ve
 
 int main()
 {
-	Material silver{
-		{	0.0f,	   0.0f,	   0.0f,	},
-		{ 0.5f,	    0.5f,	    0.5f,	},
-		{ 64.0f,	64.0f,	    64.0f   },
-	};
+	glm::vec3 sunLightColor{ rgb(252, 150, 1) };
 
-	Light lightSource{
+	DirectLight sunLight{
+		sunLightColor,
+		{-0.2f, -1.0f, -0.3f},
 		{ 0.2f, 0.2f, 0.2f,	},
 		{ 0.5f, 0.5f, 0.5f,	},
-		{ 1.0f,	 1.0f,  1.0f   },
+		{ 1.0f,	 1.0f,  1.0f },
 	};
 
 	float vertices[288]{};
@@ -112,6 +111,8 @@ int main()
 	float cubeEdge{ 1.0f };
 	std::array<float, 3> cubeOriginCoord{ -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), -(cubeEdge / 2.0f) }; //bottomFace topLeft 
 	std::array<Point, 8> points{};
+
+
 	constructCube(vertices, indices, cubeEdge, cubeOriginCoord, points);
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -168,7 +169,6 @@ int main()
 	Texture specularMap(1, "specularMap", ".\\rsc\\specularMap.png");
 	Texture emissionMap(2 , "emissionMap", ".\\rsc\\emissionMap.png");
 
-
 	//lightVAO
 	unsigned int lightVAO{};
 	glGenVertexArrays(1, &lightVAO);
@@ -196,6 +196,18 @@ int main()
 
 	//Matrixes
 	glm::mat4 localOrigin{ glm::mat4(1.0f) };
+	glm::mat4 firstLightSourceRotMatrix = glm::mat4(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, cos(2 * M_PI / 3), sin(2 * M_PI / 3), 0.0f,
+		0.0f, -sin(2 * M_PI / 3), cos(2 * M_PI / 3), 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f);
+
+	glm::mat4 secondLightSourceRotMatrix = glm::mat4(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, cos(M_PI / 3), sin(M_PI / 3), 0.0f,
+		0.0f, -sin(M_PI / 3), cos(M_PI / 3), 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f);
+
 
 	glm::mat4 lightSourcelocalOrigin{
 		glm::mat4(
@@ -205,6 +217,7 @@ int main()
 		0.0f,0.0f,0.0f,1.0f)
 	};
 
+	/* 
 	glm::mat4 shiftedlightSourcelocalOrigin{
 		glm::mat4(
 		1.0f,0.0f,0.0f,0.0f,
@@ -212,34 +225,47 @@ int main()
 		0.0f,-sin(2*M_PI / 3),cos(2*M_PI / 3),0.0f,
 		0.0f,0.0f,0.0f,1.0f) * lightSourcelocalOrigin
 	};
+	*/
 
 	//lightCubes 
 	std::array<lightPointCube, 2> lightPoints{};
-
-	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-	lightPos = glm::vec3(shiftedlightSourcelocalOrigin * glm::vec4(lightPos, 0.0f) );
+	//glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+	//lightPos = glm::vec3(shiftedlightSourcelocalOrigin * glm::vec4(lightPos, 0.0f) );
 	glm::mat4 ellipticOrbit{ glm::mat4(1.0f) };
 
 	for (int index{}; index < lightPoints.size(); ++index)
 	{
 
 		if (index) //index==1
-			lightPoints[index].shiftedlightSourcelocalOrigin = glm::mat4(
-				1.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, cos(2 * M_PI / 3), sin(2 * M_PI / 3), 0.0f,
-				0.0f, -sin(2 * M_PI / 3), cos(2 * M_PI / 3), 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f) * lightSourcelocalOrigin;
+			lightPoints[index].shiftedLocalOrigin =  firstLightSourceRotMatrix* lightSourcelocalOrigin;
 
 		else
-			lightPoints[index].shiftedlightSourcelocalOrigin = glm::mat4(
-				1.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, cos(M_PI / 3), sin(M_PI / 3), 0.0f,
-				0.0f, -sin(M_PI / 3), cos(M_PI / 3), 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f) * lightSourcelocalOrigin;
+			lightPoints[index].shiftedLocalOrigin = secondLightSourceRotMatrix * lightSourcelocalOrigin ;
 
-		lightPoints[index].pos = glm::vec3 (0.0f, 0.0f, 0.0f);
-		lightPoints[index].pos = glm::vec3(lightPoints[index].shiftedlightSourcelocalOrigin * glm::vec4(lightPoints[index].pos, 0.0f));
+		lightPoints[index].pos = glm::vec3(0.0f, 0.0f, 0.0f);
+		lightPoints[index].pos = glm::vec3(lightPoints[index].shiftedLocalOrigin * glm::vec4(lightPoints[index].pos, 0.0f));
 	}
+
+	lightPoints[0].color = rgb(4, 217, 255);
+	lightPoints[1].color = rgb(242, 0, 0);
+
+
+	lightPoints[0].ambient =  glm::vec3(0.05f, 0.05f, 0.05f);
+	lightPoints[0].diffuse =  glm::vec3(0.8f, 0.8f, 0.8f);
+	lightPoints[0].specular = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	lightPoints[0].constant = 1.0f;
+	lightPoints[0].linearCoef = 0.0014f;
+	lightPoints[0].squareCoef = 0.000007f;
+
+	lightPoints[1].constant = 1.0f;
+	lightPoints[1].linearCoef = 0.0014f;
+	lightPoints[1].squareCoef = 0.000007f;
+
+	lightPoints[1].ambient = glm::vec3(0.05f, 0.05f, 0.05f);
+	lightPoints[1].diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
+	lightPoints[1].specular = glm::vec3(1.0f, 1.0f, 1.0f);
+
 
 	//elipses variables    
 	float aValue{ 2.0f };
@@ -257,31 +283,45 @@ int main()
 	shader.use();
 	shader.setInt("material.diffuse", 0);
 	shader.setInt("material.specular", 1);
-	shader.setInt("material.emission", 1);
+	shader.setInt("material.emission", 2);
 	shader.setFloat("cubeEdge", cubeEdge);
-	glUniform3f(glGetUniformLocation(shader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 	glUniform3f(glGetUniformLocation(shader.ID, "viewPos"), camera.pos.x, camera.pos.y, camera.pos.z);
 
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].pos"), lightPoints[0].pos.x, lightPoints[0].pos.y, lightPoints[0].pos.z);
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].pos"), lightPoints[1].pos.x, lightPoints[1].pos.y, lightPoints[1].pos.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].pos"), lightPoints[0].pos.x, lightPoints[0].pos.y, lightPoints[0].pos.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].pos"), lightPoints[1].pos.x, lightPoints[1].pos.y, lightPoints[1].pos.z);
 
-	//material properties ï¿½
+	//material properties 
 	shader.setFloat("material.shininess", 64.0f);
 
 
 	//light properties 
-	glUniform3f(glGetUniformLocation(shader.ID, "light.ambient"), lightSource.ambient[0], lightSource.ambient[1], lightSource.ambient[2]);
-	glUniform3f(glGetUniformLocation(shader.ID, "light.diffuse"), lightSource.diffuse[0], lightSource.diffuse[1], lightSource.diffuse[2]);
-	glUniform3f(glGetUniformLocation(shader.ID, "light.specular"), lightSource.specular[0], lightSource.specular[1], lightSource.specular[2]);
+	glUniform3f(glGetUniformLocation(shader.ID, "sunLight.color"), sunLight.color.x, sunLight.color.y, sunLight.color.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "sunLight.direction"), sunLight.direction.x, sunLight.direction.x, sunLight.direction.x);
+
+	glUniform3f(glGetUniformLocation(shader.ID, "sunLight.ambient"), sunLight.ambient.x, sunLight.ambient.y, sunLight.ambient.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "sunLight.diffuse"), sunLight.diffuse.x, sunLight.diffuse.y, sunLight.diffuse.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "sunLight.specular"), sunLight.specular.x, sunLight.specular.y, sunLight.specular.z);
+
 	
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].ambient"), lightPoints[0].ambient.x, lightPoints[0].ambient.y, lightPoints[0].ambient.z);
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].diffuse"), lightPoints[0].diffuse.x, lightPoints[0].diffuse.y, lightPoints[0].diffuse.z);
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[0].specular"), lightPoints[0].specular.x, lightPoints[0].specular.y, lightPoints[0].specular.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].ambient"), lightPoints[0].ambient.x, lightPoints[0].ambient.y, lightPoints[0].ambient.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].diffuse"), lightPoints[0].diffuse.x, lightPoints[0].diffuse.y, lightPoints[0].diffuse.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].specular"), lightPoints[0].specular.x, lightPoints[0].specular.y, lightPoints[0].specular.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].color"), lightPoints[0].color.x, lightPoints[0].color.y, lightPoints[0].color.z);
 
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].ambient"), lightPoints[1].ambient.x, lightPoints[1].ambient.y, lightPoints[1].ambient.z);
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].diffuse"), lightPoints[1].diffuse.x, lightPoints[1].diffuse.y, lightPoints[1].diffuse.z);
-	glUniform3f(glGetUniformLocation(shader.ID, "pointLight[1].specular"), lightPoints[1].specular.x, lightPoints[1].specular.y, lightPoints[1].specular.z);
 
+	shader.setFloat("pointLights[0].constant", lightPoints[0].constant);
+	shader.setFloat("pointLights[0].linearCoef", lightPoints[0].linearCoef);
+	shader.setFloat("pointLights[0].squareCoef", lightPoints[0].squareCoef);
+
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].ambient"), lightPoints[1].ambient.x, lightPoints[1].ambient.y, lightPoints[1].ambient.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].diffuse"), lightPoints[1].diffuse.x, lightPoints[1].diffuse.y, lightPoints[1].diffuse.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].specular"), lightPoints[1].specular.x, lightPoints[1].specular.y, lightPoints[1].specular.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].color"), lightPoints[1].color.x, lightPoints[1].color.y, lightPoints[1].color.z);
+
+
+	shader.setFloat("pointLights[1].constant", lightPoints[1].constant);
+	shader.setFloat("pointLights[1].linearCoef", lightPoints[1].linearCoef);
+	shader.setFloat("pointLights[1].squareCoef", lightPoints[1].squareCoef);
 
 	//model
 	glm::mat4 model{ glm::mat4(1.0f) };
@@ -308,9 +348,13 @@ int main()
 
 	//models
 	glm::mat4 lightSourceModel{ glm::mat4(1.0f) };
-	lightSourceModel = glm::translate(localOrigin, lightPos);
 	lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.2f));
 	glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(lightSourceModel));
+
+	for (int index{}; index < lightPoints.size(); ++index)
+	{
+		lightPoints[index].model = lightSourceModel;
+	}
 
 	//view
 	glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -318,10 +362,11 @@ int main()
 	//projection
 	glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-	auto prepareCube = [&woodTexture,&specularMap,&emissionMap](unsigned int VAO, Shader shader)
+	auto drawCube = [&woodTexture,&specularMap,&emissionMap](unsigned int VAO, Shader shader)
 		{
 			//background color
-			glClearColor(25.0f / 255.0f, 25.0f / 255.0f, 25.0f / 255.0f, 1.0f);
+			glm::vec3 clearColor{ rgb(29, 16, 10) };
+			glClearColor(clearColor.x, clearColor.y, clearColor.z,0.0f);
 			glEnable(GL_MULTISAMPLE);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -329,15 +374,17 @@ int main()
 			// bind diffuse map
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, woodTexture.ID);
+
 			// bind specular map
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, specularMap.ID);
+
 			// bind emmision map
-			glActiveTexture(GL_TEXTURE1);
+			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, emissionMap.ID);
 
 
-			glBindVertexArray(VAO);
+			glBindVertexArray(VAO);		 
 			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 			//increment time variables 
@@ -393,10 +440,13 @@ int main()
 			yElipse = (bValue * sin(2 * M_PI));
 		}
 
-		ellipticOrbit = glm::translate(shiftedlightSourcelocalOrigin, glm::vec3(xElipse, 0.0f, yElipse));
+		for (int index{}; index < lightPoints.size(); ++index)
+		{
+			lightPoints[index].ellipticOrbit = glm::translate(lightPoints[index].shiftedLocalOrigin, glm::vec3(xElipse, 0.0f, yElipse) );
+		}
 
-		lightPos.x = xElipse;
-		lightPos.z = yElipse;
+		//ellipticOrbit = glm::translate(shiftedlightSourcelocalOrigin, glm::vec3(xElipse, 0.0f, yElipse));
+
 
 		view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
 		projection = glm::perspective(glm::radians(Mouse::fov), 800.0f / 600.0f, 0.1f, 100.0f);
@@ -407,21 +457,44 @@ int main()
 		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-		glUniform3f(glGetUniformLocation(shader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+		//pointLights pos
+
+		for (int index{}; index < lightPoints.size(); ++index)
+		{
+			lightPoints[index].pos.x = xElipse;
+
+			if (index==0) 
+			{
+				lightPoints[0].pos.z = secondLightSourceRotMatrix[0][0] * xElipse + secondLightSourceRotMatrix[0][1] * lightPoints[0].pos.y + secondLightSourceRotMatrix[0][2] * yElipse; //je sais pas pourquoi c'est inversé
+				glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].pos"), lightPoints[0].pos.x, lightPoints[0].pos.y, lightPoints[0].pos.z);
+			}
+				
+
+			else
+			{
+				lightPoints[0].pos.z = firstLightSourceRotMatrix[0][0] * xElipse + firstLightSourceRotMatrix[0][1] * lightPoints[0].pos.y + firstLightSourceRotMatrix[0][2] * yElipse;
+				glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].pos"), lightPoints[1].pos.x, lightPoints[1].pos.y, lightPoints[1].pos.z);
+			}
+		}
+
 		glUniform3f(glGetUniformLocation(shader.ID, "viewPos"), camera.pos.x, camera.pos.y, camera.pos.z);
 		shader.setFloat("emmissionStrength", currentFrameGlow);
-		prepareCube(VAO, shader);
+		drawCube(VAO, shader);
 
 
 		//--LIGHTSOURCE--
 		lightSourceShader.use();
-		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(lightSourceModel));
-		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "orbit"), 1, GL_FALSE, glm::value_ptr(ellipticOrbit));
-		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glBindVertexArray(lightVAO);
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
+		for (auto& const lightPoint : lightPoints)
+		{
+			glUniform3f(glGetUniformLocation(lightSourceShader.ID, "lightColor"), lightPoint.color.x, lightPoint.color.y, lightPoint.color.z );
+			glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(lightPoint.model));
+			glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "orbit"), 1, GL_FALSE, glm::value_ptr(lightPoint.ellipticOrbit));
+			glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			glBindVertexArray(lightVAO);
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
 		swapBuffer();
 	}
 
@@ -502,4 +575,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 	if (Mouse::fov > 45.0f)
 		Mouse::fov = 45.0f;
+}
+
+glm::vec3 rgb(float red, float blue, float green)
+{
+	return glm::vec3(red/255.0f,blue/255.0f,green/255.0f);
 }
