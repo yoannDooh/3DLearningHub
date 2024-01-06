@@ -1,8 +1,15 @@
 #pragma once
 
+#define _USE_MATH_DEFINES
+#include <array>
+#include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "../header/shaderAndLight.h"
+#include "../header/mesh.h"
+
+class Cube;
 
 /*CAMERA AND MOUSE*/
 class Camera
@@ -93,7 +100,45 @@ namespace Time
 	extern int totalFrame;
 }
 
-//GLOBAL VARIABLE CAMERA
-extern Camera camera;
+//GLOBAL VARIABLES
+namespace world
+{
+	extern Camera camera;
+	extern glm::mat4 view;
+	extern glm::mat4 projection;
+}
+
+namespace lightVar
+{
+	//sunlight Ambient 
+	extern glm::vec3 sunLightColor;
+	extern light::DirectLight sunLight;
+}
+
+//Animations 
+void passViewProject(Shader& shader); //pass view and projection matrix to shader 
+
+//emissionMap
+float frameGlow(); //return currentFrameGlowStrenght for emmision map
+
+//setup lights and orbit
+void rotatePlane (light::lightPointCube& light, int index);
+void setLightCube(Shader& shader, float cubeEdge, std::vector<light::lightPointCube>& lightCubes);
+
+
+void setLighting(Shader& shader, std::vector<light::lightPointCube>& lightCubes);
+
+//orbit and 
+glm::mat4 orbit(light::lightPointCube& light);
+void animateLightsCube(Shader& shader, Cube lightCubeVao, std::vector<light::lightPointCube>& lightCubes);
+void updateViewProject(); //update world::view and world::projection
+
+void setWoodCube(Shader& shader, float cubeEdge, std::vector<light::lightPointCube>& lightCubes);//just translate and scale then pass to shader 
+void animateWoodCube(Shader& shader, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
+
+
+
+
+
 
 

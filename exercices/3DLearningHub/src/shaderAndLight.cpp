@@ -1,4 +1,7 @@
-#include "../header/shader.h"
+#include "../header/shaderAndLight.h"
+#include <iostream>
+#include <fstream>
+
 
 
 /*--SHADER CLASSE--*/
@@ -92,9 +95,28 @@ void Shader::setFloat(const std::string& name, float value) const
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
+void Shader::set3Float(const std::string& name, float values[3]) const
+{
+    glUniform3f(glGetUniformLocation(ID, name.c_str()), values[0], values[1], values[2]);
+
+}
+
+void Shader::set3Float(const std::string& name, glm::vec3& values) const
+{
+    glUniform3f(glGetUniformLocation(ID, name.c_str()), values.x, values.y, values.z);
+
+}
+
 void Shader::set4Float(const std::string& name, float values[4]) const
 {
     glUniform4f(glGetUniformLocation(ID, name.c_str()), values[0], values[1], values[2], values[3]);
+
+}
+
+void Shader::setMat4(const std::string& name, glm::mat4& mat) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str() ), 1, GL_FALSE, glm::value_ptr(mat));
+
 }
 
 glm::vec3 rgb(float red, float blue, float green)

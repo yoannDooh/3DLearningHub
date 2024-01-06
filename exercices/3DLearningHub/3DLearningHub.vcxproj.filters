@@ -6,7 +6,7 @@
     <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
     <ClCompile Include="src\motion.cpp" />
     <ClCompile Include="src\window.cpp" />
-    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\shaderAndLight.cpp" />
     <ClCompile Include="src\mesh.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -16,7 +16,7 @@
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3native.h" />
     <ClInclude Include="header\stb_image.h" />
     <ClInclude Include="header\motion.h" />
-    <ClInclude Include="header\shader.h" />
+    <ClInclude Include="header\shaderAndLight.h" />
     <ClInclude Include="header\mesh.h" />
     <ClInclude Include="header\window.h" />
   </ItemGroup>

@@ -1,4 +1,5 @@
 #include "../header/window.h"
+#include <iostream>
 
 /*--WINDOW CLASSE--*/
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -41,32 +42,30 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
     }
 }
 
-
 /*INPUT LISTENER FUNCTIONS*/
-
 void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.moveCamera('z', Time::deltaTime);
+		world::camera.moveCamera('z', Time::deltaTime);
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		camera.moveCamera('q', Time::deltaTime);
+		world::camera.moveCamera('q', Time::deltaTime);
 
 
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.moveCamera('s', Time::deltaTime);
+		world::camera.moveCamera('s', Time::deltaTime);
 
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		camera.moveCamera('d', Time::deltaTime);
+		world::camera.moveCamera('d', Time::deltaTime);
 
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		camera.moveCamera('u', Time::deltaTime);
+		world::camera.moveCamera('u', Time::deltaTime);
 
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		camera.moveCamera('w', Time::deltaTime);
+		world::camera.moveCamera('w', Time::deltaTime);
 
 }
 
@@ -89,21 +88,21 @@ void mouse_callback(GLFWwindow* window, double xPos, double yPos)
 	xOffset *= Mouse::sensitivity;
 	yOffset *= Mouse::sensitivity;
 
-	camera.yawAngle += xOffset;
-	camera.pitchAngle += yOffset;
+	world::camera.yawAngle += xOffset;
+	world::camera.pitchAngle += yOffset;
 
-	if (camera.pitchAngle > 89.0f)
-		camera.pitchAngle = 89.0f;
+	if (world::camera.pitchAngle > 89.0f)
+		world::camera.pitchAngle = 89.0f;
 
-	if (camera.pitchAngle < -89.0f)
-		camera.pitchAngle = -89.0f;
+	if (world::camera.pitchAngle < -89.0f)
+		world::camera.pitchAngle = -89.0f;
 
 	glm::vec3 direction{};
 
-	direction.x = cos(glm::radians(camera.yawAngle)) * cos(glm::radians(camera.pitchAngle));
-	direction.y = sin(glm::radians(camera.pitchAngle));
-	direction.z = sin(glm::radians(camera.yawAngle)) * cos(glm::radians(camera.pitchAngle));
-	camera.front = glm::normalize(direction);
+	direction.x = cos(glm::radians(world::camera.yawAngle)) * cos(glm::radians(world::camera.pitchAngle));
+	direction.y = sin(glm::radians(world::camera.pitchAngle));
+	direction.z = sin(glm::radians(world::camera.yawAngle)) * cos(glm::radians(world::camera.pitchAngle));
+	world::camera.front = glm::normalize(direction);
 
 
 }

@@ -1,5 +1,12 @@
 #include "../header/mesh.h"
 
+#include <glad/glad.h> 
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <cstddef>
+#include <iostream>
+#include "../header/stb_image.h"
+
 void constructCube(float vertices[288], unsigned int indices[36], float cote, std::array<float, 3>& originCoord, std::array<Point, 8>& point)
 {
 	//point array in order :

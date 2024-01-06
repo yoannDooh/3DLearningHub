@@ -461,19 +461,20 @@ int main()
 
 		for (int index{}; index < lightPoints.size(); ++index)
 		{
+
+			glm::vec3 merde{ glm::vec4(lightPoints[index].ellipticOrbit * glm::vec4(lightPoints[index].pos, 1.0f)) };
+
 			lightPoints[index].pos.x = xElipse;
 
 			if (index==0) 
 			{
-				lightPoints[0].pos.z = secondLightSourceRotMatrix[0][0] * xElipse + secondLightSourceRotMatrix[0][1] * lightPoints[0].pos.y + secondLightSourceRotMatrix[0][2] * yElipse; //je sais pas pourquoi c'est inversé
-				glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].pos"), lightPoints[0].pos.x, lightPoints[0].pos.y, lightPoints[0].pos.z);
+				glUniform3f(glGetUniformLocation(shader.ID, "pointLights[0].pos"), merde.x, merde.y, merde.z);
 			}
 				
 
 			else
 			{
-				lightPoints[0].pos.z = firstLightSourceRotMatrix[0][0] * xElipse + firstLightSourceRotMatrix[0][1] * lightPoints[0].pos.y + firstLightSourceRotMatrix[0][2] * yElipse;
-				glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].pos"), lightPoints[1].pos.x, lightPoints[1].pos.y, lightPoints[1].pos.z);
+				glUniform3f(glGetUniformLocation(shader.ID, "pointLights[1].pos"), merde.x, merde.y, merde.z);
 			}
 		}
 

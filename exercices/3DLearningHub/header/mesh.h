@@ -1,15 +1,9 @@
 #pragma once
 
-#include <glad/glad.h> 
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include <string>
-#include <iostream>
 #include <array>
 #include <vector>
-#include <cstddef>
-#include "../header/stb_image.h"
-#include "../header/shader.h"
+#include "../header/shaderAndLight.h"
 
 enum TextureMap
 {
@@ -93,5 +87,4 @@ void constructCube(float vertices[216], unsigned int indices[36], float cote, st
 
 void compare(Cube cube, float vertices[216], unsigned int indices[36]);
 
-//void generateCubeVertices(float vertices[288], unsigned int indices[36], float cote, std::array<float, 3>& originCoord); //DEPRECATED
 //in order : coord/colorCoord/normal/TextCoord/number of the point 
