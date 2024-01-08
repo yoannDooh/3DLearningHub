@@ -138,7 +138,7 @@ void animateWoodCube(Shader& shader, Cube woodCubeVao, std::vector<light::lightP
 
 
 
-
+//void updateLightPos(std::vector<light::lightPointCube>& lightCubes);
 
 
 

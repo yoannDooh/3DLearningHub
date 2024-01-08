@@ -236,7 +236,7 @@ int main()
 	for (int index{}; index < lightPoints.size(); ++index)
 	{
 
-		if (index) //index==1
+		if (!index) //index==1
 			lightPoints[index].shiftedLocalOrigin =  firstLightSourceRotMatrix* lightSourcelocalOrigin;
 
 		else
@@ -464,7 +464,6 @@ int main()
 
 			glm::vec3 merde{ glm::vec4(lightPoints[index].ellipticOrbit * glm::vec4(lightPoints[index].pos, 1.0f)) };
 
-			lightPoints[index].pos.x = xElipse;
 
 			if (index==0) 
 			{

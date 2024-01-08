@@ -43,7 +43,7 @@ namespace world
 //Animation functions 
 float frameGlow()
 {
-	float currentFrameGlow{ 0.25 };
+	float currentFrameGlow{ };
 	const float glowStrenghtMax{ 0.25 }; //max value of glow
 	const float durationToReachGlowMax{ 0.9 }; //in sec
 
@@ -60,10 +60,13 @@ float frameGlow()
 
 void rotatePlane(light::lightPointCube& light,int index) //rotate plane and add 60�*index+1 to the rotaion index being the index of the light if the array 
 {	
+	
 	//for now don't have an array of more than 6 element
+	light.localOrigin = glm::mat4(1.0f);
+
 	glm::mat4 rot{};
 	double rad{};
-
+	
 	switch (index)
 	{
 	case 0:
@@ -96,7 +99,13 @@ void rotatePlane(light::lightPointCube& light,int index) //rotate plane and add 
 		0.0f, -sin(rad), cos(rad), 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f);
 
+
+	light.pos = glm::vec3(0.0f, 0.0f, 0.0f);
 	light.localOrigin = rot * light.localOrigin;
+
+
+	light.pos = glm::vec3(light.localOrigin * glm::vec4(light.pos, 0.0f));
+
 }
 
 glm::mat4 orbit(light::lightPointCube& light) //the elipse has world x axis for x axis and world z axis for y axis
@@ -123,29 +132,18 @@ glm::mat4 orbit(light::lightPointCube& light) //the elipse has world x axis for 
 		zAxisValue = (verticalAxis * sin(((2 * M_PI) / orbitDuration) * Time::deltaSum));
 	}
 
-
-	else
-	{
-		xAxisValue = (horizontalAxis * cos(2 * M_PI));
-		zAxisValue = (verticalAxis * sin(2 * M_PI));
-	}
-
 	orbit = glm::translate(light.localOrigin, glm::vec3(xAxisValue, 0.0f, zAxisValue));
 
-	//update lightPosition
-
-	light.pos = glm::vec4(orbit * glm::vec4(light.pos, 1.0f));
-
 	/*
-	light.pos.x = xAxisValue;
-	light.pos.z = light.localOrigin[0][0] * xAxisValue + light.localOrigin[0][1] * light.pos.y + light.localOrigin[0][2] * zAxisValue;
+	//update lightPosition
+	light.pos = glm::vec4(orbit * glm::vec4(light.pos, 1.0f));
 	*/
 
 	return  orbit;
 }
 
 void setLightCube(Shader& shader, float cubeEdge, std::vector<light::lightPointCube>& lightCubes)
-{
+ {
 	shader.use();
 
 	//lightPoints
@@ -280,7 +278,7 @@ void animateLightsCube(Shader& shader,Cube lightCubeVao,std::vector<light::light
 		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "orbit"), 1, GL_FALSE, glm::value_ptr( orbit(lightCube) ) );
 
 		passViewProject(shader);
-		lightCubeVao.draw(shader);
+		lightCubeVao.draw(shader);	
 	}
 }
 
@@ -308,22 +306,24 @@ void animateWoodCube(Shader& shader,Cube woodCubeVao ,std::vector<light::lightPo
 	//incompleted
 	shader.use();
 
-	for (int index{}; index < lightCubes.size(); ++index )
+	//updateLightPos(lightCubes);
+	int index{};
+	for (auto& lightPoint : lightCubes)
 	{
-		switch (index)
-		{
-			case 0:
-				shader.set3Float("pointLights[0].pos", lightCubes[index].pos);
-				break;
 
-			case 1:
-				shader.set3Float("pointLights[1].pos", lightCubes[index].pos);
-				break;
-		}
+		glm::vec3 newPos{ glm::vec4(orbit(lightPoint) * glm::vec4(lightPoint.pos, 1.0f)) };
+
+		if (index == 0)
+			shader.set3Float("pointLights[0].pos", newPos);
+
+		else
+			shader.set3Float("pointLights[1].pos", newPos);
+	
+		++index;
 	}
+
 	shader.setFloat("emmissionStrength", frameGlow() );
 	shader.set3Float("viewPos", world::camera.pos);
-
 
 	passViewProject(shader);
 	woodCubeVao.draw(shader);
@@ -341,3 +341,5 @@ void passViewProject(Shader& shader)
 	shader.setMat4("view", world::view);
 	shader.setMat4("projection", world::projection);
 } 
+
+

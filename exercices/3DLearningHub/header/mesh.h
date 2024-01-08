@@ -73,18 +73,6 @@ public:
 	void setupCube();
 };
 
-
 std::vector<Texture> loadTextures(std::vector<const char*> pathes, std::vector<TextureMap> types);
+Texture loadCubemap(std::vector<const char*> pathes);
 
-struct Point
-{
-	std::array<float, 3> coord;     //vertices coord, in order : xyz
-	std::array<float, 3> coolors;   //vertices coolors in order : rgb
-	std::array<float, 3> normal;    //normal vector to the plane of the vertice 
-};
-
-void constructCube(float vertices[216], unsigned int indices[36], float cote, std::array<float, 3>& originCoord, std::array<Point, 8>& point);
-
-void compare(Cube cube, float vertices[216], unsigned int indices[36]);
-
-//in order : coord/colorCoord/normal/TextCoord/number of the point 

@@ -26,11 +26,20 @@ int main()
 	lightPoints.push_back(light);
 	lightPoints.push_back(light);
 
+	//loadCubeMap
+	std::vector<const char*> cubeMapFacePathes{
+			".\\rsc\\skybox\\right.jpg",
+			".\\rsc\\skybox\\left.jpg",
+			".\\rsc\\skybox\\top.jpg",
+			".\\rsc\\skybox\\bottom.jpg",
+			".\\rsc\\skybox\\front.jpg",
+			".\\rsc\\skybox\\back.jpg"
+	};
+	loadCubemap(cubeMapFacePathes);
+
 	setLightCube(lightSourcesShader, cubeEdge, lightPoints);
 	setLighting(woodBoxShader, lightPoints);
 	setWoodCube(woodBoxShader, cubeEdge, lightPoints);
-
-
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
@@ -77,7 +86,7 @@ int main()
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{
 		newFrame();
-	
+
 		updateViewProject();
 		animateWoodCube(woodBoxShader, woodCube, lightPoints);
 		animateLightsCube(lightSourcesShader, lightCube, lightPoints);

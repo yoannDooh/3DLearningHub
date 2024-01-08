@@ -14,7 +14,6 @@ uniform mat4 orbit;
 mat4 newModel;
 vec3 elipseCenterCoord = vec3(0.0f, 0.0f, 0.0f);
 
-
 mat4 BuildTranslation(vec3 delta) //from https://stackoverflow.com/questions/33807535/translation-in-glsl-shader
 {
 	return mat4(
@@ -71,7 +70,7 @@ void setOrbit()
 		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
 	}
 	}
-}
+} 
 
 void main()
 {
