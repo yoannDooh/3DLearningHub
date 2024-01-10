@@ -13,15 +13,10 @@
 //forward declaration
 class Cube;
 
-namespace Object
+enum Effects
 {
-	struct Model
-	{
-		glm::mat4 model{};
-		glm::mat4 localOrigin{ glm::mat4(1.0f) };
-	};
-
-}
+	
+};
 
 /*CAMERA AND MOUSE*/
 class Camera
@@ -90,6 +85,17 @@ public:
 	float pitchAngle{};
 };
 
+namespace Object
+{
+	struct Model
+	{
+		glm::mat4 model{};
+		glm::mat4 localOrigin{ glm::mat4(1.0f) };
+		bool outLine{ false };
+	};
+
+}
+
 namespace Mouse
 {
 	extern float sensitivity;
@@ -151,8 +157,12 @@ void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao
 
 
 /*POST PROCESSING EFFECT*/
-void outLine(Shader& outlineShader, Shader& shader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
+void animateWoodCubeAndOutline(Shader& shader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
 
+//frameBuffers
+unsigned int genFrameBuff();
+unsigned int genFrameBuffTex();
+unsigned int genRenderBUff();
 
 
 //void updateLightPos(std::vector<light::lightPointCube>& lightCubes);

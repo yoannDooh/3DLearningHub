@@ -53,7 +53,7 @@ int main()
 	glEnable(GL_STENCIL_TEST);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glEnable(GL_MULTISAMPLE);
-
+	glEnable(GL_BLEND);
 
 	//callback functions/ window inputMode
 	glfwSetCursorPosCallback(window.windowPtr, mouse_callback);
@@ -101,38 +101,9 @@ int main()
 		newFrame();
 		updateViewProject();
 
-		woodBoxShader.setMat4("model", World::woodCube.model);
 		animateLightsCube(lightSourcesShader, lightCube, lightPoints);
+		animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube,lightPoints);
 
-		
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glStencilMask(0xFF);
-
-		animateWoodCube(woodBoxShader,skyBox.texture.ID,woodCube,lightPoints);
-
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		glStencilMask(0x00);
-		glDepthFunc(GL_ALWAYS);
-
-
-		outlineShader.use();
-		glm::vec3 outlineColor{ rgb(241, 128, 45) };
-		outlineShader.set3Float("outLineColor", outlineColor);
-
-		float weight = 0.008f;
-		outlineShader.setFloat("outLineWeight",weight);
-
-		outlineShader.setMat4("model", World::woodCube.model);		
-		outlineShader.use();
-		passViewProject(outlineShader);
-		woodCube.draw(outlineShader);
-
-		glStencilMask(0xFF);
-		glStencilFunc(GL_ALWAYS, 0, 0xFF);
-		glEnable(GL_DEPTH_TEST);
-
-		glDepthFunc(GL_LESS);
-		
 
 		//DRAW IN LAST
 		skyBox.draw(skyboxShader);

@@ -42,6 +42,9 @@ namespace World
 	Object::Model woodCube{};
 }
 
+
+//LIGHT SHOULD USE A MODEL STRUCT 
+
 //Animation functions 
 float frameGlow()
 {
@@ -304,7 +307,6 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeVao
 {
 	//updateLightPos
 	//incompleted ?
-
 	shader.use();
 	glm::vec3 emmissionColor{ rgb(255, 255, 0) };
 
@@ -346,33 +348,34 @@ void passViewProject(Shader& shader)
 } 
 
 /*POST PROCESSING EFFECT*/
-void outLine(Shader& outlineShader,Shader& shader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes)
+void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes)
 {
-	float scale{ 1.1f };
-	glm::mat4 model{ World::woodCube.model };
-	glm::vec3 outlineColor{ rgb(241, 128, 45) };
-
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	glStencilMask(0xFF); // enable writing to the stencil buffer
-	
-	//drawModel
-	animateWoodCube(shader, cubemapTexture, woodCubeVao, lightCubes);
+	glStencilMask(0xFF);
+
+	animateWoodCube(woodBoxShader, cubemapTexture, woodCubeVao, lightCubes);
 
 	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-	glStencilMask(0x00); 
-	glDisable(GL_DEPTH_TEST);
+	glStencilMask(0x00);
+	glDepthFunc(GL_ALWAYS);
 
-	//draw outline 
+
 	outlineShader.use();
+	glm::vec3 outlineColor{ rgb(241, 128, 45) };
 	outlineShader.set3Float("outLineColor", outlineColor);
 
-	model = glm::scale(model, glm::vec3(scale, scale, scale));
-	outlineShader.setMat4("model", model);
-	animateWoodCube(outlineShader, cubemapTexture, woodCubeVao, lightCubes);
+	float weight = 0.008f;
+	outlineShader.setFloat("outLineWeight", weight);
+
+	outlineShader.setMat4("model", World::woodCube.model);
+	passViewProject(outlineShader);
+	woodCubeVao.draw(outlineShader);
 
 	glStencilMask(0xFF);
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilFunc(GL_ALWAYS, 0, 0xFF);
 	glEnable(GL_DEPTH_TEST);
+
+	glDepthFunc(GL_LESS);
 }
 
 

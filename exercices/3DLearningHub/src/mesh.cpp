@@ -870,6 +870,14 @@ void CubeMap::draw(Shader& shader)
 }
 
 
+/*--SQUARE CLASS--*/
+Square::Square(float cote, std::array<float, 3>& originCoord, Texture texture)
+{
+
+}
+
+
+
 
 
 

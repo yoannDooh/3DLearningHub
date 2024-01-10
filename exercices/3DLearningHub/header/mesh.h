@@ -96,6 +96,16 @@ class CubeMap : public Cube
 		void setupCubeMap();
 };
 
+class Square
+{
+	std::vector<float> vertices;
+	std::array<unsigned int, 6> indices;
+	void draw(Shader& shader);
+
+	Square() {}
+	Square(float cote, std::array<float, 3>& originCoord, Texture texture); //originCoord is topLeft vertex 
+};
+
 
 //function declaration
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
