@@ -304,10 +304,10 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeVao
 {
 	//updateLightPos
 	//incompleted ?
+
 	shader.use();
 	glm::vec3 emmissionColor{ rgb(255, 255, 0) };
 
-	//updateLightPos(lightCubes);
 	int index{};
 	for (auto& lightPoint : lightCubes)
 	{
@@ -325,6 +325,8 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeVao
 
 	shader.setFloat("emmissionStrength", frameGlow() );
 	shader.set3Float("emmissionColor", emmissionColor);
+	shader.set3Float("viewPos", World::camera.pos);
+
 
 	passViewProject(shader);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);

@@ -16,7 +16,7 @@ int main()
 	Shader woodBoxShader(".\\shader\\woodBox\\vertex.glsl", ".\\shader\\woodBox\\fragment.glsl");
 	Shader lightSourcesShader(".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
 	Shader skyboxShader(".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
-	//Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
+	Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
 
 	//woodCube parameters
 	float cubeEdge{ 1.0f };
@@ -43,19 +43,6 @@ int main()
 	lightPoints.push_back(light);
 	lightPoints.push_back(light);
 
-	/*
-	//loadCubeMap
-	std::vector<const char*> cubeMapFacePathes{
-			".\\rsc\\skybox\\right.jpg",
-			".\\rsc\\skybox\\left.jpg",
-			".\\rsc\\skybox\\top.jpg",
-			".\\rsc\\skybox\\bottom.jpg",
-			".\\rsc\\skybox\\front.jpg",
-			".\\rsc\\skybox\\back.jpg"
-	};
-	loadCubemap(cubeMapFacePathes);
-	*/
-
 	//set models
 	setLightCube(lightSourcesShader, cubeEdge, lightPoints);
 	setLighting(woodBoxShader, lightPoints);
@@ -63,8 +50,8 @@ int main()
 
 	//rendering parameters
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_STENCIL_TEST);
-	//glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glEnable(GL_STENCIL_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glEnable(GL_MULTISAMPLE);
 
 
@@ -110,13 +97,14 @@ int main()
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{
+
 		newFrame();
 		updateViewProject();
 
+		woodBoxShader.setMat4("model", World::woodCube.model);
 		animateLightsCube(lightSourcesShader, lightCube, lightPoints);
-		animateWoodCube(woodBoxShader, skyBox.texture.ID, woodCube, lightPoints);
 
-		/*
+		
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 		glStencilMask(0xFF);
 
@@ -144,7 +132,7 @@ int main()
 		glEnable(GL_DEPTH_TEST);
 
 		glDepthFunc(GL_LESS);
-		*/
+		
 
 		//DRAW IN LAST
 		skyBox.draw(skyboxShader);

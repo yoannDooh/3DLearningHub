@@ -87,14 +87,16 @@ void main()
     //direction vectors and normal vector
     vec3 normVec = normalize(normal);
     vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 MinusviewDir = -viewDir;
+
 
     //reflection 
-    vec3 reflectDir = reflect(viewDir, normVec);
+    vec3 reflectDir = reflect(MinusviewDir, normVec);
     vec3 reflectColor = texture(skyBox, reflectDir).rgb;
 
     //refraction
     float ratio = 1.00 / 1.52;
-    vec3 refractDir = refract(viewDir,normVec,ratio);
+    vec3 refractDir = refract(MinusviewDir,normVec,ratio);
     vec3 refractColor = texture(skyBox, refractDir).rgb;
 
 
