@@ -66,7 +66,6 @@ namespace light
 		float squareCoef{};
 
 		glm::mat4 model{};
-		//glm::mat4 ellipticOrbit{};
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
 
 	};

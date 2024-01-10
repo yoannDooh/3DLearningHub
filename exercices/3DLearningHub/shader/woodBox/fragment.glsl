@@ -2,6 +2,7 @@
 in vec3 normal;
 in vec3 FragPos; 
 in vec2 TextCoord;
+in vec3 cubeMapTextDir; 
 
 out vec4 FragColor;
 
@@ -65,6 +66,7 @@ struct Material {
     float shininess;
 };
 
+uniform samplerCube skyBox;
 uniform Material material;
 uniform Light light;
 uniform int spotLightNb;
@@ -73,6 +75,8 @@ uniform SpotLight spotLight;
 uniform vec3 viewPos;
 uniform DirectLight sunLight;
 uniform float emmissionStrength;
+uniform vec3 emmissionColor;
+
 
 vec3 CalcDirLight(DirectLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
@@ -84,15 +88,25 @@ void main()
     vec3 normVec = normalize(normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
+    //reflection 
+    vec3 reflectDir = reflect(viewDir, normVec);
+    vec3 reflectColor = texture(skyBox, reflectDir).rgb;
+
+    //refraction
+    float ratio = 1.00 / 1.52;
+    vec3 refractDir = refract(viewDir,normVec,ratio);
+    vec3 refractColor = texture(skyBox, refractDir).rgb;
+
+
     //DirectLight 
     vec3 lightning = CalcDirLight(sunLight, normVec, viewDir);
 
     for (int index = 0; index < POINT_LIGHTS_NB; ++index)
         lightning += CalcPointLight(pointLights[index], normVec, viewDir,FragPos);
 
-    vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb;
+    vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb* emmissionColor;
 
-    FragColor = vec4(lightning+emission, 1.0);
+    FragColor = vec4(reflectColor, 1.0);
    
 }
 

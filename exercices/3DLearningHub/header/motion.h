@@ -9,7 +9,19 @@
 #include "../header/shaderAndLight.h"
 #include "../header/mesh.h"
 
+
+//forward declaration
 class Cube;
+
+namespace Object
+{
+	struct Model
+	{
+		glm::mat4 model{};
+		glm::mat4 localOrigin{ glm::mat4(1.0f) };
+	};
+
+}
 
 /*CAMERA AND MOUSE*/
 class Camera
@@ -101,11 +113,12 @@ namespace Time
 }
 
 //GLOBAL VARIABLES
-namespace world
+namespace World
 {
 	extern Camera camera;
 	extern glm::mat4 view;
 	extern glm::mat4 projection;
+	extern Object::Model woodCube;
 }
 
 namespace lightVar
@@ -134,7 +147,11 @@ void animateLightsCube(Shader& shader, Cube lightCubeVao, std::vector<light::lig
 void updateViewProject(); //update world::view and world::projection
 
 void setWoodCube(Shader& shader, float cubeEdge, std::vector<light::lightPointCube>& lightCubes);//just translate and scale then pass to shader 
-void animateWoodCube(Shader& shader, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
+void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
+
+
+/*POST PROCESSING EFFECT*/
+void outLine(Shader& outlineShader, Shader& shader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
 
 
 

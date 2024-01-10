@@ -24,20 +24,22 @@ namespace Time
 namespace lightVar
 {
 	//sunlight Ambient 
-	glm::vec3 sunLightColor { rgb(252, 150, 1) };
-	light::DirectLight sunLight
-	{	sunLightColor,
-		{-0.2f, -1.0f, -0.3f},
-		{ 0.2f, 0.2f, 0.2f,	},
-		{ 0.5f, 0.5f, 0.5f,	},
-		{ 1.0f,	 1.0f,  1.0f }, };
+	glm::vec3 sunLightColor { rgb(226, 239, 245) };
+	light::DirectLight sunLight{	
+		sunLightColor,
+		{-0.2f, -1.0f, -0.3f },	//direction
+		{ 0.4f, 0.4f, 0.4f,	 },	//ambient
+		{ 0.5f, 0.5f, 0.5f,	 },	//diffuse
+		{ 1.0f,	 1.0f,  1.0f }, //specular
+	};
 }
 
-namespace world
+namespace World
 {
 	Camera camera{ glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), 2.5f };
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
 	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), 800.0f / 600.0f, 0.1f, 100.0f)  };
+	Object::Model woodCube{};
 }
 
 //Animation functions 
@@ -284,13 +286,11 @@ void animateLightsCube(Shader& shader,Cube lightCubeVao,std::vector<light::light
 
 void setWoodCube(Shader& shader,float cubeEdge, std::vector<light::lightPointCube>& lightCubes)
 {
-	glm::mat4 localOrigin{ glm::mat4(1.0f)  };
-	glm::mat4 model{ glm::mat4(1.0f) };
-	model = glm::translate(localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+	World::woodCube.model = glm::translate(World::woodCube.localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
+	World::woodCube.model = glm::rotate(World::woodCube.model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
 	shader.use();
-	shader.setMat4("model", model);
+	shader.setMat4("model", World::woodCube.model);
 	shader.setFloat("cubeEdge", cubeEdge);
 	shader.setFloat("material.shininess", 64.0f);
 
@@ -300,11 +300,12 @@ void setWoodCube(Shader& shader,float cubeEdge, std::vector<light::lightPointCub
 	
 }
 
-void animateWoodCube(Shader& shader,Cube woodCubeVao ,std::vector<light::lightPointCube>& lightCubes)
+void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeVao ,std::vector<light::lightPointCube>& lightCubes)
 {
 	//updateLightPos
-	//incompleted
+	//incompleted ?
 	shader.use();
+	glm::vec3 emmissionColor{ rgb(255, 255, 0) };
 
 	//updateLightPos(lightCubes);
 	int index{};
@@ -323,23 +324,53 @@ void animateWoodCube(Shader& shader,Cube woodCubeVao ,std::vector<light::lightPo
 	}
 
 	shader.setFloat("emmissionStrength", frameGlow() );
-	shader.set3Float("viewPos", world::camera.pos);
+	shader.set3Float("emmissionColor", emmissionColor);
 
 	passViewProject(shader);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 	woodCubeVao.draw(shader);
 }
 
 void updateViewProject()
 {
-	world::view = glm::lookAt(world::camera.pos, world::camera.pos + world::camera.front, world::camera.up);
-	world::projection = glm::perspective(glm::radians(Mouse::fov), 800.0f / 600.0f, 0.1f, 100.0f);
+	World::view = glm::lookAt(World::camera.pos, World::camera.pos + World::camera.front, World::camera.up);
+	World::projection = glm::perspective(glm::radians(Mouse::fov), 800.0f / 600.0f, 0.1f, 100.0f);
 }
 
 void passViewProject(Shader& shader)
 {
-	shader.use();
-	shader.setMat4("view", world::view);
-	shader.setMat4("projection", world::projection);
+	shader.setMat4("view", World::view);
+	shader.setMat4("projection", World::projection);
 } 
+
+/*POST PROCESSING EFFECT*/
+void outLine(Shader& outlineShader,Shader& shader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes)
+{
+	float scale{ 1.1f };
+	glm::mat4 model{ World::woodCube.model };
+	glm::vec3 outlineColor{ rgb(241, 128, 45) };
+
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilMask(0xFF); // enable writing to the stencil buffer
+	
+	//drawModel
+	animateWoodCube(shader, cubemapTexture, woodCubeVao, lightCubes);
+
+	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+	glStencilMask(0x00); 
+	glDisable(GL_DEPTH_TEST);
+
+	//draw outline 
+	outlineShader.use();
+	outlineShader.set3Float("outLineColor", outlineColor);
+
+	model = glm::scale(model, glm::vec3(scale, scale, scale));
+	outlineShader.setMat4("model", model);
+	animateWoodCube(outlineShader, cubemapTexture, woodCubeVao, lightCubes);
+
+	glStencilMask(0xFF);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glEnable(GL_DEPTH_TEST);
+}
 
 

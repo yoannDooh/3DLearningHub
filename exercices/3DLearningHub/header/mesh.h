@@ -36,9 +36,11 @@ class Mesh
 public:
 	Mesh() {}
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures,bool cubeMapPresence);
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
+
 	void draw(Shader& shader);
 
 	unsigned int getVbo();
@@ -53,9 +55,9 @@ public:
 protected:
 	// render data
 	unsigned int VAO{}, VBO{}, EBO {};
-	
-private: 
+	bool isThereCubeMap;
 
+private: 
 	void setupMesh();
 };
 
@@ -67,12 +69,38 @@ public:
 	void draw(Shader& shader);
 
 	Cube() {}
-	Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures);
-	void constructLightCube(unsigned int vbo, unsigned int ebo); //construct lightCube VAO/VBO/EBO 
-		
+	Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures, bool isThereCubeMap);
+	//generate VAO,VBO and EBO from the provided cote and originCoor
+	//there is 5 attribute, in order : coord(3 floats) -> coolors coord (https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/RGB_color_solid_cube.png/220px-RGB_color_solid_cube.png) (3 floats)
+	//->normal vector (3 float) -> texture coord (2 float) -> the vertex number within the 8 vertices of the cube (1 float) 
+	//originCoord is bottomFace topLeft vertex 
+
+	Cube(unsigned int vbo, unsigned int ebo); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
+	
+protected:
 	void setupCube();
 };
 
-std::vector<Texture> loadTextures(std::vector<const char*> pathes, std::vector<TextureMap> types);
-Texture loadCubemap(std::vector<const char*> pathes);
+class CubeMap : public Cube
+{
+	public: 
+		CubeMap(std::vector<const char*>& texturesPath);
+		Texture texture;
+		std::array<float, 72> vertices;
+
+
+		void draw(Shader& shader);
+
+	private:
+		void loadTexture(std::vector<const char*>& paths);
+		void setupCubeMap();
+};
+
+
+//function declaration
+std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
+
+
+
+
 
