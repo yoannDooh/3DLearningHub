@@ -1,4 +1,3 @@
-#define _USE_MATH_DEFINES
 #include "../header/stb_image.h"
 #include "../header/window.h"
 #include "../header/shaderAndLight.h"
@@ -17,6 +16,8 @@ int main()
 	Shader lightSourcesShader(".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
 	Shader skyboxShader(".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
 	Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
+	Shader postProcessShader(".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
+
 
 	//woodCube parameters
 	float cubeEdge{ 1.0f };
@@ -92,6 +93,9 @@ int main()
 			++Time::currentFrame;
 			++Time::totalFrame;
 		};
+
+
+	//genFrameBuff(true, false);
 
 	// render loop
 	glfwSetTime(0);

@@ -160,6 +160,8 @@
     <None Include="openGl.props" />
     <None Include="shader\outline\fragment.glsl" />
     <None Include="shader\outline\vertex.glsl" />
+    <None Include="shader\postProcess\fragment.glsl" />
+    <None Include="shader\postProcess\vertex.glsl" />
     <None Include="shader\skyBox\fragment.glsl" />
     <None Include="shader\skyBox\vertex.glsl" />
     <None Include="shader\woodBox\fragment.glsl" />

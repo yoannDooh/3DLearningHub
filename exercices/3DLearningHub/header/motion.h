@@ -1,6 +1,5 @@
 #pragma once
 
-#define _USE_MATH_DEFINES
 #include <array>
 #include <vector>
 #include <glm/glm.hpp>
@@ -8,10 +7,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../header/shaderAndLight.h"
 #include "../header/mesh.h"
+#include "../header/window.h"
+
 
 
 //forward declaration
 class Cube;
+class Square;
+
 
 enum Effects
 {
@@ -160,9 +163,10 @@ void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao
 void animateWoodCubeAndOutline(Shader& shader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
 
 //frameBuffers
-unsigned int genFrameBuff();
+unsigned int genFrameBuff(bool activateBufferTex, bool activateRenderBuff);
 unsigned int genFrameBuffTex();
-unsigned int genRenderBUff();
+unsigned int genRenderBuff();
+void test();
 
 
 //void updateLightPos(std::vector<light::lightPointCube>& lightCubes);

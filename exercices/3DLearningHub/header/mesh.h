@@ -96,21 +96,20 @@ class CubeMap : public Cube
 		void setupCubeMap();
 };
 
-class Square
+class Square : public Mesh
 {
-	std::vector<float> vertices;
+public:
+	std::array<float,20> vertices;
 	std::array<unsigned int, 6> indices;
-	void draw(Shader& shader);
+	Texture texture;
+
 
 	Square() {}
-	Square(float cote, std::array<float, 3>& originCoord, Texture texture); //originCoord is topLeft vertex 
-};
+	Square(float cote, std::array<float, 2>& originCoord, Texture texture); //originCoord is topLeft vertex 
+	Square(float cote, std::array<float, 2>& originCoord); //originCoord is topRight vertex 
+	void draw(Shader& shader, std::string textureName);
 
+};
 
 //function declaration
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
-
-
-
-
-

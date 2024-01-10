@@ -30,6 +30,8 @@
     <None Include="shader\skyBox\fragment.glsl" />
     <None Include="shader\outline\vertex.glsl" />
     <None Include="shader\outline\fragment.glsl" />
+    <None Include="shader\postProcess\vertex.glsl" />
+    <None Include="shader\postProcess\fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

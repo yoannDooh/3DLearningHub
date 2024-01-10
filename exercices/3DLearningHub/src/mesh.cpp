@@ -8,8 +8,6 @@
 #include "../header/stb_image.h"
 #include "../header/motion.h"
 
-
-
 /*--Texture FUNCTION--*/
 std::vector<Texture> loadTextures(std::vector<const char*> pathes, std::vector<TextureMap> types)
 {
@@ -585,7 +583,7 @@ void Cube::setupCube()
 /*--CUBE MAP CLASS*/
 CubeMap::CubeMap(std::vector<const char*>& texturesPath)
 {
-	//faudrait clean ça et crée un enum en mode choix des attribut voulus comme genre un menu, et après on fait des if pour voir si faut inclure tel ou tel attributs
+	//faudrait clean ï¿½a et crï¿½e un enum en mode choix des attribut voulus comme genre un menu, et aprï¿½s on fait des if pour voir si faut inclure tel ou tel attributs
 	std::array<Vertex, 8> cubeVertices{};
 	const float cote{ 2 };
 	std::array<const float, 3> originCoord{ -1, -1, -1 };
@@ -869,15 +867,145 @@ void CubeMap::draw(Shader& shader)
 	glDepthFunc(GL_LESS);
 }
 
-
 /*--SQUARE CLASS--*/
-Square::Square(float cote, std::array<float, 3>& originCoord, Texture texture)
+Square::Square(float cote, std::array<float, 2>& originCoord, Texture texture)
 {
+	vertices = {
+			//coordinates	
+				//x 							//y		     //z	  //texture coord
+			   originCoord[0],			originCoord[1],		 0.0f,		1.0f, 1.0f,			// top right
+			   originCoord[0],			originCoord[1]-cote, 0.0f,      1.0f, 0.0f,			// bottom right
+			   originCoord[0]-cote,		originCoord[1]-cote, 0.0f,      0.0f, 0.0f,			// bottom left
+			   originCoord[0]-cote,		originCoord[1],		 0.0f,      0.0f, 1.0f,			// top left
+	};
 
+	//indices 
+	indices = {
+		0, 1, 3, // first triangle
+		1, 2, 3// second triangle
+	};
+
+	//Texture 
+	unsigned int tex{};
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	texture.ID = tex;
+
+	//texture filtering 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//prepare texture
+	int width{}, height{}, nrChannels{};
+	unsigned char* data{ stbi_load("ressource\\catTexture.jpg",&width,&height,&nrChannels,0) };
+
+	//load texture
+	if (data)
+	{
+		GLenum format = GL_RGBA;
+		if (nrChannels == 1)
+			format = GL_RED;
+		else if (nrChannels == 3)
+			format = GL_RGB;
+		else if (nrChannels == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, texture.ID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		//texture filtering
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+
+	else
+		std::cout << "Failed to load : texture" << texture.type << std::endl;
+
+
+	//VAO
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	//VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+
+	//EBO
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+
+	//coord attribute
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+
+	//texCoord attribute
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+
+	glBindVertexArray(0);
 }
 
+Square::Square(float cote, std::array<float, 2>& originCoord)
+{
+	vertices = {
+		//coordinates	
+			//x 							//y		     //z	  //texture coord
+		   originCoord[0],			originCoord[1],		 0.0f,		1.0f, 1.0f,			// top right
+		   originCoord[0],			originCoord[1] - cote, 0.0f,      1.0f, 0.0f,			// bottom right
+		   originCoord[0] - cote,		originCoord[1] - cote, 0.0f,      0.0f, 0.0f,			// bottom left
+		   originCoord[0] - cote,		originCoord[1],		 0.0f,      0.0f, 1.0f,			// top left
+	};
+
+	//indices 
+	indices = {
+		0, 1, 3, // first triangle
+		1, 2, 3// second triangle
+	};
+
+	//VAO
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	//VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+
+	//EBO
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+
+	//coord attribute
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+
+	//texCoord attribute
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float) ) );
 
 
+	glBindVertexArray(0);
+}
 
+void Square::draw(Shader& shader,std::string textureName)
+{
+	shader.setInt(textureName,0);
+	glBindTexture(GL_TEXTURE_2D, texture.ID);
+	glActiveTexture(GL_TEXTURE0);
 
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 
+}
