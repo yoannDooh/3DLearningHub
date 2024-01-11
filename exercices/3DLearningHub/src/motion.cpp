@@ -45,6 +45,54 @@ namespace World
 	Object::Model woodCube{};
 }
 
+//frameBuffer CLASS
+FrameBuffer::FrameBuffer(bool activateBufferTex, bool activateRenderBuff)
+{
+	glGenFramebuffers(1, &id);
+	glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+	if (activateBufferTex)
+		genFrameBuffTex();
+
+	if (activateRenderBuff)
+		genRenderBuff();
+
+	if (!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE))
+	{
+		auto error{ glCheckFramebufferStatus(GL_FRAMEBUFFER) };
+		std::cerr << "renderBUffer failed, error : " << error;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void FrameBuffer::genFrameBuffTex()
+{
+	glGenTextures(1, &texId);
+	glBindTexture(GL_TEXTURE_2D, texId);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
+}
+
+void FrameBuffer::genRenderBuff()
+{
+	glGenRenderbuffers(1, &renderId);
+	glBindRenderbuffer(GL_RENDERBUFFER, renderId);
+
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderId);
+
+}
+
+
 
 //LIGHT SHOULD USE A MODEL STRUCT 
 
@@ -382,61 +430,3 @@ void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, uns
 	glDepthFunc(GL_LESS);
 }
 
-//frameBuffers
-unsigned int genFrameBuff(bool activateBufferTex, bool activateRenderBuff)
-{
-	unsigned int fbo{};
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-	if (activateBufferTex)
-		genFrameBuffTex();
-
-	if (activateRenderBuff)
-		genRenderBuff();
-
-	if (!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE))
-	{
-		auto error{ glCheckFramebufferStatus(GL_FRAMEBUFFER) };
-		std::cerr << "renderBUffer failed, error : " << error;
-	}
-
-	return fbo;
-}
-
-unsigned int genFrameBuffTex()
-{
-	unsigned int frameBufferTex{};
-	glGenTextures(1, &frameBufferTex);
-	glBindTexture(GL_TEXTURE_2D, frameBufferTex);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frameBufferTex, 0);
-
-	return frameBufferTex;
-}
-
-unsigned int genRenderBuff()
-{
-	unsigned int renderBuff{};
-	glGenRenderbuffers(1, &renderBuff);
-	glBindRenderbuffer(GL_RENDERBUFFER, renderBuff);
-	
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,GL_RENDERBUFFER, renderBuff);
-
-	return renderBuff;
-}
-
-void test()
-{
-	std::array<float, 2> origin{1.0f,1.0f};
-	Square mesmorts (2.0f, origin);
-}

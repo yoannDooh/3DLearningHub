@@ -43,6 +43,7 @@ public:
 
 	void draw(Shader& shader);
 
+	unsigned int getVao();
 	unsigned int getVbo();
 	unsigned int getEbo();
 
@@ -99,7 +100,7 @@ class CubeMap : public Cube
 class Square : public Mesh
 {
 public:
-	std::array<float,20> vertices;
+	std::array<float,24> vertices;
 	std::array<unsigned int, 6> indices;
 	Texture texture;
 
@@ -108,6 +109,8 @@ public:
 	Square(float cote, std::array<float, 2>& originCoord, Texture texture); //originCoord is topLeft vertex 
 	Square(float cote, std::array<float, 2>& originCoord); //originCoord is topRight vertex 
 	void draw(Shader& shader, std::string textureName);
+	void draw(Shader& shader, std::string textureName, unsigned int textureId);
+
 
 };
 

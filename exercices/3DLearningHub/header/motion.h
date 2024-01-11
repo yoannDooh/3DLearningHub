@@ -21,6 +21,22 @@ enum Effects
 	
 };
 
+class FrameBuffer
+{
+public:
+	unsigned int id;
+	unsigned int texId;
+	unsigned int renderId;
+
+	FrameBuffer(bool activateBufferTex, bool activateRenderBuff);
+
+
+private:
+	void genFrameBuffTex();
+	void genRenderBuff();
+
+};
+
 /*CAMERA AND MOUSE*/
 class Camera
 {
@@ -163,10 +179,9 @@ void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao
 void animateWoodCubeAndOutline(Shader& shader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
 
 //frameBuffers
-unsigned int genFrameBuff(bool activateBufferTex, bool activateRenderBuff);
-unsigned int genFrameBuffTex();
-unsigned int genRenderBuff();
-void test();
+void genFrameBuff(FrameBuffer FBO,bool activateBufferTex, bool activateRenderBuff);
+void genFrameBuffTex(FrameBuffer FBO);
+void genRenderBuff(FrameBuffer FBO);
 
 
 //void updateLightPos(std::vector<light::lightPointCube>& lightCubes);

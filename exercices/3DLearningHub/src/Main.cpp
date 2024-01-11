@@ -5,9 +5,7 @@
 #include "../header/mesh.h"
 
 int main()
-
 {
-
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
@@ -37,6 +35,9 @@ int main()
 	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}),true);
 	Cube lightCube(woodCube.getVbo(), woodCube.getEbo());
 	CubeMap skyBox (skyBoxTextPaths);
+
+	std::array<float, 2> origin{ 1.0f,1.0f };
+	Square quad(2.0, origin);
 
 	//lightCubes 
 	light::lightPointCube light;
@@ -77,7 +78,7 @@ int main()
 			Time::deltaTime = Time::currentFrameTime - Time::lastFrameTime;
 			Time::lastFrameTime = Time::currentFrameTime;
 		};
-
+	 
 	auto swapBuffer = [&window]()
 		{
 			glfwSwapBuffers(window.windowPtr);
@@ -94,25 +95,41 @@ int main()
 			++Time::totalFrame;
 		};
 
+	FrameBuffer fbo(true, true);
 
-	//genFrameBuff(true, false);
 
 	// render loop
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{
-
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+		glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+		
+		
 		newFrame();
 		updateViewProject();
 
 		animateLightsCube(lightSourcesShader, lightCube, lightPoints);
-		animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube,lightPoints);
+		//animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube,lightPoints);
 
-
+		/*
 		//DRAW IN LAST
 		skyBox.draw(skyboxShader);
+		*/
+		
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+		postProcessShader.use();
+		glBindVertexArray(quad.getVao() );
+		glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
+		glBindTexture(GL_TEXTURE_2D, fbo.texId);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
 
 		swapBuffer();
+
 	}
 
 	glfwTerminate();

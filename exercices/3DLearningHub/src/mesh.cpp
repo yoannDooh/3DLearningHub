@@ -163,6 +163,12 @@ void Mesh::setupMesh()
 
 }
 
+unsigned int Mesh::getVao()
+{
+	return VAO;
+
+}
+
 unsigned int Mesh::getVbo()
 {
 	return VBO;
@@ -871,12 +877,14 @@ void CubeMap::draw(Shader& shader)
 Square::Square(float cote, std::array<float, 2>& originCoord, Texture texture)
 {
 	vertices = {
-			//coordinates	
-				//x 							//y		     //z	  //texture coord
-			   originCoord[0],			originCoord[1],		 0.0f,		1.0f, 1.0f,			// top right
-			   originCoord[0],			originCoord[1]-cote, 0.0f,      1.0f, 0.0f,			// bottom right
-			   originCoord[0]-cote,		originCoord[1]-cote, 0.0f,      0.0f, 0.0f,			// bottom left
-			   originCoord[0]-cote,		originCoord[1],		 0.0f,      0.0f, 1.0f,			// top left
+		// positions   // texCoords
+	  -1.0f,  1.0f,  0.0f, 1.0f,
+	  -1.0f, -1.0f,  0.0f, 0.0f,
+	   1.0f, -1.0f,  1.0f, 0.0f,
+
+	  -1.0f,  1.0f,  0.0f, 1.0f,
+	   1.0f, -1.0f,  1.0f, 0.0f,
+	   1.0f,  1.0f,  1.0f, 1.0f
 	};
 
 	//indices 
@@ -938,18 +946,20 @@ Square::Square(float cote, std::array<float, 2>& originCoord, Texture texture)
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
 
+	/*
 	//EBO
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+	*/
 
 	//coord attribute
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 
 	//texCoord attribute
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
 
 	glBindVertexArray(0);
@@ -958,12 +968,14 @@ Square::Square(float cote, std::array<float, 2>& originCoord, Texture texture)
 Square::Square(float cote, std::array<float, 2>& originCoord)
 {
 	vertices = {
-		//coordinates	
-			//x 							//y		     //z	  //texture coord
-		   originCoord[0],			originCoord[1],		 0.0f,		1.0f, 1.0f,			// top right
-		   originCoord[0],			originCoord[1] - cote, 0.0f,      1.0f, 0.0f,			// bottom right
-		   originCoord[0] - cote,		originCoord[1] - cote, 0.0f,      0.0f, 0.0f,			// bottom left
-		   originCoord[0] - cote,		originCoord[1],		 0.0f,      0.0f, 1.0f,			// top left
+		// positions   // texCoords
+	  -1.0f,  1.0f,  0.0f, 1.0f,
+	  -1.0f, -1.0f,  0.0f, 0.0f,
+	   1.0f, -1.0f,  1.0f, 0.0f,
+
+	  -1.0f,  1.0f,  0.0f, 1.0f,
+	   1.0f, -1.0f,  1.0f, 0.0f,
+	   1.0f,  1.0f,  1.0f, 1.0f
 	};
 
 	//indices 
@@ -981,18 +993,20 @@ Square::Square(float cote, std::array<float, 2>& originCoord)
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
 
+	/*
 	//EBO
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+	*/
 
 	//coord attribute
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 
 	//texCoord attribute
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float) ) );
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
 
 	glBindVertexArray(0);
@@ -1006,6 +1020,19 @@ void Square::draw(Shader& shader,std::string textureName)
 
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
+}
+
+void Square::draw(Shader& shader, std::string textureName, unsigned int textureId)
+{
+	shader.use();
+	shader.setInt(textureName, 0);
+	glBindVertexArray(VAO);
+
+	glBindTexture(GL_TEXTURE_2D, textureId);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
 }
