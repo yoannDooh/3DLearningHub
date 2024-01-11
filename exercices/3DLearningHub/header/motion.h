@@ -18,7 +18,12 @@ class Square;
 
 enum Effects
 {
-	
+	inverse, //inverse color
+	greyscale,// B&W color
+
+	//Kernel effects
+	blur,
+	edgeDetection,
 };
 
 class FrameBuffer
@@ -177,14 +182,6 @@ void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao
 
 /*POST PROCESSING EFFECT*/
 void animateWoodCubeAndOutline(Shader& shader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
-
-//frameBuffers
-void genFrameBuff(FrameBuffer FBO,bool activateBufferTex, bool activateRenderBuff);
-void genFrameBuffTex(FrameBuffer FBO);
-void genRenderBuff(FrameBuffer FBO);
-
-
-//void updateLightPos(std::vector<light::lightPointCube>& lightCubes);
-
+void setEffect(Shader& shader, Effects effect);
 
 

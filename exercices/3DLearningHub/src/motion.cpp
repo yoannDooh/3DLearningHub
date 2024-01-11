@@ -430,3 +430,9 @@ void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, uns
 	glDepthFunc(GL_LESS);
 }
 
+void setEffect(Shader& shader, Effects effect)
+{
+	shader.use();
+	shader.setInt("effectIndex", effect);
+}
+

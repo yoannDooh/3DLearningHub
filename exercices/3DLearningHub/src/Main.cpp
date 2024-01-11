@@ -5,6 +5,7 @@
 #include "../header/mesh.h"
 
 int main()
+
 {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
@@ -97,39 +98,31 @@ int main()
 
 	FrameBuffer fbo(true, true);
 
+	setEffect(postProcessShader, edgeDetection);
 
 	// render loop
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{
-		
+		//BindFbo
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
 		glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-		
-		
+
 		newFrame();
+
+		//DrawScene
 		updateViewProject();
-
 		animateLightsCube(lightSourcesShader, lightCube, lightPoints);
-		//animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube,lightPoints);
-
-		/*
+		animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube,lightPoints);
 		//DRAW IN LAST
 		skyBox.draw(skyboxShader);
-		*/
-		
-		
+			
+		//drawTexture Fbo
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-		postProcessShader.use();
-		glBindVertexArray(quad.getVao() );
-		glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
-		glBindTexture(GL_TEXTURE_2D, fbo.texId);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
+		quad.draw(postProcessShader,"screenTexture", fbo.texId);
 
 		swapBuffer();
-
 	}
 
 	glfwTerminate();
