@@ -18,8 +18,14 @@ class Square;
 
 enum Effects
 {
-	
+	inverse, //inverse color
+	greyscale,// B&W color
+
+	//Kernel effects
+	blur,
+	edgeDetection,
 };
+void setEffect(Shader& shader, Effects effect);
 
 class FrameBuffer
 {

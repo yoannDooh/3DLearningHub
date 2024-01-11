@@ -92,6 +92,11 @@ void FrameBuffer::genRenderBuff()
 
 }
 
+void setEffect(Shader& shader,Effects effect)
+{
+	shader.use();
+	shader.setInt("effectIndex", effect);
+}
 
 
 //LIGHT SHOULD USE A MODEL STRUCT 
