@@ -4,8 +4,16 @@
 #include "../header/motion.h"
 #include "../header/mesh.h"
 
-int main()
 
+std::array<float, 8>points  {
+-0.5f, 0.5f, // top-left
+0.5f, 0.5f, // top-right
+0.5f, -0.5f, // bottom-right
+-0.5f, -0.5f // bottom-left
+};
+
+
+int main()
 {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
@@ -16,6 +24,8 @@ int main()
 	Shader skyboxShader(".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
 	Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
 	Shader postProcessShader(".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
+	Shader geometryShader(".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
+	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
 
 
 	//woodCube parameters
@@ -37,8 +47,13 @@ int main()
 	Cube lightCube(woodCube.getVbo(), woodCube.getEbo());
 	CubeMap skyBox (skyBoxTextPaths);
 
+	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
 	Square quad(2.0, origin);
+
+
+	//quad for geometry Shader 
+	QuadPoints quadPoints (points);
 
 	//lightCubes 
 	light::lightPointCube light;
@@ -96,14 +111,22 @@ int main()
 			++Time::totalFrame;
 		};
 
+	auto drawHouse = [&geometryShader, &quadPoints]()
+		{
+			geometryShader.use();
+			quadPoints.draw(geometryShader);
+		};
+
 	FrameBuffer fbo(true, true);
 
 	setEffect(postProcessShader, edgeDetection);
+
 
 	// render loop
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{
+		
 		//BindFbo
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
 		glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
@@ -121,6 +144,7 @@ int main()
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
 		quad.draw(postProcessShader,"screenTexture", fbo.texId);
+		
 
 		swapBuffer();
 	}
@@ -128,4 +152,3 @@ int main()
 	glfwTerminate();
 	return 0;
 }
-

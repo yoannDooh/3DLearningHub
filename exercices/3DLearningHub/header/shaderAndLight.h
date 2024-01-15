@@ -15,6 +15,8 @@ class Shader
 	public:
 	// constructor reads and builds the shader
 	Shader(const char* vertexPath, const char* fragmentPath);
+	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
+
 
 	// the program ID
 	unsigned int ID{};

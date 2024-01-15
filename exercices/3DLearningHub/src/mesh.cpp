@@ -1027,3 +1027,31 @@ void Square::draw(Shader& shader, std::string textureName, unsigned int textureI
 	glBindVertexArray(0);
 
 }
+
+
+/*--QuadPoints CLASS--*/
+QuadPoints::QuadPoints(std::array<float,8>points)
+{
+	//VAO
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	//VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points[0], GL_STATIC_DRAW);
+
+	//coord attribute
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glBindVertexArray(0);
+}
+
+void QuadPoints::draw(Shader& shader)
+{
+	shader.use();
+	glBindVertexArray(VAO);
+
+	glDrawArrays(GL_POINTS, 0, 4);
+	glBindVertexArray(0);
+}

@@ -158,6 +158,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="openGl.props" />
+    <None Include="shader\circle\fragment.glsl" />
+    <None Include="shader\circle\geometry.glsl" />
+    <None Include="shader\circle\vertex.glsl" />
+    <None Include="shader\house\fragment.glsl" />
+    <None Include="shader\house\geometry.glsl" />
+    <None Include="shader\house\vertex.glsl" />
     <None Include="shader\outline\fragment.glsl" />
     <None Include="shader\outline\vertex.glsl" />
     <None Include="shader\postProcess\fragment.glsl" />

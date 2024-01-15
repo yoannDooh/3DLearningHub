@@ -114,5 +114,15 @@ public:
 
 };
 
+class QuadPoints : public Mesh
+{
+public:
+	std::array<float, 4> points;
+
+	QuadPoints() {};
+	QuadPoints(std::array<float, 8>points);
+	void draw(Shader& shader);
+};
+
 //function declaration
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
