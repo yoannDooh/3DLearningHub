@@ -25,7 +25,6 @@ enum Effects
 	blur,
 	edgeDetection,
 };
-void setEffect(Shader& shader, Effects effect);
 
 class FrameBuffer
 {
