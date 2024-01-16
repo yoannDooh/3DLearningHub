@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 layout(points) in;
 layout(triangle_strip, max_vertices = 5) out;
 
@@ -16,6 +16,7 @@ void build_house(vec4 position)
 	EmitVertex();
 	EndPrimitive();
 }
+
 void main() {
 	build_house(gl_in[0].gl_Position);
 }

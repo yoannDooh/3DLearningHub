@@ -5,13 +5,16 @@
 #include "../header/mesh.h"
 
 
-std::array<float, 8>points  {
--0.5f, 0.5f, // top-left
-0.5f, 0.5f, // top-right
-0.5f, -0.5f, // bottom-right
--0.5f, -0.5f // bottom-left
+std::vector<float>points  {
+-0.5f, 0.5f,0.0f, // top-left
+0.5f, 0.5f,0.0f, // top-right
+0.5f, -0.5f,0.0f, // bottom-right
+-0.5f, -0.5f, 0.0f,// bottom-left
 };
 
+std::vector<float>circleCenter{
+	0.0f, 0.0f,0.0f, 
+};
 
 int main()
 
@@ -54,7 +57,9 @@ int main()
 
 
 	//quad for geometry Shader 
-	QuadPoints quadPoints (points);
+	Points quadPoints(points);
+	Points circle(circleCenter);
+
 
 	//lightCubes 
 	light::lightPointCube light;
@@ -115,7 +120,15 @@ int main()
 	auto drawHouse = [&geometryShader, &quadPoints]()
 		{
 			geometryShader.use();
-			quadPoints.draw(geometryShader);
+			quadPoints.draw();
+		};
+
+	auto drawCircle = [&circleShader, &circle]()
+		{
+			circleShader.use();
+			circleShader.setFloat("radius", 0.3f);
+			circleShader.setInt("pointsNb", 85);
+			circle.draw();
 		};
 
 	FrameBuffer fbo(true, true);
@@ -127,7 +140,6 @@ int main()
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{
-		
 		//BindFbo
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
 		glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
@@ -146,7 +158,6 @@ int main()
 		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
 		quad.draw(postProcessShader,"screenTexture", fbo.texId);
 		
-
 		swapBuffer();
 	}
 

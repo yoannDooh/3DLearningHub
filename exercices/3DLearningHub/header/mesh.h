@@ -117,12 +117,23 @@ public:
 class QuadPoints : public Mesh
 {
 public:
-	std::array<float, 4> points;
+	std::array<float, 8> points;
 
 	QuadPoints() {};
 	QuadPoints(std::array<float, 8>points);
-	void draw(Shader& shader);
+	void draw();
 };
+
+class Points : public Mesh
+{
+public:
+	std::vector<float> points;
+
+	Points() {};
+	Points(std::vector<float> pointCoord);
+	void draw();
+};
+
 
 //function declaration
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);

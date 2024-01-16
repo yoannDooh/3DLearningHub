@@ -1,5 +1,5 @@
 #version 330 core
-layout(location = 0) in vec2 centerPos;
+layout(location = 0) in vec3 centerPos;
 
 /*
 out VS_OUT{
@@ -10,5 +10,5 @@ out VS_OUT{
 
 void main()
 {
-	gl_Position = vec4(centerPos.x, centerPos.y, 0.0, 1.0);
+	gl_Position = vec4(centerPos.xyz, 1.0);
 }

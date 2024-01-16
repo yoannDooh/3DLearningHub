@@ -130,10 +130,12 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+
 
     //diffuse and specular
     float diff = max(dot(normal, lightDir), 0.0);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
 
     // attenuation
     float distance = length(light.pos - fragPos);
@@ -142,7 +144,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TextCoord));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TextCoord)) * light.color;
-    vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TextCoord));
+    vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TextCoord)) * light.color;
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
@@ -154,10 +156,11 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
 
     //diffuse and specular
     float diff = max(dot(normal, lightDir), 0.0);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
 
     // attenuation
     float distance = length(light.pos - fragPos);
@@ -172,7 +175,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TextCoord));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TextCoord)) * light.color;
-    vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TextCoord));
+    vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TextCoord)) * light.color;
     ambient *= attenuation*intensity;
     diffuse *= attenuation*intensity;
     specular *= attenuation*intensity;
