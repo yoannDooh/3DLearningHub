@@ -811,7 +811,7 @@ void CubeMap::loadTexture(std::vector<const char*>& pathes)
 
 		else
 		{
-			std::cerr << "failed to load face number " << index << " of cubeMap";
+			std::cerr << "failed to load face number " << index << " of cubeMap" << std::endl;
 			stbi_image_free(data);
 		}
 
@@ -1086,5 +1086,101 @@ void Points::draw()
 
 	glDrawArrays(GL_POINTS, 0, points.size()/3 );
 	glBindVertexArray(0);
+}
+
+
+/*--TERRAIN CLASS--*/
+Terrain::Terrain(int width,int height,int patchNb)
+{
+
+	Vertex vertex{};
+	unsigned int indice{};
+
+	//generates vertex attribes (coord and uv)
+	for (int rowIndex{}; rowIndex < patchNb; ++rowIndex)
+	{
+		for (int colIndex{}; colIndex < patchNb+1; ++colIndex) //to access all vertices on an a row
+		{
+			vertex.coord[0] = (-width/2) + (width/patchNb+1 * patchNb + 1); //x
+			vertex.coord[1] = 0; //y
+			vertex.coord[2] = (-height / 2) + (height / patchNb + 1 * patchNb + 1); //z
+
+			vertex.textCoord[0] = colIndex / (patchNb+1); //u
+			vertex.textCoord[1] = rowIndex / (patchNb+1); //v
+
+			vertices.push_back(vertex);
+		}
+	}
+
+	//generates indices first triangle is : topRight->bottomLeft->topLeft of the square and second triangle is bottomLeft->bottomRigt->topLeft
+	for (int rowIndex{}; rowIndex < patchNb; ++rowIndex)
+	{
+		for (int colIndex{}; colIndex < patchNb; ++colIndex) //to access all vertices on an a row
+		{
+			int currentSquareBottomLeft{ colIndex + patchNb+1 * rowIndex };
+
+			/*FIRST TRIANGLE*/
+			//topRight
+			indice = currentSquareBottomLeft + patchNb + 2;
+			indices.push_back(indice);
+
+			//bottomLeft
+			indices.push_back(currentSquareBottomLeft);
+
+			//topLeft
+			indice = currentSquareBottomLeft + patchNb + 1;
+			indices.push_back(indice);
+
+
+			/*SECOND TRIANGLE*/
+			//bottomLeft
+			indices.push_back(currentSquareBottomLeft);
+
+			//bottomRigt
+			indice = currentSquareBottomLeft+1;
+			indices.push_back(indice);
+
+			//topLeft
+			indice = currentSquareBottomLeft + patchNb + 1;
+			indices.push_back(indice);
+		}
+	}
+
+
+	 setupTerrain();
+}
+
+void Terrain::setupTerrain()
+{
+	//VAO
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	//VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+
+	//EBO
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+
+	//coord attribute
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+
+	//texture coord attribute
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+
+	glBindVertexArray(0);
+}
+
+void Terrain::draw()
+{
+	glBindVertexArray(VAO);
+	glDrawElements(GL_PATCHES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 

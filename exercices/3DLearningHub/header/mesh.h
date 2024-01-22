@@ -28,7 +28,7 @@ struct Vertex
 	std::array<float, 3> coolors{};   //rgb cube model 
 	std::array<float, 3> normal{};    //normal vector to the plane of the vertice 
 	std::array<float, 2> textCoord{};
-	float vertexNb{}; // vertex 1 2 3 4 5 6 7 or 8 on the cube 
+	float vertexNb{}; // vertex 1 2 3 4 5 6 7 or 8 on a cube 
 };
 
 class Mesh
@@ -133,6 +133,24 @@ public:
 	Points(std::vector<float> pointCoord);
 	void draw();
 };
+
+class Terrain : public Mesh
+{
+public:
+
+	Terrain() {};
+	Terrain(int width, int weight, int patchNb); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
+	
+	void draw();
+
+private: 
+	void setupTerrain();
+
+};
+
+
+//Terrain rendering
+void renderTerrain();
 
 
 //function declaration

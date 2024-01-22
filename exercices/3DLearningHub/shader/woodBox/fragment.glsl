@@ -108,7 +108,7 @@ void main()
 
     vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb* emmissionColor;
 
-    FragColor = vec4(lightning + reflectColor * 0.3 + refractColor * 0.3 + emission, 1.0);
+    FragColor = vec4(lightning + /*reflectColor * 0.3 + refractColor * 0.3*/ + emission, 1.0);
    
 }
 
@@ -182,4 +182,3 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
     return (ambient + diffuse + specular);
 
 }
-

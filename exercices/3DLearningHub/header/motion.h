@@ -29,9 +29,9 @@ enum Effects
 class FrameBuffer
 {
 public:
-	unsigned int id;
-	unsigned int texId;
-	unsigned int renderId;
+	unsigned int id{};
+	unsigned int texId{};
+	unsigned int renderId{};
 
 	FrameBuffer(bool activateBufferTex, bool activateRenderBuff);
 
