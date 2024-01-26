@@ -5,7 +5,7 @@
 
 namespace Mouse
 {
-	float sensitivity = 0.1f;
+	float sensitivity = 0.15f;
 	float lastX{ 400 };
 	float lastY{ 300 };
 	bool firstMouseInput{ true };
@@ -39,10 +39,48 @@ namespace lightVar
 
 namespace World
 {
-	Camera camera{ glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), 2.5f };
+	Camera camera{ glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), 50.5f };
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
-	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), 800.0f / 600.0f, 0.1f, 100.0f)  };
+	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar)  };
+	float projectionWidth { 1920.0f };
+	float projectionHeight{ 1080.0f };
+	float projectionNear{ 0.1f };
+	float projectionFar{ 1000.0f };
 	Object::Model woodCube{};
+	extern int mapWidth{};
+	extern int mapHeight{};
+}
+
+//shadows functions
+glm::mat4 toDirectionalLightSpaceMat(float lightRange,glm::vec3 lightPos)
+{
+	float near_plane = 1.0f, far_plane = lightRange;
+	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,near_plane, far_plane);
+	glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); //look at the center of the scene and up vector is y axis direction
+
+	return lightProjection * lightView;			
+}
+
+void drawShadow(Shader& shadowMapShader)
+{
+	FrameBuffer depthMap(true);
+	
+	//setup texture size and frameBuffer
+	glViewport(0, 0, depthMap.SHADOW_WIDTH, depthMap.SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMap.id);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	//send lightSpaceMatrix
+	shadowMapShader.use();
+	glm::mat4 lightMat(toDirectionalLightSpaceMat(7.5f, glm::vec3(-2.0f, 4.0f, -1.0f) ) );
+	shadowMapShader.setMat4("lightSpaceMatrix",lightMat);
+
+
+	//RenderScene();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	
+	// 2. then render scene as normal with shadow mapping (using depth map)
+
 }
 
 //frameBuffer CLASS
@@ -52,7 +90,7 @@ FrameBuffer::FrameBuffer(bool activateBufferTex, bool activateRenderBuff)
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 
 	if (activateBufferTex)
-		genFrameBuffTex();
+		genFrameBuffTex(SCR_WIDTH,SCR_HEIGHT,false);
 
 	if (activateRenderBuff)
 		genRenderBuff();
@@ -66,19 +104,27 @@ FrameBuffer::FrameBuffer(bool activateBufferTex, bool activateRenderBuff)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void FrameBuffer::genFrameBuffTex()
+void FrameBuffer::genFrameBuffTex(int width, int height,bool depthAttachment)
 {
 	glGenTextures(1, &texId);
 	glBindTexture(GL_TEXTURE_2D, texId);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
+	if (!depthAttachment)
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
+	else
+	{
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texId, 0);
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+	}
+
 }
 
 void FrameBuffer::genRenderBuff()
@@ -90,6 +136,27 @@ void FrameBuffer::genRenderBuff()
 
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderId);
 
+}
+
+FrameBuffer::FrameBuffer(bool shadowMap)
+{
+	if (shadowMap)
+	{
+		SHADOW_WIDTH = 1024;
+		SHADOW_HEIGHT = 1024;
+		glGenFramebuffers(1, &id);
+		glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+		genFrameBuffTex(SHADOW_WIDTH, SHADOW_HEIGHT,true);
+
+		if (!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE))
+		{
+			auto error{ glCheckFramebufferStatus(GL_FRAMEBUFFER) };
+			std::cerr << "renderBuffer failed, error : " << error;
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 }
 
 //Animation functions 
@@ -385,7 +452,7 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeVao
 void updateViewProject()
 {
 	World::view = glm::lookAt(World::camera.pos, World::camera.pos + World::camera.front, World::camera.up);
-	World::projection = glm::perspective(glm::radians(Mouse::fov), 800.0f / 600.0f, 0.1f, 100.0f);
+	World::projection = glm::perspective(glm::radians(Mouse::fov), World::projectionWidth / World::projectionHeight, World::projectionNear, World::projectionFar);
 }
 
 void passViewProject(Shader& shader)

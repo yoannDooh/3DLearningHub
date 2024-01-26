@@ -13,6 +13,7 @@ enum TextureMap
 	normal,
 	roughness,
 	refraction,
+	heightmap,
 };
 
 struct Texture
@@ -29,6 +30,13 @@ struct Vertex
 	std::array<float, 3> normal{};    //normal vector to the plane of the vertice 
 	std::array<float, 2> textCoord{};
 	float vertexNb{}; // vertex 1 2 3 4 5 6 7 or 8 on a cube 
+};
+
+//terrain Vertex struct 
+struct terrainVertex
+{
+	std::array<float, 3> coord{};     //vertices coord, in order : xyz
+	std::array<float, 2> textCoord{};
 };
 
 class Mesh
@@ -137,13 +145,21 @@ public:
 class Terrain : public Mesh
 {
 public:
+	
+	Texture heightMap{};
+	int width{};
+	int height{};
+	std::vector<terrainVertex> vertices{};
+	
 
 	Terrain() {};
-	Terrain(int width, int weight, int patchNb); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
-	
-	void draw();
+	Terrain(int patchNb,const char* heightMapPath); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
+
+
+	void draw(Shader& shader);
 
 private: 
+	void loadHeightMap(const char* heightMapPath);
 	void setupTerrain();
 
 };

@@ -16,6 +16,7 @@ class Shader
 	// constructor reads and builds the shader
 	Shader(const char* vertexPath, const char* fragmentPath);
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
+	Shader(const char* vertexPath, const char* fragmentPath, const char* tessellationControl, const char* tessellationEvaluation);
 
 
 	// the program ID

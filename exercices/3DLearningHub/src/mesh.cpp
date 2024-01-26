@@ -543,7 +543,7 @@ void Cube::draw(Shader& shader)
 		glBindTexture(GL_TEXTURE_2D, textures[index].ID);
 	}
 
-	glActiveTexture(GL_TEXTURE0); 
+	glActiveTexture(GL_TEXTURE0);  //????
 
 	 // draw mesh
 	glBindVertexArray(VAO);
@@ -905,7 +905,7 @@ Square::Square(float cote, std::array<float, 2>& originCoord, Texture texture)
 
 	//prepare texture
 	int width{}, height{}, nrChannels{};
-	unsigned char* data{ stbi_load("ressource\\catTexture.jpg",&width,&height,&nrChannels,0) };
+	unsigned char* data{ stbi_load("ressource\\catTexture.jpg",&width,&height,&nrChannels,0) }; //???????????
 
 	//load texture
 	if (data)
@@ -1088,70 +1088,62 @@ void Points::draw()
 	glBindVertexArray(0);
 }
 
-
 /*--TERRAIN CLASS--*/
-Terrain::Terrain(int width,int height,int patchNb)
+Terrain::Terrain(int patchNb, const char* heightMapPath)
 {
+	loadHeightMap(heightMapPath);
 
-	Vertex vertex{};
+	terrainVertex vertex{};
 	unsigned int indice{};
 
 	//generates vertex attribes (coord and uv)
-	for (int rowIndex{}; rowIndex < patchNb; ++rowIndex)
+	for (int rowIndex{}; rowIndex < patchNb+1; ++rowIndex) 
 	{
 		for (int colIndex{}; colIndex < patchNb+1; ++colIndex) //to access all vertices on an a row
 		{
-			vertex.coord[0] = (-width/2) + (width/patchNb+1 * patchNb + 1); //x
+			vertex.coord[0] = (static_cast<float>(-width) / 2.0f) + (static_cast<float>(width) / patchNb * colIndex); //x
 			vertex.coord[1] = 0; //y
-			vertex.coord[2] = (-height / 2) + (height / patchNb + 1 * patchNb + 1); //z
+			vertex.coord[2] = (static_cast<float>(-height) / 2.0f) + (static_cast<float>(height) /patchNb  * rowIndex); //z
 
-			vertex.textCoord[0] = colIndex / (patchNb+1); //u
-			vertex.textCoord[1] = rowIndex / (patchNb+1); //v
+			vertex.textCoord[0] = static_cast<float>(colIndex) / ( static_cast<float>(patchNb) ); //u
+			vertex.textCoord[1] = static_cast<float>(rowIndex) / ( static_cast<float>(patchNb) ); //v
 
 			vertices.push_back(vertex);
 		}
 	}
 
-	//generates indices first triangle is : topRight->bottomLeft->topLeft of the square and second triangle is bottomLeft->bottomRigt->topLeft
+	//generates indices for the quad (ccw) 0:bottomLeft 1:bottomRight 2:topLeft 3:topRight
 	for (int rowIndex{}; rowIndex < patchNb; ++rowIndex)
 	{
-		for (int colIndex{}; colIndex < patchNb; ++colIndex) //to access all vertices on an a row
+		for (int colIndex{}; colIndex < patchNb; ++colIndex)
 		{
-			int currentSquareBottomLeft{ colIndex + patchNb+1 * rowIndex };
+			int currentSquareBottomLeft{ colIndex + (patchNb + 1) * rowIndex };
+			
+			//bottomLeft
+			indices.push_back(currentSquareBottomLeft);
 
-			/*FIRST TRIANGLE*/
+			//bottomRight
+			indice = currentSquareBottomLeft + 1;
+			indices.push_back(indice);
+
 			//topRight
-			indice = currentSquareBottomLeft + patchNb + 2;
-			indices.push_back(indice);
-
-			//bottomLeft
-			indices.push_back(currentSquareBottomLeft);
-
-			//topLeft
-			indice = currentSquareBottomLeft + patchNb + 1;
-			indices.push_back(indice);
-
-
-			/*SECOND TRIANGLE*/
-			//bottomLeft
-			indices.push_back(currentSquareBottomLeft);
-
-			//bottomRigt
-			indice = currentSquareBottomLeft+1;
+			indice = currentSquareBottomLeft + patchNb+2;
 			indices.push_back(indice);
 
 			//topLeft
-			indice = currentSquareBottomLeft + patchNb + 1;
+			indice = currentSquareBottomLeft + patchNb+1;
 			indices.push_back(indice);
 		}
-	}
 
+	}
 
 	 setupTerrain();
 }
 
 void Terrain::setupTerrain()
 {
+
+
 	//VAO
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -1159,12 +1151,12 @@ void Terrain::setupTerrain()
 	//VBO
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(terrainVertex)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
 	//EBO
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices.size(), &indices[0], GL_STATIC_DRAW);
 
 	//coord attribute
 	glEnableVertexAttribArray(0);
@@ -1175,12 +1167,68 @@ void Terrain::setupTerrain()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
 
+
 	glBindVertexArray(0);
 }
 
-void Terrain::draw()
+void Terrain::loadHeightMap(const char* heightMapPath)
 {
+	//load heigthMap
+	//Texture 
+	unsigned int tex{};
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	heightMap.ID = tex;
+
+	//texture filtering 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//prepare texture
+	int nrChannels{};
+	unsigned char* data{ stbi_load(heightMapPath,&width,&height,&nrChannels,0) };
+	World::mapWidth = width;
+	World::mapHeight = height;
+
+	//load texture
+	if (data)
+	{
+		GLenum format = GL_RGBA;
+		if (nrChannels == 1)
+			format = GL_RED;
+		else if (nrChannels == 3)
+			format = GL_RGB;
+		else if (nrChannels == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, heightMap.ID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		//texture filtering
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+
+
+	}
+
+	else
+		std::cout << "Failed to load heightMap" << std::endl;
+}
+
+void Terrain::draw(Shader& shader)
+{
+	//activate heightMap
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, heightMap.ID);
+
+	shader.use();
 	glBindVertexArray(VAO);
 	glDrawElements(GL_PATCHES, indices.size(), GL_UNSIGNED_INT, 0);
 }
-

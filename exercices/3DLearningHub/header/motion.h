@@ -9,12 +9,9 @@
 #include "../header/mesh.h"
 #include "../header/window.h"
 
-
-
 //forward declaration
 class Cube;
 class Square;
-
 
 enum Effects
 {
@@ -34,11 +31,16 @@ public:
 	unsigned int renderId{};
 
 	FrameBuffer(bool activateBufferTex, bool activateRenderBuff);
+	FrameBuffer(bool shadowMap);
+
+	unsigned int SHADOW_WIDTH{};
+	unsigned int SHADOW_HEIGHT{};
 
 
 private:
-	void genFrameBuffTex();
+	void genFrameBuffTex(int width, int height, bool depthAttachment);
 	void genRenderBuff();
+	
 
 };
 
@@ -148,7 +150,13 @@ namespace World
 	extern Camera camera;
 	extern glm::mat4 view;
 	extern glm::mat4 projection;
+	extern float projectionWidth;
+	extern float projectionHeight;
+	extern float projectionNear;
+	extern float projectionFar;
 	extern Object::Model woodCube;
+	extern int mapWidth;
+	extern int mapHeight;
 }
 
 namespace lightVar
@@ -157,6 +165,12 @@ namespace lightVar
 	extern glm::vec3 sunLightColor;
 	extern light::DirectLight sunLight;
 }
+
+
+//shadows functions
+void toLightSpaceMat();
+void drawShadow(Shader& shader);
+
 
 //Animations 
 void passViewProject(Shader& shader); //pass view and projection matrix to shader 
@@ -183,5 +197,3 @@ void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao
 /*POST PROCESSING EFFECT*/
 void animateWoodCubeAndOutline(Shader& shader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
 void setEffect(Shader& shader, Effects effect);
-
-

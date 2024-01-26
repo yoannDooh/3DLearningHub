@@ -18,11 +18,9 @@ std::vector<float>circleCenter{
 
 int main()
 
- {
+{
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
-	glPatchParameteri(GL_PATCH_VERTICES, 4);
-
 
 	//init shaders
 	Shader woodBoxShader(".\\shader\\woodBox\\vertex.glsl", ".\\shader\\woodBox\\fragment.glsl");
@@ -32,6 +30,8 @@ int main()
 	Shader postProcessShader(".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
 	Shader geometryShader(".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
 	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
+	Shader terrainShader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
+	Shader simpleShadowShader(".\\shader\\simpleShadowMap\\vertex.glsl", ".\\shader\\simpleShadowMap\\fragment.glsl");
 
 
 	//woodCube parameters
@@ -52,6 +52,7 @@ int main()
 	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}),true);
 	Cube lightCube(woodCube.getVbo(), woodCube.getEbo());
 	CubeMap skyBox (skyBoxTextPaths);
+	Terrain terrain(8,".\\rsc\\terrain\\icelandHeightmap.png");
 
 	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -80,7 +81,8 @@ int main()
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_BLEND);
-
+	glEnable(GL_DEPTH_CLAMP);
+	glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 
 	//callback functions/ window inputMode
@@ -88,9 +90,7 @@ int main()
 	glfwSetScrollCallback(window.windowPtr, scroll_callback);
 	glfwSetInputMode(window.windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-
 	FrameBuffer fbo(true, true);
-
 
 	// render loop lambda functions
 	auto newFrame = [&window]()
@@ -160,7 +160,29 @@ int main()
 
 		};
 
+	glm::mat4 model{ glm::mat4(1.0f) };
+	auto drawTerrain = [&terrainShader,&terrain,&skyBox,&skyboxShader,&model]()
+		{
+
+			terrainShader.use();
+			updateViewProject();
+			passViewProject(terrainShader);
+			terrainShader.set3Float("viewPos", World::camera.pos);
+			terrainShader.setMat4("model", model);
+			terrainShader.setFloat("maxDistLod", 1000);
+
+			terrain.draw(terrainShader);
+
+			//DRAW IN LAST
+			skyBox.draw(skyboxShader);
+
+		};
+
 	//setEffect(postProcessShader, edgeDetection);
+
+
+	//wireframe On
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// render loop
 	glfwSetTime(0);
@@ -168,6 +190,8 @@ int main()
 	{
 		
 		newFrame();
+
+		
 
 		swapBuffer();
 	}

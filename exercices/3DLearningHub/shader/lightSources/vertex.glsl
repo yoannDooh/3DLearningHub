@@ -30,45 +30,53 @@ void setOrbit()
 
 	switch (cubePoint)
 	{
-	case 0: //bottomFaceTopLeft
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
-	}
+		case 0: //bottomFaceTopLeft
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
+			break;
+		}
 
-	case 1: //bottomFaceBottomLeft
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
-	}
+		case 1: //bottomFaceBottomLeft
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
+			break;
+		}
 
-	case 2: //bottomFaceBottomRight
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
-	}
+		case 2: //bottomFaceBottomRight
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
+			break;
+		}
 
-	case 3: //bottomFaceTopRight
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
-	}
+		case 3: //bottomFaceTopRight
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y - halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
+			break;
+		}
 
-	case 4: //topFaceTopLeft
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
-	}
+		case 4: //topFaceTopLeft
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
+			break;
+		}
 
-	case 5: //topFaceBottomLeft
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
-	}
+		case 5: //topFaceBottomLeft
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x - halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
+			break;
+		}
 
-	case 6: //topFaceBottomRight
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
-	}
+		case 6: //topFaceBottomRight
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z + halfCubeEdge)) * model;
+			break;
+		}
 
-	case 7: //topFaceTopRight
-	{
-		newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
-	}
+		case 7: //topFaceTopRight
+		{
+			newModel = BuildTranslation(vec3(centerCoordAfterElipsTrans.x + halfCubeEdge, centerCoordAfterElipsTrans.y + halfCubeEdge, centerCoordAfterElipsTrans.z - halfCubeEdge)) * model;
+			break;
+		}
 	}
 } 
 

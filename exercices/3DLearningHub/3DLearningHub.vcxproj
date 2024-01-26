@@ -161,6 +161,9 @@
     <None Include="shader\circle\fragment.glsl" />
     <None Include="shader\circle\geometry.glsl" />
     <None Include="shader\circle\vertex.glsl" />
+    <None Include="shader\colorVertexNormal\fragment.glsl" />
+    <None Include="shader\colorVertexNormal\geometry.glsl" />
+    <None Include="shader\colorVertexNormal\vertex.glsl" />
     <None Include="shader\house\fragment.glsl" />
     <None Include="shader\house\geometry.glsl" />
     <None Include="shader\house\vertex.glsl" />
@@ -168,6 +171,8 @@
     <None Include="shader\outline\vertex.glsl" />
     <None Include="shader\postProcess\fragment.glsl" />
     <None Include="shader\postProcess\vertex.glsl" />
+    <None Include="shader\simpleShadowMap\fragment.glsl" />
+    <None Include="shader\simpleShadowMap\vertex.glsl" />
     <None Include="shader\skyBox\fragment.glsl" />
     <None Include="shader\skyBox\vertex.glsl" />
     <None Include="shader\terrain\fragment.glsl" />

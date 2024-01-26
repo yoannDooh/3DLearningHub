@@ -12,6 +12,8 @@ out vec2 TextCoord;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform sampler2D heightMap;
+
 
 
 void main()
@@ -22,5 +24,3 @@ void main()
 	normal = mat3(transpose(inverse(model))) * normalVec;
 	TextCoord = aTextCoord;
 }
-
-

@@ -42,6 +42,11 @@
     <None Include="shader\terrain\fragment.glsl" />
     <None Include="shader\terrain\TCS.glsl" />
     <None Include="shader\terrain\TES.glsl" />
+    <None Include="shader\colorVertexNormal\vertex.glsl" />
+    <None Include="shader\colorVertexNormal\geometry.glsl" />
+    <None Include="shader\colorVertexNormal\fragment.glsl" />
+    <None Include="shader\simpleShadowMap\vertex.glsl" />
+    <None Include="shader\simpleShadowMap\fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

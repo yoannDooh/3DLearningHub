@@ -2,8 +2,6 @@
 #include <iostream>
 #include <fstream>
 
-
-
 /*--SHADER CLASSE--*/
 static std::string readGlslFile(std::string filePath)
 {
@@ -140,6 +138,87 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geo
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     glDeleteShader(geometryShader);
+}
+
+Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* tessellationControl, const char* tessellationEvaluation)
+{
+    std::string vertexShaderCppStr{ readGlslFile(vertexPath) };
+    const char* vertexShaderSrc{ vertexShaderCppStr.c_str() };
+
+    std::string fragmentShaderCppStr{ readGlslFile(fragmentPath) };
+    const char* fragmentShaderSrc{ fragmentShaderCppStr.c_str() };
+
+    std::string tcShaderCppStr{ readGlslFile(tessellationControl) };
+    const char* tcShaderSrc{ tcShaderCppStr.c_str() };
+
+    std::string teShaderCppStr{ readGlslFile(tessellationEvaluation) };
+    const char* teShaderSrc{ teShaderCppStr.c_str() };
+
+    //vertex shader
+    unsigned int vertexShader{ glCreateShader(GL_VERTEX_SHADER) };
+    glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
+    glCompileShader(vertexShader);
+
+    //tessellationControl shader
+    unsigned int tessellationControlShader{ glCreateShader(GL_TESS_CONTROL_SHADER) };
+    glShaderSource(tessellationControlShader, 1, &tcShaderSrc, NULL);
+    glCompileShader(tessellationControlShader);
+
+    //tessellationEvaluation shader
+    unsigned int tessellationEvaluationShader { glCreateShader(GL_TESS_EVALUATION_SHADER) };
+    glShaderSource(tessellationEvaluationShader, 1, &teShaderSrc, NULL);
+    glCompileShader(tessellationEvaluationShader);
+
+    //fragment shader 
+    unsigned int fragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
+    glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
+    glCompileShader(fragmentShader);
+
+
+    //debug shader and fragment
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+
+        glGetShaderInfoLog(tessellationControlShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::TESSELATION_CONTROL::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+
+        glGetShaderInfoLog(tessellationEvaluationShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::TESSELATION_EVALUATION::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+    }
+
+    //link shaders
+    Shader::ID = { glCreateProgram() };
+    glAttachShader(ID, vertexShader);
+    glAttachShader(ID, fragmentShader);
+    glAttachShader(ID, tessellationControlShader);
+    glAttachShader(ID, tessellationEvaluationShader);
+    glLinkProgram(ID);
+
+    //debug shader program
+    glGetProgramiv(ID, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(ID, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+    }
+
+    //delete shaders
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    glDeleteShader(tessellationControlShader);
+    glDeleteShader(tessellationEvaluationShader);
 }
 
 void Shader::use()
