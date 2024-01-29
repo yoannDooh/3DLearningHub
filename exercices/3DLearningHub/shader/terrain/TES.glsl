@@ -8,17 +8,13 @@ uniform sampler2D heightMap;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-
+uniform mat4 lightSpaceMat;
 
 out float height;
 out vec2 textCoord;
 out vec4 normalVec;
 out vec3 fragPos;
-
-out vec4 Outer0Pos;
-out vec4 Outer1Pos;
-out vec4 Outer2Pos;
-out vec4 Outer3Pos;
+out vec4 fragPosLightSpace;
 
 
 vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data11, vec2 data01);
@@ -40,10 +36,12 @@ void main()
 
 	//displace along normal
 	normalVec = vertexNormal(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[3].gl_Position);
-	pos += normalVec*height*200-4;
+	//pos += normalVec*height*200-100;
+	pos += height - 3;
 
 	gl_Position = projection*view*model*vec4(pos.xyz, 1.0);
 	fragPos = vec3(model * vec4(pos.xyz,1.0) );
+	fragPosLightSpace = lightSpaceMat * vec4(fragPos,1.0);
 																															//	^
 }																															//	|
 																															//	v		3	2
@@ -55,7 +53,6 @@ vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data
 	return  vec2(leftData + u * (rightData - leftData) );																	//			0    1
 
 }
-
 
 vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data11, vec4 data01)							
 {																															

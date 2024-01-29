@@ -40,8 +40,6 @@ public:
 private:
 	void genFrameBuffTex(int width, int height, bool depthAttachment);
 	void genRenderBuff();
-	
-
 };
 
 /*CAMERA AND MOUSE*/
@@ -168,8 +166,8 @@ namespace lightVar
 
 
 //shadows functions
-void toLightSpaceMat();
-void drawShadow(Shader& shader);
+glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
+void setupShadowMap(Shader& shader, FrameBuffer depthMap, glm::mat4 lightSpaceMat);
 
 
 //Animations 
@@ -190,7 +188,7 @@ glm::mat4 orbit(light::lightPointCube& light);
 void animateLightsCube(Shader& shader, Cube lightCubeVao, std::vector<light::lightPointCube>& lightCubes);
 void updateViewProject(); //update world::view and world::projection
 
-void setWoodCube(Shader& shader, float cubeEdge, std::vector<light::lightPointCube>& lightCubes);//just translate and scale then pass to shader 
+void setWoodCube(Shader& shader, std::vector<light::lightPointCube>& lightCubes);//just translate and scale then pass to shader 
 void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
 
 

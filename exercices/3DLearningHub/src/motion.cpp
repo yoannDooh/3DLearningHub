@@ -39,7 +39,7 @@ namespace lightVar
 
 namespace World
 {
-	Camera camera{ glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), 50.5f };
+	Camera camera{ glm::vec3(0.11236f, 1.28743f, -1.49997f), glm::vec3(-0.11236f, -1.28743f, 1.49997f), glm::vec3(0.0f, 1.0f, 0.0f), 5.5f };
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
 	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar)  };
 	float projectionWidth { 1920.0f };
@@ -52,19 +52,17 @@ namespace World
 }
 
 //shadows functions
-glm::mat4 toDirectionalLightSpaceMat(float lightRange,glm::vec3 lightPos)
+glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation)
 {
 	float near_plane = 1.0f, far_plane = lightRange;
 	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,near_plane, far_plane);
-	glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); //look at the center of the scene and up vector is y axis direction
+	glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(lookAtLocation), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	return lightProjection * lightView;			
 }
 
-void drawShadow(Shader& shadowMapShader)
+void setupShadowMap(Shader& shadowMapShader,FrameBuffer depthMap, glm::mat4 lightSpaceMat)
 {
-	FrameBuffer depthMap(true);
-	
 	//setup texture size and frameBuffer
 	glViewport(0, 0, depthMap.SHADOW_WIDTH, depthMap.SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMap.id);
@@ -72,15 +70,7 @@ void drawShadow(Shader& shadowMapShader)
 
 	//send lightSpaceMatrix
 	shadowMapShader.use();
-	glm::mat4 lightMat(toDirectionalLightSpaceMat(7.5f, glm::vec3(-2.0f, 4.0f, -1.0f) ) );
-	shadowMapShader.setMat4("lightSpaceMatrix",lightMat);
-
-
-	//RenderScene();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	
-	// 2. then render scene as normal with shadow mapping (using depth map)
-
+	shadowMapShader.setMat4("lightSpaceMat", lightSpaceMat);
 }
 
 //frameBuffer CLASS
@@ -109,21 +99,32 @@ void FrameBuffer::genFrameBuffTex(int width, int height,bool depthAttachment)
 	glGenTextures(1, &texId);
 	glBindTexture(GL_TEXTURE_2D, texId);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
 	if (!depthAttachment)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
+
+	}
+
 	else
 	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texId, 0);
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
-	}
+	
+	}	
 
 }
 
@@ -149,6 +150,9 @@ FrameBuffer::FrameBuffer(bool shadowMap)
 
 		genFrameBuffTex(SHADOW_WIDTH, SHADOW_HEIGHT,true);
 
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+			
 		if (!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE))
 		{
 			auto error{ glCheckFramebufferStatus(GL_FRAMEBUFFER) };
@@ -401,14 +405,13 @@ void animateLightsCube(Shader& shader,Cube lightCubeVao,std::vector<light::light
 	}
 }
 
-void setWoodCube(Shader& shader,float cubeEdge, std::vector<light::lightPointCube>& lightCubes)
+void setWoodCube(Shader& shader, std::vector<light::lightPointCube>& lightCubes)
 {
 	World::woodCube.model = glm::translate(World::woodCube.localOrigin, glm::vec3(0.0f, 0.0f, 0.0f));
 	World::woodCube.model = glm::rotate(World::woodCube.model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
 	shader.use();
 	shader.setMat4("model", World::woodCube.model);
-	shader.setFloat("cubeEdge", cubeEdge);
 	shader.setFloat("material.shininess", 64.0f);
 
 	//only 2 for now

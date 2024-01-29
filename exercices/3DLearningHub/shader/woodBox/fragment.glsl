@@ -1,8 +1,9 @@
 #version 330 core
+
 in vec3 normal;
 in vec3 FragPos; 
 in vec2 TextCoord;
-in vec3 cubeMapTextDir; 
+in vec4 FragPosLightSpace;
 
 out vec4 FragColor;
 
@@ -67,6 +68,7 @@ struct Material {
 };
 
 uniform samplerCube skyBox;
+uniform sampler2D shadowMap;
 uniform Material material;
 uniform Light light;
 uniform int spotLightNb;
@@ -78,9 +80,10 @@ uniform float emmissionStrength;
 uniform vec3 emmissionColor;
 
 
-vec3 CalcDirLight(DirectLight light, vec3 normal, vec3 viewDir);
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
+float calcShadow(vec4 fragPosLightSpace);
+vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir,float shadow);
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow);
+vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow);
 
 void main()
 {
@@ -89,6 +92,8 @@ void main()
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 MinusviewDir = -viewDir;
 
+
+    float shadow = calcShadow(FragPosLightSpace);
 
     //reflection 
     vec3 reflectDir = reflect(MinusviewDir, normVec);
@@ -101,18 +106,18 @@ void main()
 
 
     //DirectLight 
-    vec3 lightning = CalcDirLight(sunLight, normVec, viewDir);
+    vec3 lightning = calcDirLight(sunLight, normVec, viewDir, shadow);
 
     for (int index = 0; index < POINT_LIGHTS_NB; ++index)
-        lightning += CalcPointLight(pointLights[index], normVec, viewDir,FragPos);
+        lightning += calcPointLight(pointLights[index], normVec, viewDir,FragPos, shadow);
 
     vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb* emmissionColor;
 
-    FragColor = vec4(lightning + /*reflectColor * 0.3 + refractColor * 0.3*/ + emission, 1.0);
+    FragColor = vec4(lightning + reflectColor * 0.3 + refractColor * 0.3 + emission, 1.0);
    
 }
 
-vec3 CalcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
+vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir, float shadow)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
@@ -123,10 +128,10 @@ vec3 CalcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TextCoord));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TextCoord)) * light.color;
     vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TextCoord));
-    return (ambient + diffuse + specular);
+    return (ambient + ( (1.0 - shadow) * ( diffuse + specular ) ) );
 }
 
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
@@ -148,11 +153,11 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
-    return (ambient + diffuse + specular);
+    return (ambient + ((1.0 - shadow) * (diffuse + specular)));
 
 }
 
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
+vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos,float shadow)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
@@ -179,6 +184,22 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
     ambient *= attenuation*intensity;
     diffuse *= attenuation*intensity;
     specular *= attenuation*intensity;
-    return (ambient + diffuse + specular);
+    return (ambient + ((1.0 - shadow) * (diffuse + specular)));
 
+}
+
+float calcShadow(vec4 fragPosLightSpace)
+{
+    // perspective division
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    //map to [0,1] range as shadowMap
+    projCoords = projCoords * 0.5 + 0.5;
+
+    //retrieve depth of the closest element to the light at the coords of the fragment  
+    float closestFragDepth = texture(shadowMap, projCoords.xy).r;
+    float currentFragDepth = projCoords.r;
+
+    // if the depth of the current fragment is not greater than closestFragDepth it means it's in the shadow 
+    return currentFragDepth > closestFragDepth ? 1.0 : 0.0;
 }

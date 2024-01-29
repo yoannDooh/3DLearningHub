@@ -188,6 +188,10 @@
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3_mt.lib" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="rsc\terrain\icelandHeightmap.png" />
+    <Image Include="rsc\terrain\merde.jpeg" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

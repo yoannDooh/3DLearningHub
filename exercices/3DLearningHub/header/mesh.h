@@ -14,6 +14,8 @@ enum TextureMap
 	roughness,
 	refraction,
 	heightmap,
+	shadowMap,
+	cubeMap,
 };
 
 struct Texture
@@ -42,13 +44,15 @@ struct terrainVertex
 class Mesh
 {
 public:
-	Mesh() {}
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures,bool cubeMapPresence);
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
 
+	Mesh() {}
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, bool cubeMapPresence);
+
+	void addTexture(Texture texture);
 	void draw(Shader& shader);
 
 	unsigned int getVao();
@@ -92,12 +96,12 @@ protected:
 
 class CubeMap : public Cube
 {
-	public: 
-		CubeMap(std::vector<const char*>& texturesPath);
+	public:
 		Texture texture;
 		std::array<float, 72> vertices;
 
-
+		CubeMap(std::vector<const char*>& texturesPath);
+		
 		void draw(Shader& shader);
 
 	private:
@@ -163,11 +167,6 @@ private:
 	void setupTerrain();
 
 };
-
-
-//Terrain rendering
-void renderTerrain();
-
 
 //function declaration
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);

@@ -70,6 +70,11 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
 	setupMesh();
 }
 
+void Mesh::addTexture(Texture texture)
+{
+	textures.push_back(texture);
+}
+
 void Mesh::draw(Shader& shader)
 {
 	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
@@ -535,6 +540,13 @@ void Cube::draw(Shader& shader)
 			name = "texture_refraction";
 			number = std::to_string(texturesCount[refraction]++);
 			break;
+		}
+
+		if (textures[index].type == shadowMap)
+		{
+			shader.setInt("shadowMap", textures[index].ID);  //hardcoded the name but pour l'instant 
+			glBindTexture(GL_TEXTURE_2D, textures[index].ID);
+			continue;
 		}
 
 		name = ("material." + name + number);
@@ -1028,7 +1040,6 @@ void Square::draw(Shader& shader, std::string textureName, unsigned int textureI
 
 }
 
-
 /*--QuadPoints CLASS--*/
 QuadPoints::QuadPoints(std::array<float,8>points)
 {
@@ -1199,7 +1210,7 @@ void Terrain::loadHeightMap(const char* heightMapPath)
 		if (nrChannels == 1)
 			format = GL_RED;
 		else if (nrChannels == 3)
-			format = GL_RGB;
+			format = GL_RGB; 
 		else if (nrChannels == 4)
 			format = GL_RGBA;
 
