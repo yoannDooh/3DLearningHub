@@ -139,7 +139,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\Downloads\glad (1)\src\glad.c" />
     <ClCompile Include="src\mesh.cpp" />
-    <ClCompile Include="src\shaderAndLight.cpp" />
+    <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\motion.cpp" />
     <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -152,7 +152,7 @@
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3native.h" />
     <ClInclude Include="header\motion.h" />
     <ClInclude Include="header\mesh.h" />
-    <ClInclude Include="header\shaderAndLight.h" />
+    <ClInclude Include="header\shader.h" />
     <ClInclude Include="header\stb_image.h" />
     <ClInclude Include="header\window.h" />
   </ItemGroup>

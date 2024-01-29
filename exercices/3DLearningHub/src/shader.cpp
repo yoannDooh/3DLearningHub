@@ -1,4 +1,4 @@
-#include "../header/shaderAndLight.h"
+#include "../header/shader.h"
 #include <iostream>
 #include <fstream>
 
@@ -263,9 +263,4 @@ void Shader::setMat4(const std::string& name, glm::mat4& mat) const
 {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str() ), 1, GL_FALSE, glm::value_ptr(mat));
 
-}
-
-glm::vec3 rgb(float red, float blue, float green)
-{
-	return glm::vec3(red / 255.0f, blue / 255.0f, green / 255.0f);
 }
