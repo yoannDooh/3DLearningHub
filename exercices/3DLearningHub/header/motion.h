@@ -1,17 +1,27 @@
 #pragma once
 
+#define POINT_LIGHTS_NB 2
+
 #include <array>
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "../header/shaderAndLight.h"
+#include "../header/shader.h"
 #include "../header/mesh.h"
 #include "../header/window.h"
 
-//forward declaration
+
+//forward declaration class and struct
 class Cube;
 class Square;
+namespace Light
+{
+	struct Material;
+	struct DirectLight;
+	struct lightPoint;
+	struct SpotLight;
+}
 
 enum Effects
 {
@@ -109,16 +119,36 @@ public:
 	float pitchAngle{};
 };
 
+class Object
+{
+	public:
+		glm::mat4 model{};
+		glm::mat4 localOrigin{ glm::mat4(1.0f) };
+		glm::vec3 pos{}; //in world unit
+		Light::lightPoint *lightPointPtr { nullptr };
+		Light::SpotLight *spotLightPtr{ nullptr };
+
+		bool outLine{ false };
+
+		Object(){}
+		Object(glm::vec3 pos);
+
+		void moveObject(glm::vec3 vector);
+};
+
+/*
 namespace Object
 {
 	struct Model
 	{
 		glm::mat4 model{};
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
+		glm::vec3 worldPos{};
 		bool outLine{ false };
 	};
 
 }
+*/
 
 namespace Mouse
 {
@@ -146,52 +176,132 @@ namespace Time
 namespace World
 {
 	extern Camera camera;
+
 	extern glm::mat4 view;
 	extern glm::mat4 projection;
+
 	extern float projectionWidth;
 	extern float projectionHeight;
 	extern float projectionNear;
 	extern float projectionFar;
-	extern Object::Model woodCube;
+
+	extern std::vector<Object> objects;
+	extern std::vector<Light::lightPoint> lightPoints;
+	extern std::vector<Light::SpotLight> spotLights;
+
+	extern Object woodCube;
+	extern std::array<Light::lightPoint, POINT_LIGHTS_NB> lightCube;
+	extern std::array<Object, POINT_LIGHTS_NB> lightCubesObject;
+
 	extern int mapWidth;
 	extern int mapHeight;
 }
 
-namespace lightVar
+/*LIGHT VARIABLES*/
+namespace Light
 {
 	//sunlight Ambient 
 	extern glm::vec3 sunLightColor;
-	extern light::DirectLight sunLight;
+	extern DirectLight sunLight;
+
+	struct Material {
+		std::array<float, 3> ambient;
+		std::array<float, 3> diffuse{};
+		std::array<float, 3> specular{};
+		float shininess{};
+	};
+
+	struct DirectLight { //Directional light 
+		glm::vec3 color{};
+		glm::vec3 direction{};
+
+		glm::vec3 ambient{};
+		glm::vec3 diffuse{};
+		glm::vec3 specular{};
+	};
+
+	struct lightPoint {
+		glm::vec3 color{};
+		glm::vec3 pos{};
+
+
+		glm::vec3 ambient{};
+		glm::vec3 diffuse{};
+		glm::vec3 specular{};
+
+		//attenuation variables
+		float constant{};
+		float linearCoef{};
+		float squareCoef{};
+	};
+
+	struct SpotLight
+	{
+		glm::vec3 color{};
+		glm::vec3 pos{};
+
+		glm::vec3 direction{};
+		float innercutOff{}; //cos(angle) of inner cone angle
+		float outercutOff{}; //cos(angle) outer cone angle 
+
+		glm::vec3 ambient{};
+		glm::vec3 diffuse{};
+		glm::vec3 specular{};
+
+		//attenuation variables
+		float constant{};
+		float linearCoef{};
+		float squareCoef{};
+	};
+
+	/*
+	struct Light {
+		std::array<float, 3> ambient{};
+		std::array<float, 3> diffuse{};
+		std::array<float, 3> specular{};
+	};
+	*/
+
+	
 }
+
+float meterToWorldUnit(float meter); //1 meter equal 10 world unit
+
+//lighting 
+void setLighting(Shader& shader);
 
 
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
-void setupShadowMap(Shader& shader, FrameBuffer depthMap, glm::mat4 lightSpaceMat);
+void setupShadowMap(Shader& shadowMapShader, FrameBuffer depthMap, glm::mat4 lightSpaceMat);
 
+//motion 
+void rotatePlane(Object object, double degree);
+glm::mat4 orbit(Object object, float horizontalAxis, float verticalAxis, float orbitDuration);  //orbitDuration is the number of seconds it takes for x to reach the value 2Py (so to do a 360)
 
-//Animations 
+//view & projection function
+void updateViewProject(); //update world::view and world::projection
 void passViewProject(Shader& shader); //pass view and projection matrix to shader 
 
 //emissionMap
 float frameGlow(); //return currentFrameGlowStrenght for emmision map
 
-//setup lights and orbit
-void rotatePlane (light::lightPointCube& light, int index);
-void setLightCube(Shader& shader, float cubeEdge, std::vector<light::lightPointCube>& lightCubes);
+//lightCube Object
+void setLightCube(Shader& shader, float cubeEdge);
+void updateLightsCubePos();
+void animateLightsCube(Shader& shader, Cube lightCubeVao);
 
 
-void setLighting(Shader& shader, std::vector<light::lightPointCube>& lightCubes);
-
-//orbit and 
-glm::mat4 orbit(light::lightPointCube& light);
-void animateLightsCube(Shader& shader, Cube lightCubeVao, std::vector<light::lightPointCube>& lightCubes);
-void updateViewProject(); //update world::view and world::projection
-
-void setWoodCube(Shader& shader, std::vector<light::lightPointCube>& lightCubes);//just translate and scale then pass to shader 
-void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
+//woodCube   
+void setWoodCube(Shader& shader);//just translate and scale then pass to shader 
+void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao);
 
 
 /*POST PROCESSING EFFECT*/
-void animateWoodCubeAndOutline(Shader& shader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao, std::vector<light::lightPointCube>& lightCubes);
+void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao);
 void setEffect(Shader& shader, Effects effect);
+
+//diverse useful function
+glm::vec3 rgb(float red, float blue, float green);
+
+template <typename T> T degreeToRad(T);

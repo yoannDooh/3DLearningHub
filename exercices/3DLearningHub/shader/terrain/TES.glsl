@@ -32,12 +32,12 @@ void main()
 
 	vec4 pos = bilinearInterpolation(u, v, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position);
 
-	height = texture(heightMap, textCoord).b; //* 64.0 - 16.0;
+	height = texture(heightMap, textCoord).r; //* 64.0 - 16.0;
 
 	//displace along normal
 	normalVec = vertexNormal(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[3].gl_Position);
-	//pos += normalVec*height*200-100;
-	pos += height - 3;
+	pos += vec4(0.0, 1.0,0.0,0.0) * height * 25 - 5;
+	//pos += height - 3;
 
 	gl_Position = projection*view*model*vec4(pos.xyz, 1.0);
 	fragPos = vec3(model * vec4(pos.xyz,1.0) );

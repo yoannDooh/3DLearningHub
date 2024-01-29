@@ -3,7 +3,7 @@
 #include <string>
 #include <array>
 #include <vector>
-#include "../header/shaderAndLight.h"
+#include "../header/shader.h"
 
 enum TextureMap
 {

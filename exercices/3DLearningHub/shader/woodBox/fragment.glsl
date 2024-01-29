@@ -68,7 +68,7 @@ struct Material {
 };
 
 uniform samplerCube skyBox;
-uniform sampler2D shadowMap;
+//uniform sampler2D shadowMap;
 uniform Material material;
 uniform Light light;
 uniform int spotLightNb;
@@ -81,9 +81,9 @@ uniform vec3 emmissionColor;
 
 
 float calcShadow(vec4 fragPosLightSpace);
-vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir,float shadow);
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow);
-vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow);
+vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir);
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
+vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
 
 void main()
 {
@@ -93,7 +93,8 @@ void main()
     vec3 MinusviewDir = -viewDir;
 
 
-    float shadow = calcShadow(FragPosLightSpace);
+    //float shadow = calcShadow(FragPosLightSpace);
+    //float shadow = 0;
 
     //reflection 
     vec3 reflectDir = reflect(MinusviewDir, normVec);
@@ -106,10 +107,10 @@ void main()
 
 
     //DirectLight 
-    vec3 lightning = calcDirLight(sunLight, normVec, viewDir, shadow);
+    vec3 lightning = calcDirLight(sunLight, normVec, viewDir);
 
     for (int index = 0; index < POINT_LIGHTS_NB; ++index)
-        lightning += calcPointLight(pointLights[index], normVec, viewDir,FragPos, shadow);
+        lightning += calcPointLight(pointLights[index], normVec, viewDir,FragPos);
 
     vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb* emmissionColor;
 
@@ -117,7 +118,7 @@ void main()
    
 }
 
-vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir, float shadow)
+vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
@@ -128,10 +129,10 @@ vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir, float shadow)
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TextCoord));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TextCoord)) * light.color;
     vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TextCoord));
-    return (ambient + ( (1.0 - shadow) * ( diffuse + specular ) ) );
+    return (ambient + diffuse + specular );
 }
 
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow)
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
@@ -153,11 +154,11 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, f
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
-    return (ambient + ((1.0 - shadow) * (diffuse + specular)));
+    return (ambient + diffuse + specular);
 
 }
 
-vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos,float shadow)
+vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
@@ -184,10 +185,11 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos,floa
     ambient *= attenuation*intensity;
     diffuse *= attenuation*intensity;
     specular *= attenuation*intensity;
-    return (ambient + ((1.0 - shadow) * (diffuse + specular)));
+    return (ambient + diffuse + specular);
 
 }
 
+/*
 float calcShadow(vec4 fragPosLightSpace)
 {
     // perspective division
@@ -203,3 +205,4 @@ float calcShadow(vec4 fragPosLightSpace)
     // if the depth of the current fragment is not greater than closestFragDepth it means it's in the shadow 
     return currentFragDepth > closestFragDepth ? 1.0 : 0.0;
 }
+*/

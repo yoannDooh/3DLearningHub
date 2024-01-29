@@ -1,7 +1,7 @@
 #include <iostream>
 #include "../header/stb_image.h"
 #include "../header/window.h"
-#include "../header/shaderAndLight.h"
+#include "../header/shader.h"
 #include "../header/motion.h"
 #include "../header/mesh.h"
 
@@ -16,8 +16,8 @@ std::vector<float>circleCenter{
 	0.0f, 0.0f,0.0f, 
 };
 
-int main()
-{
+  int main()
+  {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
@@ -51,7 +51,7 @@ int main()
 	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}),true);
 	Cube lightCube(woodCube.getVbo(), woodCube.getEbo());
 	CubeMap skyBox (skyBoxTextPaths);
-	Terrain terrain(8,".\\rsc\\terrain\\drole.png");
+	Terrain terrain(8,".\\rsc\\terrain\\heightMap2.jpeg");
 
 	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -64,15 +64,14 @@ int main()
 
 
 	//lightCubes 
-	light::lightPointCube light;
-	std::vector<light::lightPointCube> lightPoints{};
-	lightPoints.push_back(light);
-	lightPoints.push_back(light);
-
+	//Object lightCubeObject;
+	//std::array<Object,POINT_LIGHTS_NB> lightCubeObjects;
+	 
 	//set models
-	setLightCube(lightSourcesShader, cubeEdge, lightPoints);
-	setLighting(woodBoxShader, lightPoints);
-	setWoodCube(woodBoxShader, lightPoints);
+	setLightCube(lightSourcesShader, cubeEdge);
+	updateLightsCubePos();
+	//setLighting(woodBoxShader);
+	setWoodCube(woodBoxShader);
 
 	//rendering parameters
 	glEnable(GL_DEPTH_TEST);
@@ -137,7 +136,7 @@ int main()
 			circle.draw();
 		};
 
-	auto drawSceneWithEffect = [&fbo,&lightSourcesShader,&lightCube,&lightPoints,&woodBoxShader,&outlineShader,&skyBox,&woodCube,&skyboxShader,&quad,&postProcessShader,&newFrame]()
+	auto drawSceneWithEffect = [&fbo,&lightSourcesShader,&lightCube,&woodBoxShader,&outlineShader,&skyBox,&woodCube,&skyboxShader,&quad,&postProcessShader,&newFrame]()
 		{
 			//BindFbo
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
@@ -147,8 +146,9 @@ int main()
 
 			//DrawScene
 			updateViewProject();
-			animateLightsCube(lightSourcesShader, lightCube, lightPoints);
-			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube, lightPoints);
+			updateLightsCubePos();
+			animateLightsCube(lightSourcesShader, lightCube);
+			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube);
 			//DRAW IN LAST
 			skyBox.draw(skyboxShader);
 
@@ -159,12 +159,13 @@ int main()
 
 		};
 
-	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &lightPoints, &woodBoxShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
+	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &woodBoxShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
 		{
 			//DrawScene
 			updateViewProject();
-			animateLightsCube(lightSourcesShader, lightCube, lightPoints);
-			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube, lightPoints);
+			updateLightsCubePos();
+			animateLightsCube(lightSourcesShader, lightCube);
+			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube);
 
 			//DRAW IN LAST
 			skyBox.draw(skyboxShader);
@@ -192,10 +193,10 @@ int main()
 	Texture shadowMap;
 	FrameBuffer depthMap(true);
 	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(7.5f, glm::vec3(0.11236f, 1.28743f, -1.49997f), glm::vec3(0.0f)));
-	auto drawShadow = [&simpleShadowShader,&depthMap,&shadowMap,&lightSpaceMat,&lightPoints,&woodCube,&woodBoxShader,&drawScene,&terrainShader,&drawTerrain]()
+	auto drawShadow = [&simpleShadowShader,&depthMap,&shadowMap,&lightSpaceMat,&woodCube,&woodBoxShader,&drawScene,&terrainShader,&drawTerrain]()
 		{
 			//pass uniforms to  draw
-			setWoodCube(simpleShadowShader, lightPoints);
+			setWoodCube(simpleShadowShader);
 			passViewProject(simpleShadowShader);
 
 			//setup viewPort size dans fbo
@@ -237,7 +238,7 @@ int main()
 		
 		newFrame();
 
-		drawTerrain();
+		drawScene();
 
 		swapBuffer();
 	}
