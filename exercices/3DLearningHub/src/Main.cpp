@@ -66,12 +66,7 @@ std::vector<float>circleCenter{
 	//lightCubes 
 	//Object lightCubeObject;
 	//std::array<Object,POINT_LIGHTS_NB> lightCubeObjects;
-	 
-	//set models
-	setLightCube(lightSourcesShader, cubeEdge);
-	updateLightsCubePos();
-	//setLighting(woodBoxShader);
-	setWoodCube(woodBoxShader);
+
 
 	//rendering parameters
 	glEnable(GL_DEPTH_TEST);
@@ -136,7 +131,19 @@ std::vector<float>circleCenter{
 			circle.draw();
 		};
 
-	auto drawSceneWithEffect = [&fbo,&lightSourcesShader,&lightCube,&woodBoxShader,&outlineShader,&skyBox,&woodCube,&skyboxShader,&quad,&postProcessShader,&newFrame]()
+	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &woodBoxShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
+		{
+			//DrawScene
+			updateViewProject();
+			animateLightsCube(lightSourcesShader, lightCube);
+			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube);
+
+			//DRAW IN LAST
+			skyBox.draw(skyboxShader);
+
+		};
+
+	auto drawSceneWithEffect = [&drawScene,&fbo, &lightSourcesShader, &lightCube, &woodBoxShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &quad, &postProcessShader, &newFrame]()
 		{
 			//BindFbo
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
@@ -145,10 +152,8 @@ std::vector<float>circleCenter{
 			newFrame();
 
 			//DrawScene
-			updateViewProject();
-			updateLightsCubePos();
-			animateLightsCube(lightSourcesShader, lightCube);
-			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube);
+			drawScene();
+
 			//DRAW IN LAST
 			skyBox.draw(skyboxShader);
 
@@ -156,19 +161,6 @@ std::vector<float>circleCenter{
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
 			quad.draw(postProcessShader, "screenTexture", fbo.texId);
-
-		};
-
-	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &woodBoxShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
-		{
-			//DrawScene
-			updateViewProject();
-			updateLightsCubePos();
-			animateLightsCube(lightSourcesShader, lightCube);
-			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube);
-
-			//DRAW IN LAST
-			skyBox.draw(skyboxShader);
 
 		};
 
@@ -225,20 +217,23 @@ std::vector<float>circleCenter{
 
 		};
 
-	//setEffect(postProcessShader, edgeDetection);
-
+	setEffect(postProcessShader, edgeDetection);
 
 	//wireframe On
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+	//set models
+	setLightCubes(lightSourcesShader, cubeEdge);
+	setWoodCube(woodBoxShader);
+
 	// render loop
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
-	{
-		
+	{	
 		newFrame();
 
 		drawScene();
+		drawTerrain();
 
 		swapBuffer();
 	}

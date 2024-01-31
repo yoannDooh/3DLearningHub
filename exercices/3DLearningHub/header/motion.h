@@ -116,13 +116,13 @@ public:
 	glm::vec3 up{};
 	float speed{};
 	float yawAngle{ -90.0f };
-	float pitchAngle{};
+	float pitchAngle{}; 
 };
 
 class Object
 {
 	public:
-		glm::mat4 model{};
+		glm::mat4 model{ glm::mat4(1.0f) };
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
 		glm::vec3 pos{}; //in world unit
 		Light::lightPoint *lightPointPtr { nullptr };
@@ -265,19 +265,16 @@ namespace Light
 	
 }
 
-float meterToWorldUnit(float meter); //1 meter equal 10 world unit
-
 //lighting 
 void setLighting(Shader& shader);
-
 
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
 void setupShadowMap(Shader& shadowMapShader, FrameBuffer depthMap, glm::mat4 lightSpaceMat);
 
 //motion 
-void rotatePlane(Object object, double degree);
-glm::mat4 orbit(Object object, float horizontalAxis, float verticalAxis, float orbitDuration);  //orbitDuration is the number of seconds it takes for x to reach the value 2Py (so to do a 360)
+void rotatePlane(Object& object, double degree);
+glm::mat4 orbit(Object& object, float horizontalAxis, float verticalAxis, float orbitDuration);  //orbitDuration is the number of seconds it takes for x to reach the value 2Py (so to do a 360)
 
 //view & projection function
 void updateViewProject(); //update world::view and world::projection
@@ -287,7 +284,7 @@ void passViewProject(Shader& shader); //pass view and projection matrix to shade
 float frameGlow(); //return currentFrameGlowStrenght for emmision map
 
 //lightCube Object
-void setLightCube(Shader& shader, float cubeEdge);
+void setLightCubes(Shader& shader, float cubeEdge);
 void updateLightsCubePos();
 void animateLightsCube(Shader& shader, Cube lightCubeVao);
 
@@ -303,5 +300,7 @@ void setEffect(Shader& shader, Effects effect);
 
 //diverse useful function
 glm::vec3 rgb(float red, float blue, float green);
+
+float meterToWorldUnit(float meter); //1 meter equal 10 world unit
 
 template <typename T> T degreeToRad(T);

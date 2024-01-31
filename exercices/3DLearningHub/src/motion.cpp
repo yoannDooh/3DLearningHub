@@ -75,11 +75,6 @@ void Object::moveObject(glm::vec3 vector)
 	pos += vector;
 }
 
-float meterToWorldUnit(float meter)
-{
-	return meter * 10;
-}
-
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation)
 {
@@ -192,58 +187,6 @@ FrameBuffer::FrameBuffer(bool shadowMap)
 	}
 }
 
-/*
-void rotatePlane(light::lightPointCube& light,int index) //rotate plane and add 60�*index+1 to the rotaion index being the index of the light if the array 
-{	
-	
-	//for now don't have an array of more than 6 element
-	light.localOrigin = glm::mat4(1.0f);
-
-	glm::mat4 rot{};
-	double rad{};
-	
-	switch (index)
-	{
-	case 0:
-		rad = M_PI / 3;
-		break;
-
-	case 1:
-		rad = 2*M_PI / 3;
-		break;
-
-	case 2:
-		rad = M_PI;
-		break;
-
-	case 3:
-		rad = 4*M_PI/ 3;
-		break;
-
-	case 4:
-		rad = 5*M_PI / 3;
-		break;
-
-	case 5:
-		rad = 0;
-		break;
-	}
-	
-	rot = glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, cos(rad), sin(rad), 0.0f,
-		0.0f, -sin(rad), cos(rad), 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f);
-
-
-	light.pos = glm::vec3(0.0f, 0.0f, 0.0f);
-	light.localOrigin = rot * light.localOrigin;
-
-
-	light.pos = glm::vec3(light.localOrigin * glm::vec4(light.pos, 0.0f));
-
-}
-*/
-
 //lights functions 
 void setLighting(Shader& shader)
 {
@@ -312,15 +255,15 @@ void setLighting(Shader& shader)
 				float value{};
 				switch (attributeIndex)
 				{
-				case 4:
+				case 5:
 					value = World::lightPoints[lightIndex].constant;
 					break;
 
-				case 5:
+				case 6:
 					value = World::lightPoints[lightIndex].linearCoef;
 					break;
 
-				case 6:
+				case 7:
 					value = World::lightPoints[lightIndex].squareCoef;
 					break;
 				}
@@ -333,21 +276,20 @@ void setLighting(Shader& shader)
 }
 
 //motion functions
-void rotatePlane(Object object, double degree)
+void rotatePlane(Object& object, double degree)
 {
 	degree = degreeToRad(degree);
 	glm::mat4 rot{
-	glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, cos(degree), sin(degree), 0.0f,
-		0.0f, -sin(degree), cos(degree), 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f) 
-	};
+		glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
+				  0.0f, cos(degree), sin(degree), 0.0f,
+				  0.0f, -sin(degree), cos(degree), 0.0f,
+				  0.0f, 0.0f, 0.0f, 1.0 )  };
 
 	object.localOrigin = rot * object.localOrigin;
-	object.pos = glm::vec3(object.localOrigin * glm::vec4(object.pos,0.0f) );
+	//object.pos = glm::vec3(0.0f, 0.0f, 0.0f); //???
 }
 
-glm::mat4 orbit(Object object, float horizontalAxis, float verticalAxis,float orbitDuration)
+glm::mat4 orbit(Object& object, float horizontalAxis, float verticalAxis,float orbitDuration)
 {
 	glm::mat4 orbit{};
 	float xAxisValue{};
@@ -401,25 +343,23 @@ float frameGlow()
 	return currentFrameGlow;
 }
 
-
 //LightCube function
-void setLightCube(Shader& shader, float cubeEdge)
+void setLightCubes(Shader& shader, float cubeEdge)
 {
 	shader.use();
 
 	shader.setFloat("cubeEdge", cubeEdge);
+	shader.setMat4("model", World::lightCubesObject[0].model);
 
 	//set lightPoints base model
 	int index{};
 	for (auto& lightCube : World::lightCubesObject)
 	{
 		lightCube.model = glm::scale(lightCube.localOrigin, glm::vec3(0.2f) );
-		rotatePlane(lightCube, degreeToRad<double>( (index+1)*60 ) ); //first is 60° and second 120°
-		lightCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(4), 0.0f) );
+		rotatePlane(lightCube, ((index+1)*60) ); //first is 60° and second 120°
+	//	lightCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(1), 0.0f) );
 		++index;
 	}
-
-	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(World::lightCubesObject[0].model ));
 
 	//set their setLighting value
 	std::array<Light::lightPoint, 2> lights{}; //first is red second is blue 
@@ -451,12 +391,14 @@ void setLightCube(Shader& shader, float cubeEdge)
 void updateLightsCubePos()
 {
 	glm::mat4 orbitMat{};
+	glm::vec3 newPos{};
 
 	int lightCubeIndex{};
-	for (auto& const lightCube : World::lightCubesObject)
+	for (auto& lightCube : World::lightCubesObject)
 	{
 		orbitMat = orbit(lightCube, 2.0f, 2.0f, 20);
-		lightCube.pos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 0.0f));
+		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));
+
 		try 
 		{
 			if (lightCube.lightPointPtr == nullptr)
@@ -464,7 +406,7 @@ void updateLightsCubePos()
 				throw (lightCubeIndex);
 			}
 			else
-				lightCube.lightPointPtr->pos = lightCube.pos;
+				lightCube.lightPointPtr->pos = newPos;
 		}
 
 		catch (int index) {
@@ -480,9 +422,10 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 	glm::mat4 orbitMat{};
 
 	shader.use();
-	updateLightsCubePos();
 	for (auto& const lightCube : World::lightCubesObject)
 	{ 
+		orbitMat = orbit(lightCube, 2.0f, 2.0f, 20);
+
 		shader.set3Float("lightColor", lightCube.lightPointPtr->color);
 		shader.setMat4("model", lightCube.model);
 		shader.setMat4("orbit", orbitMat);
@@ -495,14 +438,17 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 //woodCube function
 void setWoodCube(Shader& shader) 
 {
-	World::woodCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(0.75f) , 0.0f));
+	//World::woodCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(0.75f) , 0.0f));
 
 	World::woodCube.model = glm::rotate(World::woodCube.model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+	//World::woodCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(1), 0.0f));
 
 	shader.use();
 	shader.setMat4("model", World::woodCube.model);
 	shader.setFloat("material.shininess", 64.0f);
 
+	
+	updateLightsCubePos();
 	setLighting(shader);
 }
 
@@ -513,19 +459,17 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMes
 	shader.use();
 	glm::vec3 emmissionColor{ rgb(255, 255, 0) };
 
-	shader.set3Float("pointLights[0].pos", World::lightPoints[0].pos);
-	shader.set3Float("pointLights[0].pos", World::lightPoints[1].pos);
-
 	shader.setFloat("emmissionStrength", frameGlow() );
 	shader.set3Float("emmissionColor", emmissionColor);
 	shader.set3Float("viewPos", World::camera.pos);
 
+	updateLightsCubePos();
+	setLighting(shader);
 
 	passViewProject(shader);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 	woodCubeMesh.draw(shader);
 }
-
 
 //POST PROCESSING EFFECT FUNCTION
 void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao)
@@ -569,6 +513,11 @@ void setEffect(Shader& shader, Effects effect)
 glm::vec3 rgb(float red, float blue, float green)
 {
 	return glm::vec3(red / 255.0f, blue / 255.0f, green / 255.0f);
+}
+
+float meterToWorldUnit(float meter)
+{
+	return meter * 10;
 }
 
 template <typename T>

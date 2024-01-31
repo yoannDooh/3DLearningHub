@@ -105,7 +105,6 @@ void main()
     vec3 refractDir = refract(MinusviewDir,normVec,ratio);
     vec3 refractColor = texture(skyBox, refractDir).rgb;
 
-
     //DirectLight 
     vec3 lightning = calcDirLight(sunLight, normVec, viewDir);
 
@@ -114,7 +113,7 @@ void main()
 
     vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb* emmissionColor;
 
-    FragColor = vec4(lightning + reflectColor * 0.3 + refractColor * 0.3 + emission, 1.0);
+    FragColor = vec4(lightning /* + reflectColor * 0.3 + refractColor * 0.3*/ + emission, 1.0);
    
 }
 
