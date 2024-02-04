@@ -225,7 +225,7 @@ std::vector<float>circleCenter{
 	terrainShader.use();
 	terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
 	terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
-	terrainShader.setFloat("chunk.shininess", 0.1f);
+	terrainShader.setFloat("chunk1.shininess", 0.00001f);
 
 
 	// render loop

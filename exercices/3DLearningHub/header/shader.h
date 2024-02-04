@@ -2,7 +2,6 @@
 
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -36,10 +35,5 @@ class Shader
 	void set4Float(const std::string& name, float values[4]) const;
 	void setMat4(const std::string& name, glm::mat4& mat) const;
 };
-
-
-
-//#include "../header/motion.h"
-
 
 

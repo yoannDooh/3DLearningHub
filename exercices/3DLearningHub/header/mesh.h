@@ -47,6 +47,8 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
+	glm::vec3 tangent;
+	glm::vec3 bitangent;
 
 	Mesh() {}
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
@@ -62,6 +64,7 @@ public:
 	void setVao(unsigned int vao);
 	void setVbo(unsigned int vbo);
 	void setEbo(unsigned int ebo);
+	void calcTB();
 
 	
 
