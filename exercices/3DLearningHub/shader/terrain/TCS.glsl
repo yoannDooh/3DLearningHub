@@ -42,18 +42,23 @@ void main()
 
     vertexTextCoord[gl_InvocationID] = textCoord[gl_InvocationID];
 
+
     barrier();
 
 
     if (gl_InvocationID == 0)
     {
-        gl_TessLevelOuter[0] = 1;
-        gl_TessLevelOuter[1] = 1;
-        gl_TessLevelOuter[2] = 1;
-        gl_TessLevelOuter[3] = 1;
+        gl_TessLevelOuter[0] = 16;
+        gl_TessLevelOuter[1] = 16;
+        gl_TessLevelOuter[2] = 16;
+        gl_TessLevelOuter[3] = 16;
+
+        gl_TessLevelInner[0] = 16;
+        gl_TessLevelInner[1] = 16;
     }
 
-
+    //LOD ALGORITHM REALLY WORKS BADLY NEED TO BE FIXED
+    /*
     //handle LOD 
     //get edge distance (get distance from camera of a vertex and the other vertex on the edge and averange both, repeate for the 4 outer)
 
@@ -94,7 +99,7 @@ void main()
     gl_TessLevelInner[0] = outerAverage;
     gl_TessLevelInner[1] = outerAverage;
 
-
+    */
 }
 
 vec4 scale(vec4 data, float scaleFactor)

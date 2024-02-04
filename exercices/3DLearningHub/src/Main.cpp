@@ -51,7 +51,7 @@ std::vector<float>circleCenter{
 	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}),true);
 	Cube lightCube(woodCube.getVbo(), woodCube.getEbo());
 	CubeMap skyBox (skyBoxTextPaths);
-	Terrain terrain(8,".\\rsc\\terrain\\heightMap2.jpeg");
+	Terrain terrain(2,".\\rsc\\terrain\\heightMaps\\drole.png");
 
 	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -61,12 +61,6 @@ std::vector<float>circleCenter{
 	//quad for geometry Shader 
 	Points quadPoints(points);
 	Points circle(circleCenter);
-
-
-	//lightCubes 
-	//Object lightCubeObject;
-	//std::array<Object,POINT_LIGHTS_NB> lightCubeObjects;
-
 
 	//rendering parameters
 	glEnable(GL_DEPTH_TEST);
@@ -175,10 +169,11 @@ std::vector<float>circleCenter{
 			terrainShader.setMat4("model", model);
 			terrainShader.setFloat("maxDistLod", 3000);
 
+			setLighting(terrainShader);
 			terrain.draw(terrainShader);
 
 			//DRAW IN LAST
-			//skyBox.draw(skyboxShader);
+			skyBox.draw(skyboxShader);
 
 		};
 
@@ -225,6 +220,13 @@ std::vector<float>circleCenter{
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(woodBoxShader);
+	terrain.addChunk( loadTextures({".\\rsc\\terrain\\sandRock\\diffuseMap.jpg"}, {diffuse}), {meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, {0.0f, 0.0f});
+
+	terrainShader.use();
+	terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
+	terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
+	terrainShader.setFloat("chunk.shininess", 0.1f);
+
 
 	// render loop
 	glfwSetTime(0);

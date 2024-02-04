@@ -11,7 +11,7 @@ uniform mat4 projection;
 uniform mat4 lightSpaceMat;
 
 out float height;
-out vec2 textCoord;
+out vec2 TextCoord;
 out vec4 normalVec;
 out vec3 fragPos;
 out vec4 fragPosLightSpace;
@@ -28,21 +28,20 @@ void main()
 	float u = gl_TessCoord.x;
 	float v = gl_TessCoord.y;
 
-	vec2 textCoord = bilinearInterpolation(u,v, vertexTextCoord[0], vertexTextCoord[1], vertexTextCoord[2], vertexTextCoord[3]);
+	TextCoord = bilinearInterpolation(u,v, vertexTextCoord[0], vertexTextCoord[1], vertexTextCoord[2], vertexTextCoord[3]);
 
 	vec4 pos = bilinearInterpolation(u, v, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position);
 
-	height = texture(heightMap, textCoord).r; //* 64.0 - 16.0;
+	height = texture(heightMap, TextCoord).r;
 
 	//displace along normal
 	normalVec = vertexNormal(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[3].gl_Position);
-	pos += vec4(0.0, 1.0,0.0,0.0) * height * 25 - 5;
+	pos += vec4(0.0, 1.0, 0.0, 0.0) * height * 25 - 5;
 	//pos += height - 3;
 
 	gl_Position = projection*view*model*vec4(pos.xyz, 1.0);
 	fragPos = vec3(model * vec4(pos.xyz,1.0) );
-	fragPosLightSpace = lightSpaceMat * vec4(fragPos,1.0);
-																															//	^
+	fragPosLightSpace = lightSpaceMat * vec4(fragPos,1.0);																													//	^
 }																															//	|
 																															//	v		3	2
 																															//	u->	   0,1   1,1
@@ -50,11 +49,11 @@ vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data
 {																															//	lefData	|   | rightData
 	vec2 leftData = data00 + v * (data01 - data00);																			//			+---+																						//		   00   10																						//	^																						//	|																						//	v
 	vec2 rightData = data10 + v * (data11 - data10);																		//		   0,0   1,0
-	return  vec2(leftData + u * (rightData - leftData) );																	//			0    1
+	return  vec2(leftData + u * (rightData - leftData));																	//			0    1
 
 }
 
-vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data11, vec4 data01)							
+vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data11, vec4 data01)
 {																															
 	vec4 leftData = data00 + v * (data01 - data00);																																							//		   00   10																						//	^																						//	|																						//	v
 	vec4 rightData = data10 + v * (data11 - data10);																		

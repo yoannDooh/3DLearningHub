@@ -38,7 +38,8 @@ namespace Light
 
 namespace World
 {
-	Camera camera{ glm::vec3(meterToWorldUnit(0.01f) , meterToWorldUnit(0.8f), meterToWorldUnit(-0.15f)), glm::vec3(meterToWorldUnit(-0.01f) , meterToWorldUnit(-0.8f), meterToWorldUnit(0.15f)), glm::vec3(0.0f, 1.0f, 0.0f), 5.5f };
+	float CameraSpeed{ 40.5 };
+	Camera camera{ glm::vec3(meterToWorldUnit(0.01f) , meterToWorldUnit(0.8f), meterToWorldUnit(-0.15f)), glm::vec3(meterToWorldUnit(-0.01f) , meterToWorldUnit(-0.8f), meterToWorldUnit(0.15f)), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
 	
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
 	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar)  };
@@ -69,10 +70,22 @@ Object::Object(glm::vec3 pos)
 	pos = pos;
 }
 
-void Object::moveObject(glm::vec3 vector)
+void Object::move(glm::vec3 vector)
 {
-	model = glm::translate(localOrigin, vector);
-	pos += vector;
+	model = model*glm::translate(localOrigin, vector);
+	pos = model * glm::vec4(pos,1.0f);
+}
+
+void Object::rotate(float rad, glm::vec3 rotateAxis)
+{
+	model = model * glm::rotate(model, rad, rotateAxis);
+	pos = model * glm::vec4(pos, 1.0f);
+}
+
+void Object::scale(glm::vec3 scaleVec)
+{
+	model = model * glm::scale(localOrigin, scaleVec);
+	pos = model * glm::vec4(pos, 1.0f);
 }
 
 //shadows functions
@@ -348,18 +361,21 @@ void setLightCubes(Shader& shader, float cubeEdge)
 {
 	shader.use();
 
-	shader.setFloat("cubeEdge", cubeEdge);
-	shader.setMat4("model", World::lightCubesObject[0].model);
-
 	//set lightPoints base model
 	int index{};
 	for (auto& lightCube : World::lightCubesObject)
 	{
-		lightCube.model = glm::scale(lightCube.localOrigin, glm::vec3(0.2f) );
-		rotatePlane(lightCube, ((index+1)*60) ); //first is 60° and second 120°
-	//	lightCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(1), 0.0f) );
+		/*
+		lightCube.scale(glm::vec3(2.0f));
+		lightCube.model = lightCube.model* glm::translate(lightCube.localOrigin,glm::vec3(0.0f, meterToWorldUnit(0.75f), 0.0f));
+		*/
+
+		rotatePlane(lightCube, ((index + 1) * 60)); //first is 60° and second 120°
 		++index;
 	}
+
+	shader.setFloat("cubeEdge", cubeEdge);
+	shader.setMat4("model", World::lightCubesObject[0].model); //both have the same model
 
 	//set their setLighting value
 	std::array<Light::lightPoint, 2> lights{}; //first is red second is blue 
@@ -396,7 +412,7 @@ void updateLightsCubePos()
 	int lightCubeIndex{};
 	for (auto& lightCube : World::lightCubesObject)
 	{
-		orbitMat = orbit(lightCube, 2.0f, 2.0f, 20);
+		orbitMat = orbit(lightCube, 4.0f, 4.0f, 20);
 		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));
 
 		try 
@@ -424,7 +440,7 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 	shader.use();
 	for (auto& const lightCube : World::lightCubesObject)
 	{ 
-		orbitMat = orbit(lightCube, 2.0f, 2.0f, 20);
+		orbitMat = orbit(lightCube, 4.0f, 4.0f, 20);
 
 		shader.set3Float("lightColor", lightCube.lightPointPtr->color);
 		shader.setMat4("model", lightCube.model);
@@ -438,10 +454,10 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 //woodCube function
 void setWoodCube(Shader& shader) 
 {
-	//World::woodCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(0.75f) , 0.0f));
-
-	World::woodCube.model = glm::rotate(World::woodCube.model, glm::radians(45.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-	//World::woodCube.moveObject(glm::vec3(0.0f, meterToWorldUnit(1), 0.0f));
+	/*
+	World::woodCube.scale(glm::vec3(2.0f));
+	World::woodCube.move(glm::vec3(0.0f, meterToWorldUnit(0.75f), 0.0f));
+	*/
 
 	shader.use();
 	shader.setMat4("model", World::woodCube.model);
@@ -520,7 +536,7 @@ float meterToWorldUnit(float meter)
 	return meter * 10;
 }
 
-template <typename T>
+template <typename T> //j'avais zappé y avait glm::radian faudra suppr ça sert à r 
 T degreeToRad(T degree)
 {
 	if (degree > 360 || degree < 0)

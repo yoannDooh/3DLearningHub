@@ -133,22 +133,10 @@ class Object
 		Object(){}
 		Object(glm::vec3 pos);
 
-		void moveObject(glm::vec3 vector);
+		void move(glm::vec3 vector);
+		void rotate(float rad,glm::vec3 rotateAxis);
+		void scale(glm::vec3 scaleVec);
 };
-
-/*
-namespace Object
-{
-	struct Model
-	{
-		glm::mat4 model{};
-		glm::mat4 localOrigin{ glm::mat4(1.0f) };
-		glm::vec3 worldPos{};
-		bool outLine{ false };
-	};
-
-}
-*/
 
 namespace Mouse
 {

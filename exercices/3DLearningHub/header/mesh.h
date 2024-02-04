@@ -149,20 +149,34 @@ public:
 class Terrain : public Mesh
 {
 public:
+	struct Chunk
+	{
+		std::vector<Texture> textures;
+		std::array<float, 2> xRange; //first is xPosLEft and second xPosRight in WORLD unit, to indicate where the texture expand and until where it stretch 
+		std::array<float, 2> zRange; //same with z 
+		std::array<float, 2> yRange; //range in height of the texture
+
+		//if range is [0,0] the texture will expand across the whole map on the axis
+	};
 	
+	std::vector<Chunk> chunks; //chunk is just a non-fixed size subPart of the terrain with it's own textures
 	Texture heightMap{};
 	int width{};
 	int height{};
+
 	std::vector<terrainVertex> vertices{};
 	
 
 	Terrain() {};
 	Terrain(int patchNb,const char* heightMapPath); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
-
+	void addChunk(std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange);
 
 	void draw(Shader& shader);
 
 private: 
+
+	
+
 	void loadHeightMap(const char* heightMapPath);
 	void setupTerrain();
 
@@ -170,3 +184,4 @@ private:
 
 //function declaration
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
+ 

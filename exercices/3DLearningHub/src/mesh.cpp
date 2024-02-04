@@ -24,6 +24,7 @@ std::vector<Texture> loadTextures(std::vector<const char*> pathes, std::vector<T
 		glGenTextures(1, &textureId);
 		texture.ID = textureId;
 		texture.type = types[index];
+		texture.path = path;
 
 		textures.push_back(texture);
 
@@ -1233,13 +1234,130 @@ void Terrain::loadHeightMap(const char* heightMapPath)
 		std::cout << "Failed to load heightMap" << std::endl;
 }
 
+void Terrain::addChunk(std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange)
+{
+	Chunk chunk;
+
+	try //made it an exeption handling because it would cause error in the shader if the first value is greater than the second
+	{
+		if (xRange[0] > xRange[1])
+		{
+			std::cerr << "chunk xRange error : ";
+			throw (xRange);
+		}
+
+		if (yRange[0] > yRange[1])
+		{
+			std::cerr << "chunk yRange error : ";
+			throw (xRange);
+		}
+
+		if (zRange[0] > zRange[1])
+		{
+			std::cerr << "chunk zRange error : ";
+			throw (zRange);
+		}
+
+		else
+		{
+			chunk.xRange = xRange;
+			chunk.zRange = zRange;
+			chunk.yRange = yRange;
+
+			for (auto const& texture : textures)
+			{
+				chunk.textures.push_back(texture);
+			}
+
+			chunks.push_back(chunk);
+		}
+
+	}
+	catch (std::array<float, 2> floatArray)
+	{
+		std::cerr << "first value : " << floatArray[0] << "is greater than second value : " << floatArray[1] << std::endl;
+	}
+	
+}
+
 void Terrain::draw(Shader& shader)
 {
+	//shader.use();
+
 	//activate heightMap
 	glActiveTexture(GL_TEXTURE0);
+	shader.setInt("heightMap", 0);
 	glBindTexture(GL_TEXTURE_2D, heightMap.ID);
 
-	shader.use();
+	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
+	std::fill_n(texturesCount.begin(), 6, 1);
+	
+	int ChunkIndex{};
+	for (auto& const chunk : chunks)
+	{
+		std::string chunkNr{ "chunk" };
+		chunkNr = chunkNr + std::to_string(ChunkIndex+1) +'.';
+		//set and pass texture uniform
+		for (unsigned int textIndex{}; textIndex < chunk.textures.size() ; textIndex++) 
+		{
+
+			glActiveTexture(GL_TEXTURE0 + textIndex+1); //+1 because GL_TEXTURE0 is heightMap
+			std::string number;
+			std::string name;
+			TextureMap type{ chunk.textures[textIndex].type };
+
+			switch (type)
+			{
+			case diffuse:
+				name = "texture_diffuse";
+				number = std::to_string(texturesCount[diffuse]++);
+				break;
+
+			case specular:
+				name = "texture_specular";
+				number = std::to_string(texturesCount[specular]++);
+				break;
+
+			case emission:
+				name = "texture_emission";
+				number = std::to_string(texturesCount[emission]++);
+				break;
+
+			case normal:
+				name = "texture_normal";
+				number = std::to_string(texturesCount[normal]++);
+				break;
+
+			case roughness:
+				name = "texture_roughness";
+				number = std::to_string(texturesCount[roughness]++);
+				break;
+
+			case refraction:
+				name = "texture_refraction";
+				number = std::to_string(texturesCount[refraction]++);
+				break;
+			}
+
+			name = (chunkNr + name + number);
+			shader.setInt(name.c_str(), textIndex+1);
+
+			glBindTexture(GL_TEXTURE_2D, chunk.textures[textIndex].ID);
+		}
+
+		//pass ranges uniform
+		shader.setFloat(chunkNr+"xRange[0]",chunk.xRange[0]);
+		shader.setFloat(chunkNr + "xRange[1]", chunk.xRange[1]);
+
+		shader.setFloat(chunkNr+"yRange[0]", chunk.yRange[0]);
+		shader.setFloat(chunkNr+"yRange[1]", chunk.yRange[1]);
+
+		shader.setFloat(chunkNr+"zRange[0]", chunk.zRange[0]);
+		shader.setFloat(chunkNr+"zRange[1]", chunk.zRange[1]);
+
+		++ChunkIndex;
+	}
+
 	glBindVertexArray(VAO);
 	glDrawElements(GL_PATCHES, indices.size(), GL_UNSIGNED_INT, 0);
 }

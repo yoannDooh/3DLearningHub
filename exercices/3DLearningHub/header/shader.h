@@ -29,6 +29,8 @@ class Shader
 	void setBool(const std::string& name, bool value) const;
 	void setInt(const std::string& name, int value) const;
 	void setFloat(const std::string& name, float value) const;
+	void set2Float(const std::string& name, glm::vec2& value) const;
+	void set2Float(const std::string& name, std::array<float, 2>values) const;
 	void set3Float(const std::string& name, float values[3]) const;
 	void set3Float(const std::string& name, glm::vec3& value) const;
 	void set4Float(const std::string& name, float values[4]) const;

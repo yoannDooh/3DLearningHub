@@ -54,12 +54,6 @@ struct SpotLight
     vec3 specular;
 };
 
-struct Light {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
 struct Material {
     sampler2D  texture_diffuse1;
     sampler2D texture_specular1;
@@ -70,7 +64,6 @@ struct Material {
 uniform samplerCube skyBox;
 //uniform sampler2D shadowMap;
 uniform Material material;
-uniform Light light;
 uniform int spotLightNb;
 uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform SpotLight spotLight;
@@ -123,7 +116,7 @@ vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    
+
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TextCoord));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TextCoord)) * light.color;
@@ -134,7 +127,6 @@ vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
 
@@ -160,7 +152,6 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
     //diffuse and specular
