@@ -79,10 +79,11 @@ uniform vec2 maxUvVertexPos;
 uniform vec2 minUvVertexPos; //it should be negative since terrain extend from negative to positive so 0 is at the center 
 
 
-vec3 calcDirLight(Chunk chunk,DirectLight light, vec3 normal, vec3 viewDir);
-vec3 calcPointLight(Chunk chunk, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
-vec3 calcSpotLight(Chunk chunk,SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
-vec3 chunkFragText(Chunk chunk, vec2 textCoord, vec3 fragPos, vec3 baseColor);
+vec3 calcDirLight(Chunk chunk,DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText);
+vec3 calcPointLight(Chunk chunk, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos,vec3 diffuseText);
+vec3 calcSpotLight(Chunk chunk,SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
+//vec3 calcNormal(Chunk chunk, vec2 uv);
+vec3 chunkFragText(Chunk chunk, vec2 textCoord,vec3 normal,vec3 viewDir,vec3 fragPos, vec3 baseColor);
 float calcShadow(vec4 fragPosLightSpace);
 
 void main()
@@ -94,20 +95,22 @@ void main()
     float shadow = calcShadow(fragPosLightSpace);
 	vec3 baseTerrainFragColor = vec3(height, height, height);
 
-    vec3 textColor = chunkFragText(chunk1, TextCoord, fragPos, baseTerrainFragColor);
 
     //faudra transfomer les chunks en uniform buffer objects et faire un fonction qui parse tous les chunks pour faire le lightning
+    /*
     vec3 lightning = calcDirLight(chunk1,sunLight,normVec,viewDir);
 
     for (int index = 0; index < POINT_LIGHTS_NB; ++index)
         lightning += calcPointLight(chunk1,pointLights[index], normVec, viewDir, fragPos);
+    */
 
+    vec3 textColor = chunkFragText(chunk1, TextCoord, normVec, viewDir,fragPos, baseTerrainFragColor);
 
     vec3 diffuse = texture(chunk1.texture_diffuse1, TextCoord).rgb;
-    FragColor = vec4(lightning,1.0);
+    FragColor = vec4(textColor,1.0);
 }
 
-vec3 chunkFragText(Chunk chunk,vec2 textCoord,vec3 fragPos, vec3 baseColor)
+vec3 chunkFragText(Chunk chunk,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragPos, vec3 baseColor)
 {
     //transform chunk Coord from patch range to it's own [0,1] range he j'ai trop mal expliqué carrément en fait c'est même pas je vais faire jsp je raconte quoi
     float uMin = (chunk.xRange[0] + abs(minUvVertexPos.x) ) / ( maxUvVertexPos.x + abs(minUvVertexPos.x) ) ;
@@ -127,35 +130,47 @@ vec3 chunkFragText(Chunk chunk,vec2 textCoord,vec3 fragPos, vec3 baseColor)
 
         vec3 diffuse = texture(chunk.texture_diffuse1, uv).rgb;
 
-        return diffuse;
+        vec3 lightning = calcDirLight(chunk, sunLight, normal, viewDir, diffuse);
+
+        for (int index = 0; index < POINT_LIGHTS_NB; ++index)
+            lightning += calcPointLight(chunk, pointLights[index], normal, viewDir, fragPos, diffuse);
+
+
+        return lightning;
     }
 
     return baseColor;
 }
 
-vec3 calcDirLight(Chunk chunk,DirectLight light, vec3 normal, vec3 viewDir)
+vec3 calcDirLight(Chunk chunk,DirectLight light, vec3 normal, vec3 viewDir,vec3 diffuseText)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 reflectDir = reflect(-lightDir, normal);
+
+    //simple phong spec
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), chunk.shininess);
 
     //diffuse / specular / ambient final value
-    vec3 ambient = light.ambient * vec3(texture(chunk.texture_diffuse1, TextCoord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(chunk.texture_diffuse1, TextCoord)) * light.color;
+    vec3 ambient = light.ambient * diffuseText;
+    vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
+
+
     vec3 specular = light.specular * spec ;
     return (ambient + diffuse + 0);
 }
 
-vec3 calcPointLight(Chunk chunk,PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
+//JE COMPREND PAS CE QUE FAIT LE SPECULAR 
+vec3 calcPointLight(Chunk chunk,PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
 
-    //diffuse and specular
+    //diffuse
     float diff = max(dot(normal, lightDir), 0.0);
+
+    //Blinn spec
     float spec = pow(max(dot(normal, halfwayDir), 0.0), chunk.shininess);
 
     // attenuation
@@ -163,8 +178,8 @@ vec3 calcPointLight(Chunk chunk,PointLight light, vec3 normal, vec3 viewDir, vec
     float attenuation = 1.0 / (light.constant + light.linearCoef * distance + light.squareCoef * (distance * distance));
 
     //diffuse / specular / ambient final value
-    vec3 ambient = light.ambient * vec3(texture(chunk.texture_diffuse1, TextCoord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(chunk.texture_diffuse1, TextCoord)) * light.color;
+    vec3 ambient = light.ambient * diffuseText;
+    vec3 diffuse = light.diffuse * diff *  diffuseText * light.color;
     vec3 specular = light.specular * spec  * light.color;
     ambient *= attenuation;
     diffuse *= attenuation;
@@ -173,14 +188,15 @@ vec3 calcPointLight(Chunk chunk,PointLight light, vec3 normal, vec3 viewDir, vec
 
 }
 
-vec3 calcSpotLight(Chunk chunk, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
+vec3 calcSpotLight(Chunk chunk, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
-    //diffuse and specular
+    //diffuse
     float diff = max(dot(normal, lightDir), 0.0);
+
+    //Blinn spec
     float spec = pow(max(dot(normal, halfwayDir), 0.0), chunk.shininess);
 
     // attenuation
@@ -194,16 +210,27 @@ vec3 calcSpotLight(Chunk chunk, SpotLight light, vec3 normal, vec3 viewDir, vec3
 
 
     //diffuse / specular / ambient final value
-    vec3 ambient = light.ambient * vec3(texture(chunk.texture_diffuse1, TextCoord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(chunk.texture_diffuse1, TextCoord)) * light.color;
+    vec3 ambient = light.ambient * diffuseText;
+    vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
     vec3 specular = light.specular * spec  * light.color;
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;
     specular *= attenuation * intensity;
-    return (ambient + diffuse + 0);
+    return (ambient + diffuse + specular);
 
 }
 
+/*
+vec3 calcNormal(Chunk chunk,vec2 uv)
+{
+    
+    normal = texture(chunk.texture_normal1,uv).rgb;
+
+    // transform to range [-1,1]
+    normal = normalize(normal * 2.0 - 1.0);
+   
+}
+*/
 
 float calcShadow(vec4 fragPosLightSpace)
 {

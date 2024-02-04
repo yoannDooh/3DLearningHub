@@ -39,7 +39,7 @@ namespace Light
 namespace World
 {
 	float CameraSpeed{ 40.5 };
-	Camera camera{ glm::vec3(meterToWorldUnit(0.01f) , meterToWorldUnit(0.8f), meterToWorldUnit(-0.15f)), glm::vec3(meterToWorldUnit(-0.01f) , meterToWorldUnit(-0.8f), meterToWorldUnit(0.15f)), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
+	Camera camera{ glm::vec3(meterToWorldUnit(-0.43f) , meterToWorldUnit(0.008f), meterToWorldUnit(-0.008f) ), glm::vec3(meterToWorldUnit(0.43f) , meterToWorldUnit(-0.008f), meterToWorldUnit(0.008f)), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
 	
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
 	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar)  };
@@ -73,19 +73,61 @@ Object::Object(glm::vec3 pos)
 void Object::move(glm::vec3 vector)
 {
 	model = model*glm::translate(localOrigin, vector);
-	pos = model * glm::vec4(pos,1.0f);
+	pos = glm::translate(localOrigin, vector) * glm::vec4(pos,1.0f);
+
+	//should add a parameter to decide how the light position is influenced by the object it's associated with position 
+	//by default the light has the same position as the object 
+	//update lightPoint pos
+	if (lightPointPtr == nullptr)
+		return;
+
+	else
+		lightPointPtr->pos = pos;
+
+	//update spotlight pos
+	if (spotLightPtr == nullptr)
+		return;
+
+	else
+		spotLightPtr->pos = pos;
 }
 
 void Object::rotate(float rad, glm::vec3 rotateAxis)
 {
 	model = model * glm::rotate(model, rad, rotateAxis);
-	pos = model * glm::vec4(pos, 1.0f);
+	pos = glm::rotate(model, rad, rotateAxis) * glm::vec4(pos, 1.0f);
+
+	if (lightPointPtr == nullptr)
+		return;
+
+	else
+		lightPointPtr->pos = pos;
+
+	//update spotlight pos
+	if (spotLightPtr == nullptr)
+		return;
+
+	else
+		spotLightPtr->pos = pos;
 }
 
 void Object::scale(glm::vec3 scaleVec)
 {
 	model = model * glm::scale(localOrigin, scaleVec);
-	pos = model * glm::vec4(pos, 1.0f);
+	pos = glm::scale(localOrigin, scaleVec) * glm::vec4(pos, 1.0f);
+
+	if (lightPointPtr == nullptr)
+		return;
+
+	else
+		lightPointPtr->pos = pos;
+
+	//update spotlight pos
+	if (spotLightPtr == nullptr)
+		return;
+
+	else
+		spotLightPtr->pos = pos;
 }
 
 //shadows functions
@@ -322,6 +364,8 @@ glm::mat4 orbit(Object& object, float horizontalAxis, float verticalAxis,float o
 
 	orbit = glm::translate(object.localOrigin, glm::vec3(xAxisValue, 0.0f, zAxisValue));
 
+	//object.move(glm::vec3(xAxisValue, 0.0f, zAxisValue) );
+
 	return  orbit;
 }
 
@@ -365,10 +409,8 @@ void setLightCubes(Shader& shader, float cubeEdge)
 	int index{};
 	for (auto& lightCube : World::lightCubesObject)
 	{
-		/*
-		lightCube.scale(glm::vec3(2.0f));
-		lightCube.model = lightCube.model* glm::translate(lightCube.localOrigin,glm::vec3(0.0f, meterToWorldUnit(0.75f), 0.0f));
-		*/
+		
+		lightCube.scale(glm::vec3(0.4f));
 
 		rotatePlane(lightCube, ((index + 1) * 60)); //first is 60° and second 120°
 		++index;
@@ -404,43 +446,20 @@ void setLightCubes(Shader& shader, float cubeEdge)
 	World::lightCubesObject[1].lightPointPtr = &World::lightPoints[1];
 }
 
-void updateLightsCubePos()
+void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 {
 	glm::mat4 orbitMat{};
 	glm::vec3 newPos{};
 
-	int lightCubeIndex{};
-	for (auto& lightCube : World::lightCubesObject)
-	{
-		orbitMat = orbit(lightCube, 4.0f, 4.0f, 20);
-		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));
-
-		try 
-		{
-			if (lightCube.lightPointPtr == nullptr)
-			{
-				throw (lightCubeIndex);
-			}
-			else
-				lightCube.lightPointPtr->pos = newPos;
-		}
-
-		catch (int index) {
-			std::cerr << "DEREFERENCING NULLPTR WITH LIGHTCUBE AT INDEX : "<< index << std::endl;
-		}
-
-		++lightCubeIndex;
-	}
-}
-
-void animateLightsCube(Shader& shader, Cube lightCubeMesh)
-{
-	glm::mat4 orbitMat{};
-
 	shader.use();
+
 	for (auto& const lightCube : World::lightCubesObject)
 	{ 
-		orbitMat = orbit(lightCube, 4.0f, 4.0f, 20);
+		orbitMat = orbit(lightCube, 4.0f, 4.0f, 15);
+		
+		//update light pos
+		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));
+		lightCube.lightPointPtr->pos = newPos;
 
 		shader.set3Float("lightColor", lightCube.lightPointPtr->color);
 		shader.setMat4("model", lightCube.model);
@@ -464,7 +483,7 @@ void setWoodCube(Shader& shader)
 	shader.setFloat("material.shininess", 64.0f);
 
 	
-	updateLightsCubePos();
+	//updateLightsCubePos();
 	setLighting(shader);
 }
 
@@ -479,7 +498,7 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMes
 	shader.set3Float("emmissionColor", emmissionColor);
 	shader.set3Float("viewPos", World::camera.pos);
 
-	updateLightsCubePos();
+	//updateLightsCubePos();
 	setLighting(shader);
 
 	passViewProject(shader);

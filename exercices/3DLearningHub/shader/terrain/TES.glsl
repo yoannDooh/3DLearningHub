@@ -34,10 +34,14 @@ void main()
 
 	height = texture(heightMap, TextCoord).r;
 
-	//displace along normal
-	normalVec = vertexNormal(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[3].gl_Position);
 	pos += vec4(0.0, 1.0, 0.0, 0.0) * height * 25 - 5;
 	//pos += height - 3;
+
+	vec4 pos00 = gl_in[0].gl_Position + vec4(0.0, 1.0, 0.0, 0.0) * height * 25 - 5; //jsuis pas trop sur de tout ça hein 
+	vec4 pos10 = gl_in[1].gl_Position + vec4(0.0, 1.0, 0.0, 0.0) * height * 25 - 5; //jsuis pas trop sur de tout ça hein 
+	vec4 pos01 = gl_in[3].gl_Position + vec4(0.0, 1.0, 0.0, 0.0) * height * 25 - 5; //jsuis pas trop sur de tout ça hein 
+
+	normalVec = vertexNormal(pos00, pos10, pos01); //bah ça change r jsuis perdu là 
 
 	gl_Position = projection*view*model*vec4(pos.xyz, 1.0);
 	fragPos = vec3(model * vec4(pos.xyz,1.0) );

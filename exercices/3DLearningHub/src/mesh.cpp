@@ -71,6 +71,41 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
 	setupMesh();
 }
 
+void Mesh::calcTB()
+{
+	// positions
+	glm::vec3 pos1(-1.0, 1.0, 0.0);
+	glm::vec3 pos2(-1.0, -1.0, 0.0);
+	glm::vec3 pos3(1.0, -1.0, 0.0);
+	glm::vec3 pos4(1.0, 1.0, 0.0);
+
+	// texture coordinates
+	glm::vec2 uv1(0.0, 1.0);
+	glm::vec2 uv2(0.0, 0.0);
+	glm::vec2 uv3(1.0, 0.0);
+	glm::vec2 uv4(1.0, 1.0);
+
+	// normal vector
+	glm::vec3 nm(0.0, 0.0, 1.0);
+
+	glm::vec3 edge1 = pos2 - pos1;
+	glm::vec3 edge2 = pos3 - pos1;
+	glm::vec2 deltaUV1 = uv2 - uv1;
+	glm::vec2 deltaUV2 = uv3 - uv1;
+
+	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+
+	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+	//[...] // similar procedure for plane’s second triangle
+
+}
+
 void Mesh::addTexture(Texture texture)
 {
 	textures.push_back(texture);
