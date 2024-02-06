@@ -222,10 +222,18 @@ std::vector<float>circleCenter{
 	setWoodCube(woodBoxShader);
 	terrain.addChunk( loadTextures({".\\rsc\\terrain\\sandRock\\diffuseMap.jpg"}, {diffuse}), {meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, {0.0f, 0.0f});
 
+
+	float a{ static_cast<float>(1.0) / static_cast<float>(terrain.width) };
+	float b{ static_cast<float>(1.0) / static_cast<float>(terrain.height) };
+
 	terrainShader.use();
 	terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
 	terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
 	terrainShader.setFloat("chunk1.shininess", 0.00001f);
+
+	terrainShader.use();
+	terrainShader.setFloat("inverseWidth",a );
+	terrainShader.setFloat("inverseHeight",b );
 
 
 	// render loop

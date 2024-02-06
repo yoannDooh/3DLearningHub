@@ -107,7 +107,7 @@ void main()
     vec3 textColor = chunkFragText(chunk1, TextCoord, normVec, viewDir,fragPos, baseTerrainFragColor);
 
     vec3 diffuse = texture(chunk1.texture_diffuse1, TextCoord).rgb;
-    FragColor = vec4(textColor,1.0);
+    FragColor = vec4(baseTerrainFragColor,1.0);
 }
 
 vec3 chunkFragText(Chunk chunk,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragPos, vec3 baseColor)
