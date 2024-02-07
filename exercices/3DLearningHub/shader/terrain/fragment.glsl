@@ -11,17 +11,19 @@ out vec4 FragColor;
 
 #define POINT_LIGHTS_NB 2
 
-struct Chunk {
+struct Area {
+
+    int chunkId;
+    float[2] xRange; //first is xPosLEft and second xPosRight in WORLD unit, to indicate where the texture expand and until where it stretch 
+    float[2] zRange; //same with z 
+    float[2] yRange; //range in height of the texture
+
     sampler2D texture_diffuse1;
     sampler2D texture_specular1;
     sampler2D texture_normal1;
     sampler2D texture_displacement1;
     sampler2D texture_emission1;
     float shininess;
-
-    float[2] xRange; //first is xPosLEft and second xPosRight in WORLD unit, to indicate where the texture expand and until where it stretch 
-    float[2] zRange; //same with z 
-    float[2] yRange; //range in height of the texture
 };
 
 struct DirectLight { //Directional light 
@@ -72,18 +74,18 @@ struct SpotLight
 
 uniform sampler2D shadowMap;
 uniform PointLight pointLights[POINT_LIGHTS_NB];
-uniform Chunk chunk1;
+uniform Area area1;
 uniform vec3 viewPos;
 uniform DirectLight sunLight;
 uniform vec2 maxUvVertexPos;
 uniform vec2 minUvVertexPos; //it should be negative since terrain extend from negative to positive so 0 is at the center 
 
 
-vec3 calcDirLight(Chunk chunk,DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText);
-vec3 calcPointLight(Chunk chunk, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos,vec3 diffuseText);
-vec3 calcSpotLight(Chunk chunk,SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
-//vec3 calcNormal(Chunk chunk, vec2 uv);
-vec3 chunkFragText(Chunk chunk, vec2 textCoord,vec3 normal,vec3 viewDir,vec3 fragPos, vec3 baseColor);
+vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText);
+vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
+vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
+//vec3 calcNormal(Area area, vec2 uv);
+vec3 areaFragText(Area area, vec2 textCoord,vec3 normal,vec3 viewDir,vec3 fragPos, vec3 baseColor);
 float calcShadow(vec4 fragPosLightSpace);
 
 void main()
@@ -97,43 +99,38 @@ void main()
 
 
     //faudra transfomer les chunks en uniform buffer objects et faire un fonction qui parse tous les chunks pour faire le lightning
-    /*
-    vec3 lightning = calcDirLight(chunk1,sunLight,normVec,viewDir);
+    
 
-    for (int index = 0; index < POINT_LIGHTS_NB; ++index)
-        lightning += calcPointLight(chunk1,pointLights[index], normVec, viewDir, fragPos);
-    */
+    vec3 textColor = areaFragText(area1, TextCoord, normVec, viewDir,fragPos, baseTerrainFragColor);
 
-    vec3 textColor = chunkFragText(chunk1, TextCoord, normVec, viewDir,fragPos, baseTerrainFragColor);
-
-    vec3 diffuse = texture(chunk1.texture_diffuse1, TextCoord).rgb;
-    FragColor = vec4(baseTerrainFragColor,1.0);
+    vec3 diffuse = texture(area1.texture_diffuse1, TextCoord).rgb;
+    FragColor = vec4(textColor,1.0);
 }
 
-vec3 chunkFragText(Chunk chunk,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragPos, vec3 baseColor)
+vec3 areaFragText(Area area,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragPos, vec3 baseColor)
 {
-    //transform chunk Coord from patch range to it's own [0,1] range he j'ai trop mal expliqué carrément en fait c'est même pas je vais faire jsp je raconte quoi
-    float uMin = (chunk.xRange[0] + abs(minUvVertexPos.x) ) / ( maxUvVertexPos.x + abs(minUvVertexPos.x) ) ;
-    float uMax = (chunk.xRange[1] + abs(minUvVertexPos.x) )/  ( maxUvVertexPos.x + abs(minUvVertexPos.x) ) ;
+    //transform chunk Coord from patch range to it's own [0,1] range he j'ai trop mal expliquï¿½ carrï¿½ment en fait c'est mï¿½me pas je vais faire jsp je raconte quoi
+    float uMin = (area.xRange[0] + abs(minUvVertexPos.x) ) / ( maxUvVertexPos.x + abs(minUvVertexPos.x) ) ;
+    float uMax = (area.xRange[1] + abs(minUvVertexPos.x) )/  ( maxUvVertexPos.x + abs(minUvVertexPos.x) ) ;
 
 
-    float vMin = (chunk.xRange[0] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
-    float vMax = (chunk.xRange[1] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
+    float vMin = (area.xRange[0] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
+    float vMax = (area.xRange[1] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
     
     if ( ( (textCoord.x > uMin) && (textCoord.x < uMax) ) && ( (textCoord.y > vMin ) && (textCoord.y < vMax) ) ) //it's within the texture range
     {
-       //transform chunk Coord from patch range to it's own [0,1] range tjr mal expliqué mais là c'est vraiment ça
+       //transform area Coord from patch range to it's own [0,1] range tjr mal expliquï¿½ mais lï¿½ c'est vraiment ï¿½a
         vec2 uv;
         
-        uv.x = (fragPos.x - chunk.xRange[0] ) / (chunk.xRange[1] - chunk.xRange[0]);
-        uv.y = (fragPos.z - chunk.zRange[0]) / (chunk.zRange[1] - chunk.zRange[0]);
+        uv.x = (fragPos.x - area.xRange[0] ) / (area.xRange[1] - area.xRange[0]);
+        uv.y = (fragPos.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
 
-        vec3 diffuse = texture(chunk.texture_diffuse1, uv).rgb;
+        vec3 diffuse = texture(area.texture_diffuse1, uv).rgb;
 
-        vec3 lightning = calcDirLight(chunk, sunLight, normal, viewDir, diffuse);
+        vec3 lightning = calcDirLight(area, sunLight, normal, viewDir, diffuse);
 
         for (int index = 0; index < POINT_LIGHTS_NB; ++index)
-            lightning += calcPointLight(chunk, pointLights[index], normal, viewDir, fragPos, diffuse);
+            lightning += calcPointLight(area, pointLights[index], normal, viewDir, fragPos, diffuse);
 
 
         return lightning;
@@ -142,14 +139,14 @@ vec3 chunkFragText(Chunk chunk,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fr
     return baseColor;
 }
 
-vec3 calcDirLight(Chunk chunk,DirectLight light, vec3 normal, vec3 viewDir,vec3 diffuseText)
+vec3 calcDirLight(Area area,DirectLight light, vec3 normal, vec3 viewDir,vec3 diffuseText)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 reflectDir = reflect(-lightDir, normal);
 
     //simple phong spec
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), chunk.shininess);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), area.shininess);
 
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * diffuseText;
@@ -161,7 +158,7 @@ vec3 calcDirLight(Chunk chunk,DirectLight light, vec3 normal, vec3 viewDir,vec3 
 }
 
 //JE COMPREND PAS CE QUE FAIT LE SPECULAR 
-vec3 calcPointLight(Chunk chunk,PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
+vec3 calcPointLight(Area area,PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -171,7 +168,7 @@ vec3 calcPointLight(Chunk chunk,PointLight light, vec3 normal, vec3 viewDir, vec
     float diff = max(dot(normal, lightDir), 0.0);
 
     //Blinn spec
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), chunk.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), area.shininess);
 
     // attenuation
     float distance = length(light.pos - fragPos);
@@ -188,7 +185,7 @@ vec3 calcPointLight(Chunk chunk,PointLight light, vec3 normal, vec3 viewDir, vec
 
 }
 
-vec3 calcSpotLight(Chunk chunk, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
+vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -197,7 +194,7 @@ vec3 calcSpotLight(Chunk chunk, SpotLight light, vec3 normal, vec3 viewDir, vec3
     float diff = max(dot(normal, lightDir), 0.0);
 
     //Blinn spec
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), chunk.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), area.shininess);
 
     // attenuation
     float distance = length(light.pos - fragPos);
@@ -221,10 +218,10 @@ vec3 calcSpotLight(Chunk chunk, SpotLight light, vec3 normal, vec3 viewDir, vec3
 }
 
 /*
-vec3 calcNormal(Chunk chunk,vec2 uv)
+vec3 calcNormal(Area area,vec2 uv)
 {
     
-    normal = texture(chunk.texture_normal1,uv).rgb;
+    normal = texture(area.texture_normal1,uv).rgb;
 
     // transform to range [-1,1]
     normal = normalize(normal * 2.0 - 1.0);

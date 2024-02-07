@@ -64,8 +64,7 @@ struct Material {
 uniform samplerCube skyBox;
 //uniform sampler2D shadowMap;
 uniform Material material;
-uniform int spotLightNb;
-uniform PointLight pointLights[POINT_LIGHTS_NB];
+ uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform SpotLight spotLight;
 uniform vec3 viewPos;
 uniform DirectLight sunLight;

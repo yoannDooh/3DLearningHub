@@ -1138,7 +1138,9 @@ void Points::draw()
 /*--TERRAIN CLASS--*/
 Terrain::Terrain(int patchNb, const char* heightMapPath)
 {
-	loadHeightMap(heightMapPath);
+	Chunk chunk;
+
+	loadHeightMap(chunk,heightMapPath);
 
 	terrainVertex vertex{};
 	unsigned int indice{};
@@ -1155,7 +1157,7 @@ Terrain::Terrain(int patchNb, const char* heightMapPath)
 			vertex.textCoord[0] = static_cast<float>(colIndex) / ( static_cast<float>(patchNb) ); //u
 			vertex.textCoord[1] = static_cast<float>(rowIndex) / ( static_cast<float>(patchNb) ); //v
 
-			vertices.push_back(vertex);
+			chunk.vertices.push_back(vertex);
 		}
 	}
 
@@ -1167,43 +1169,44 @@ Terrain::Terrain(int patchNb, const char* heightMapPath)
 			int currentSquareBottomLeft{ colIndex + (patchNb + 1) * rowIndex };
 			
 			//bottomLeft
-			indices.push_back(currentSquareBottomLeft);
+			chunk.indices.push_back(currentSquareBottomLeft);
 
 			//bottomRight
 			indice = currentSquareBottomLeft + 1;
-			indices.push_back(indice);
+			chunk.indices.push_back(indice);
 
 			//topRight
-			indice = currentSquareBottomLeft + patchNb+2;
-			indices.push_back(indice);
+			indice = currentSquareBottomLeft + patchNb + 2;
+			chunk.indices.push_back(indice);
 
 			//topLeft
-			indice = currentSquareBottomLeft + patchNb+1;
-			indices.push_back(indice);
+			indice = currentSquareBottomLeft + patchNb + 1;
+			chunk.indices.push_back(indice);
 		}
 
 	}
 
-	 setupTerrain();
+	chunks.push_back(chunk);
+	setupChunk(0);
 }
 
-void Terrain::setupTerrain()
+void Terrain::setupChunk(int chunkId)
 {
 
-
 	//VAO
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	glGenVertexArrays(1, &chunks[chunkId].VAO);
+
+	glBindVertexArray(chunks[chunkId].VAO);
 
 	//VBO
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(terrainVertex)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &chunks[chunkId].VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, chunks[chunkId].VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(terrainVertex) * chunks[chunkId].vertices.size(), &chunks[chunkId].vertices[0], GL_STATIC_DRAW);
 
 	//EBO
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices.size(), &indices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &chunks[chunkId].EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunks[chunkId].EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)* chunks[chunkId].indices.size(), &chunks[chunkId].indices[0], GL_STATIC_DRAW);
 
 	//coord attribute
 	glEnableVertexAttribArray(0);
@@ -1218,14 +1221,14 @@ void Terrain::setupTerrain()
 	glBindVertexArray(0);
 }
 
-void Terrain::loadHeightMap(const char* heightMapPath)
+void Terrain::loadHeightMap(Chunk& chunk,const char* heightMapPath)
 {
 	//load heigthMap
 	//Texture 
 	unsigned int tex{};
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	heightMap.ID = tex;
+	chunk.heightMap.ID = tex;
 
 	//texture filtering 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -1235,9 +1238,12 @@ void Terrain::loadHeightMap(const char* heightMapPath)
 
 	//prepare texture
 	int nrChannels{};
-	unsigned char* data{ stbi_load(heightMapPath,&width,&height,&nrChannels,0) };
+	unsigned char* data{ stbi_load(heightMapPath,&chunk.width,&chunk.height,&nrChannels,0) };
+
+	
 	World::mapWidth = width;
 	World::mapHeight = height;
+	
 
 	//load texture
 	if (data)
@@ -1250,7 +1256,7 @@ void Terrain::loadHeightMap(const char* heightMapPath)
 		else if (nrChannels == 4)
 			format = GL_RGBA;
 
-		glBindTexture(GL_TEXTURE_2D, heightMap.ID);
+		glBindTexture(GL_TEXTURE_2D, chunk.heightMap.ID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -1269,42 +1275,42 @@ void Terrain::loadHeightMap(const char* heightMapPath)
 		std::cout << "Failed to load heightMap" << std::endl;
 }
 
-void Terrain::addChunk(std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange)
+void Terrain::addArea(int chunkId,std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange)
 {
-	Chunk chunk;
+	Area area;
 
 	try //made it an exeption handling because it would cause error in the shader if the first value is greater than the second
 	{
 		if (xRange[0] > xRange[1])
 		{
-			std::cerr << "chunk xRange error : ";
+			std::cerr << "area xRange error : ";
 			throw (xRange);
 		}
 
 		if (yRange[0] > yRange[1])
 		{
-			std::cerr << "chunk yRange error : ";
+			std::cerr << "area yRange error : ";
 			throw (xRange);
 		}
 
 		if (zRange[0] > zRange[1])
 		{
-			std::cerr << "chunk zRange error : ";
+			std::cerr << "area zRange error : ";
 			throw (zRange);
 		}
 
 		else
 		{
-			chunk.xRange = xRange;
-			chunk.zRange = zRange;
-			chunk.yRange = yRange;
+			area.xRange = xRange;
+			area.zRange = zRange;
+			area.yRange = yRange;
 
 			for (auto const& texture : textures)
 			{
-				chunk.textures.push_back(texture);
+				area.textures.push_back(texture);
 			}
 
-			chunks.push_back(chunk);
+			chunks[chunkId].areas.push_back(area);
 		}
 
 	}
@@ -1312,34 +1318,34 @@ void Terrain::addChunk(std::vector<Texture> textures, std::array<float, 2> xRang
 	{
 		std::cerr << "first value : " << floatArray[0] << "is greater than second value : " << floatArray[1] << std::endl;
 	}
-	
 }
 
-void Terrain::draw(Shader& shader)
+void Terrain::drawChunk(int chunkId, Shader& shader)
 {
 	//shader.use();
 
 	//activate heightMap
 	glActiveTexture(GL_TEXTURE0);
 	shader.setInt("heightMap", 0);
-	glBindTexture(GL_TEXTURE_2D, heightMap.ID);
+
+	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].heightMap.ID);
 
 	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
 	std::fill_n(texturesCount.begin(), 6, 1);
 	
-	int ChunkIndex{};
-	for (auto& const chunk : chunks)
+	int areaIndex{};
+	for (auto& const area : chunks[chunkId].areas)
 	{
-		std::string chunkNr{ "chunk" };
-		chunkNr = chunkNr + std::to_string(ChunkIndex+1) +'.';
+		std::string areaNr{ "area" };
+		areaNr = areaNr + std::to_string(areaIndex+1) +'.';
 		//set and pass texture uniform
-		for (unsigned int textIndex{}; textIndex < chunk.textures.size() ; textIndex++) 
+		for (unsigned int textIndex{}; textIndex < area.textures.size() ; textIndex++)
 		{
 
 			glActiveTexture(GL_TEXTURE0 + textIndex+1); //+1 because GL_TEXTURE0 is heightMap
 			std::string number;
 			std::string name;
-			TextureMap type{ chunk.textures[textIndex].type };
+			TextureMap type{ area.textures[textIndex].type };
 
 			switch (type)
 			{
@@ -1374,25 +1380,36 @@ void Terrain::draw(Shader& shader)
 				break;
 			}
 
-			name = (chunkNr + name + number);
+			name = (areaNr + name + number);
 			shader.setInt(name.c_str(), textIndex+1);
 
-			glBindTexture(GL_TEXTURE_2D, chunk.textures[textIndex].ID);
+			glBindTexture(GL_TEXTURE_2D, area.textures[textIndex].ID);
 		}
 
+		//pass chunkId
+		shader.setInt(areaNr + "chunkId", chunkId);
+
 		//pass ranges uniform
-		shader.setFloat(chunkNr+"xRange[0]",chunk.xRange[0]);
-		shader.setFloat(chunkNr + "xRange[1]", chunk.xRange[1]);
+		shader.setFloat(areaNr+"xRange[0]", area.xRange[0]);
+		shader.setFloat(areaNr + "xRange[1]", area.xRange[1]);
 
-		shader.setFloat(chunkNr+"yRange[0]", chunk.yRange[0]);
-		shader.setFloat(chunkNr+"yRange[1]", chunk.yRange[1]);
+		shader.setFloat(areaNr + "yRange[0]", area.yRange[0]);
+		shader.setFloat(areaNr + "yRange[1]", area.yRange[1]);
 
-		shader.setFloat(chunkNr+"zRange[0]", chunk.zRange[0]);
-		shader.setFloat(chunkNr+"zRange[1]", chunk.zRange[1]);
+		shader.setFloat(areaNr + "zRange[0]", area.zRange[0]);
+		shader.setFloat(areaNr + "zRange[1]", area.zRange[1]);
 
-		++ChunkIndex;
+		++areaIndex;
 	}
 
-	glBindVertexArray(VAO);
-	glDrawElements(GL_PATCHES, indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(chunks[chunkId].VAO);
+	glDrawElements(GL_PATCHES, chunks[chunkId].indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void Terrain::draw(Shader& shader)
+{
+	for (int chunkIndex{}; chunkIndex < chunks.size(); ++chunkIndex)
+	{
+		drawChunk(chunkIndex,shader);
+	}
 }

@@ -161,6 +161,8 @@ std::vector<float>circleCenter{
 	glm::mat4 model{ glm::mat4(1.0f) };
 	auto drawTerrain = [&terrainShader,&terrain,&skyBox,&skyboxShader,&model]()
 		{
+			float a{ 1.0f / static_cast<float>(terrain.width) };
+			float b{ 1.0f / static_cast<float>(terrain.height) };
 
 			terrainShader.use();
 			updateViewProject();
@@ -168,6 +170,14 @@ std::vector<float>circleCenter{
 			terrainShader.set3Float("viewPos", World::camera.pos);
 			terrainShader.setMat4("model", model);
 			terrainShader.setFloat("maxDistLod", 3000);
+
+			terrainShader.setFloat("inverseWidth", a);
+			terrainShader.setFloat("inverseHeight", b);
+
+			terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
+			terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
+			terrainShader.setFloat("area1.shininess", 0.00001f);
+
 
 			setLighting(terrainShader);
 			terrain.draw(terrainShader);
@@ -220,21 +230,9 @@ std::vector<float>circleCenter{
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(woodBoxShader);
-	terrain.addChunk( loadTextures({".\\rsc\\terrain\\sandRock\\diffuseMap.jpg"}, {diffuse}), {meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, {0.0f, 0.0f});
-
-
-	float a{ static_cast<float>(1.0) / static_cast<float>(terrain.width) };
-	float b{ static_cast<float>(1.0) / static_cast<float>(terrain.height) };
-
-	terrainShader.use();
-	terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
-	terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
-	terrainShader.setFloat("chunk1.shininess", 0.00001f);
-
-	terrainShader.use();
-	terrainShader.setFloat("inverseWidth",a );
-	terrainShader.setFloat("inverseHeight",b );
-
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\sandRock\\diffuseMap.jpg" }, { diffuse }), { meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, { 0.0f, 0.0f });
+	
+	//terrain.addChunk( loadTextures({".\\rsc\\terrain\\sandRock\\diffuseMap.jpg"}, {diffuse}), {meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, {0.0f, 0.0f});
 
 	// render loop
 	glfwSetTime(0);

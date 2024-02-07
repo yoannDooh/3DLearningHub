@@ -5,6 +5,7 @@ layout(location = 1) in vec2 inTextCoord;
 
 out vec2 textCoord;
 
+
 void main()
 {
 	gl_Position = vec4(inPos.xyz, 1.0);
