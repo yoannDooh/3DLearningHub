@@ -173,6 +173,8 @@ namespace World
 	extern float projectionNear;
 	extern float projectionFar;
 
+
+
 	extern std::vector<Object> objects;
 	extern std::vector<Light::lightPoint> lightPoints;
 	extern std::vector<Light::SpotLight> spotLights;
@@ -270,6 +272,9 @@ void passViewProject(Shader& shader); //pass view and projection matrix to shade
 
 //emissionMap
 float frameGlow(); //return currentFrameGlowStrenght for emmision map
+
+//terrainMesh
+void setChunk(int chunkId);
 
 //lightCube Object
 void setLightCubes(Shader& shader, float cubeEdge);

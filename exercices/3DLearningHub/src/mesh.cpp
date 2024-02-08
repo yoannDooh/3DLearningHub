@@ -1142,6 +1142,9 @@ Terrain::Terrain(int patchNb, const char* heightMapPath)
 
 	loadHeightMap(chunk,heightMapPath);
 
+	World::mapWidth = chunk.width;
+	World::mapHeight = chunk.height;
+
 	terrainVertex vertex{};
 	unsigned int indice{};
 
@@ -1150,9 +1153,9 @@ Terrain::Terrain(int patchNb, const char* heightMapPath)
 	{
 		for (int colIndex{}; colIndex < patchNb+1; ++colIndex) //to access all vertices on an a row
 		{
-			vertex.coord[0] = (static_cast<float>(-width) / 2.0f) + (static_cast<float>(width) / patchNb * colIndex); //x
+			vertex.coord[0] = (static_cast<float>(-chunk.width) / 2.0f) + (static_cast<float>(chunk.width) / patchNb * colIndex); //x
 			vertex.coord[1] = 0; //y
-			vertex.coord[2] = (static_cast<float>(-height) / 2.0f) + (static_cast<float>(height) /patchNb  * rowIndex); //z
+			vertex.coord[2] = (static_cast<float>(-chunk.height) / 2.0f) + (static_cast<float>(chunk.height) /patchNb  * rowIndex); //z
 
 			vertex.textCoord[0] = static_cast<float>(colIndex) / ( static_cast<float>(patchNb) ); //u
 			vertex.textCoord[1] = static_cast<float>(rowIndex) / ( static_cast<float>(patchNb) ); //v
@@ -1238,12 +1241,7 @@ void Terrain::loadHeightMap(Chunk& chunk,const char* heightMapPath)
 
 	//prepare texture
 	int nrChannels{};
-	unsigned char* data{ stbi_load(heightMapPath,&chunk.width,&chunk.height,&nrChannels,0) };
-
-	
-	World::mapWidth = width;
-	World::mapHeight = height;
-	
+	unsigned char* data{ stbi_load(heightMapPath,&chunk.width,&chunk.height,&nrChannels,0) };	
 
 	//load texture
 	if (data)
@@ -1257,7 +1255,7 @@ void Terrain::loadHeightMap(Chunk& chunk,const char* heightMapPath)
 			format = GL_RGBA;
 
 		glBindTexture(GL_TEXTURE_2D, chunk.heightMap.ID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, chunk.width, chunk.height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		//texture filtering
@@ -1273,6 +1271,99 @@ void Terrain::loadHeightMap(Chunk& chunk,const char* heightMapPath)
 
 	else
 		std::cout << "Failed to load heightMap" << std::endl;
+}
+
+void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, const char* heightMapPath)
+{
+	Chunk chunk;
+
+	loadHeightMap(chunk, heightMapPath);
+
+	terrainVertex vertex{};
+	unsigned int indice{};
+
+	//proceed only if targetChunkId is valid
+	try
+	{
+		
+		//exeption handling
+		if (targetChunkId < 0 || targetChunkId >= chunks.size())	
+			throw(targetChunkId);
+
+		if (chunks[targetChunkId].boardingChunkId[direction] == -1)
+		{
+			std::cerr << "THERE IS ALREADY A CHUNK AT THIS DIRECTION SO";
+			throw(direction);
+		}
+
+		for (int directionIndex{}; directionIndex<4;++directionIndex)
+		{
+			//0=north 1=est 2=south 3=west , they are the only avalue accepted 
+			if (direction == directionIndex)
+				break;
+
+			if (directionIndex==3)
+			{
+				std::cerr << "ONLY NORTH/EST/SOUTH/WEST ARE CORRECT VALUES SO";
+				throw(direction);
+			}
+		}
+		//faut faire truc avec opposé 
+	
+		//generates vertex attribes (coord and uv)
+		for (int rowIndex{}; rowIndex < patchNb + 1; ++rowIndex)
+		{
+			for (int colIndex{}; colIndex < patchNb + 1; ++colIndex) //to access all vertices on an a row
+			{
+				vertex.coord[0] = (static_cast<float>(-chunk.width) / 2.0f) + (static_cast<float>(chunk.width) / patchNb * colIndex); //x
+				vertex.coord[1] = 0; //y
+				vertex.coord[2] = (static_cast<float>(-chunk.height) / 2.0f) + (static_cast<float>(chunk.height) / patchNb * rowIndex); //z
+
+				vertex.textCoord[0] = static_cast<float>(colIndex) / (static_cast<float>(patchNb)); //u
+				vertex.textCoord[1] = static_cast<float>(rowIndex) / (static_cast<float>(patchNb)); //v
+
+				chunk.vertices.push_back(vertex);
+			}
+		}
+
+		//generates indices for the quad (ccw) 0:bottomLeft 1:bottomRight 2:topLeft 3:topRight
+		for (int rowIndex{}; rowIndex < patchNb; ++rowIndex)
+		{
+			for (int colIndex{}; colIndex < patchNb; ++colIndex)
+			{
+				int currentSquareBottomLeft{ colIndex + (patchNb + 1) * rowIndex };
+
+				//bottomLeft
+				chunk.indices.push_back(currentSquareBottomLeft);
+
+				//bottomRight
+				indice = currentSquareBottomLeft + 1;
+				chunk.indices.push_back(indice);
+
+				//topRight
+				indice = currentSquareBottomLeft + patchNb + 2;
+				chunk.indices.push_back(indice);
+
+				//topLeft
+				indice = currentSquareBottomLeft + patchNb + 1;
+				chunk.indices.push_back(indice);
+			}
+		}
+
+		chunks.push_back(chunk);
+		setupChunk(chunks.size()-1);
+	}
+
+	catch (int targetChunkId)
+	{
+		std::cerr << "INVALID CHUNK ID WITH A VALUE OF" << targetChunkId <<"WHEN TRYING TO ADD NEW CHUNK";
+	}
+
+	catch (Direction direction)
+	{
+		std::cerr << direction <<"IS AN INVALID DIRECTION";
+	}
+
 }
 
 void Terrain::addArea(int chunkId,std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange)

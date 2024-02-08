@@ -16,8 +16,7 @@ std::vector<float>circleCenter{
 	0.0f, 0.0f,0.0f, 
 };
 
-  int main()
-  {
+  int main(){
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 

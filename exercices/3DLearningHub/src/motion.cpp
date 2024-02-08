@@ -152,6 +152,11 @@ void setupShadowMap(Shader& shadowMapShader,FrameBuffer depthMap, glm::mat4 ligh
 	shadowMapShader.setMat4("lightSpaceMat", lightSpaceMat);
 }
 
+//terrainMesh
+void setChunk(int chunkId)
+{
+}
+
 //frameBuffer CLASS
 FrameBuffer::FrameBuffer(bool activateBufferTex, bool activateRenderBuff)
 {

@@ -18,7 +18,6 @@ struct Area {
 	float shininess;
 };
 
-
 uniform Area area1;
 uniform float inverseWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passé je vais peter mon crane 
 uniform float inverseHeight;//même chose 
