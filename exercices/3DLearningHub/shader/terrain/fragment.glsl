@@ -5,7 +5,9 @@ in vec4 normalVec;
 in float height;
 in vec3 fragPos;
 in vec4 fragPosLightSpace;
-
+//in mat3 TBN;
+in vec3 Tangent;
+in vec3 Bitangent;
 
 out vec4 FragColor;
 
@@ -104,7 +106,7 @@ void main()
     vec3 textColor = areaFragText(area1, TextCoord, normVec, viewDir,fragPos, baseTerrainFragColor);
 
     vec3 diffuse = texture(area1.texture_diffuse1, TextCoord).rgb;
-    FragColor = vec4(baseTerrainFragColor,1.0);
+    FragColor = vec4(textColor,1.0);
 }
 
 vec3 areaFragText(Area area,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragPos, vec3 baseColor)

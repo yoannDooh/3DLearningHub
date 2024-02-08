@@ -273,9 +273,6 @@ void passViewProject(Shader& shader); //pass view and projection matrix to shade
 //emissionMap
 float frameGlow(); //return currentFrameGlowStrenght for emmision map
 
-//terrainMesh
-void setChunk(int chunkId);
-
 //lightCube Object
 void setLightCubes(Shader& shader, float cubeEdge);
 void updateLightsCubePos();

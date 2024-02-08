@@ -1276,6 +1276,7 @@ void Terrain::loadHeightMap(Chunk& chunk,const char* heightMapPath)
 void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, const char* heightMapPath)
 {
 	Chunk chunk;
+	chunk.id = chunks.size(); //since first element has id 0 and size is firstElemIndex+1 
 
 	loadHeightMap(chunk, heightMapPath);
 
@@ -1290,7 +1291,7 @@ void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, cons
 		if (targetChunkId < 0 || targetChunkId >= chunks.size())	
 			throw(targetChunkId);
 
-		if (chunks[targetChunkId].boardingChunkId[direction] == -1)
+		if (chunks[targetChunkId].boardingChunkId[direction] != -1)
 		{
 			std::cerr << "THERE IS ALREADY A CHUNK AT THIS DIRECTION SO";
 			throw(direction);
@@ -1308,7 +1309,6 @@ void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, cons
 				throw(direction);
 			}
 		}
-		//faut faire truc avec opposé 
 	
 		//generates vertex attribes (coord and uv)
 		for (int rowIndex{}; rowIndex < patchNb + 1; ++rowIndex)
@@ -1350,8 +1350,58 @@ void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, cons
 			}
 		}
 
+		//set Model, chunk startingXpos/startingZpos,boardingChunkId and update worldMap size
+		glm::vec3 transVector;
+		switch (direction)
+		{
+		case north:
+			chunk.startingXpos = chunks[targetChunkId].startingXpos;
+			chunk.startingZpos = chunks[targetChunkId].startingZpos + chunks[targetChunkId].height;
+			transVector = glm::vec3(0.0f,0.0f, chunk.startingZpos);
+
+			chunks[targetChunkId].boardingChunkId[north] = chunk.id;
+			chunk.boardingChunkId[south] = targetChunkId;
+
+			World::mapHeight += chunk.height;
+			break;
+
+		case est:
+			chunk.startingXpos = chunks[targetChunkId].startingXpos + chunks[targetChunkId].width;
+			chunk.startingZpos = chunks[targetChunkId].startingZpos;
+			transVector = glm::vec3(chunk.startingXpos, 0.0f,0.0f);
+
+			chunks[targetChunkId].boardingChunkId[est] = chunk.id;
+			chunk.boardingChunkId[west] = targetChunkId;
+
+			World::mapHeight += chunk.width;
+			break;
+
+		case south:
+			chunk.startingXpos = chunks[targetChunkId].startingXpos;
+			chunk.startingZpos = -1*(chunks[targetChunkId].startingZpos + chunks[targetChunkId].height);
+			transVector = glm::vec3(0.0f, 0.0f, chunk.startingZpos);
+
+			chunks[targetChunkId].boardingChunkId[south] = chunk.id;
+			chunk.boardingChunkId[north] = targetChunkId;
+
+			World::mapHeight += chunk.height;
+			break;
+
+		case west:
+			chunk.startingXpos = -1*(chunks[targetChunkId].startingXpos + chunks[targetChunkId].width);
+			chunk.startingZpos = chunks[targetChunkId].startingZpos;
+			transVector = glm::vec3(chunk.startingXpos, 0.0f, 0.0f);
+
+			chunks[targetChunkId].boardingChunkId[west] = chunk.id;
+			chunk.boardingChunkId[est] = targetChunkId;
+
+			World::mapHeight += chunk.width;
+			break;
+		}
+		chunk.model = glm::translate(glm::mat4(1.0f), transVector);
+
 		chunks.push_back(chunk);
-		setupChunk(chunks.size()-1);
+		setupChunk(chunk.id);
 	}
 
 	catch (int targetChunkId)
@@ -1361,7 +1411,28 @@ void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, cons
 
 	catch (Direction direction)
 	{
-		std::cerr << direction <<"IS AN INVALID DIRECTION";
+		std::string name{};
+		
+		switch (direction)
+		{
+		case north:
+			name = "north";
+			break;
+
+		case est:
+			name = "est";
+			break;
+
+		case south:
+			name = "south";
+			break;
+
+		case west:
+			name = "west";
+			break;
+		}
+		
+		std::cerr << name <<" IS AN INVALID DIRECTION";
 	}
 
 }
@@ -1418,6 +1489,10 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 	//activate heightMap
 	glActiveTexture(GL_TEXTURE0);
 	shader.setInt("heightMap", 0);
+
+	//setModel
+	shader.setMat4("chunkModel",chunks[chunkId].model);
+
 
 	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].heightMap.ID);
 

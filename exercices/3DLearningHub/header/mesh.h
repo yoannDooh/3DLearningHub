@@ -185,6 +185,7 @@ public:
 		int width{};
 		int height{};
 
+		glm::mat4 model{ glm::mat4(1.0f) };
 		int startingXpos{}; //le nom est moche faudra changer mais
 		int startingZpos{};
 

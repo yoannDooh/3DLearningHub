@@ -16,7 +16,8 @@ std::vector<float>circleCenter{
 	0.0f, 0.0f,0.0f, 
 };
 
-  int main(){
+  int main()
+  {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
@@ -230,8 +231,10 @@ std::vector<float>circleCenter{
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(woodBoxShader);
 	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\sandRock\\diffuseMap.jpg" }, { diffuse }), { meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, { 0.0f, 0.0f });
-	
-	//terrain.addChunk( loadTextures({".\\rsc\\terrain\\sandRock\\diffuseMap.jpg"}, {diffuse}), {meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, {0.0f, 0.0f});
+	 
+
+	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
+
 
 	// render loop
 	glfwSetTime(0);

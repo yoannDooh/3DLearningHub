@@ -1,4 +1,4 @@
-#version 460 core
+Ôªø#version 460 core
 layout(quads, fractional_even_spacing) in;
 
 in vec2 vertexTextCoord[];
@@ -19,14 +19,15 @@ struct Area {
 };
 
 uniform Area area1;
-uniform float inverseWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passÈ je vais peter mon crane 
-uniform float inverseHeight;//mÍme chose 
+uniform float inverseWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas pass√© je vais peter mon crane 
+uniform float inverseHeight;//m√™me chose 
 uniform sampler2D heightMap;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 lightSpaceMat;
-
+uniform vec2 maxUvVertexPos;
+uniform vec2 minUvVertexPos; //it should be negative since terrain extend from negative to positive so 0 is at the center 
 
 
 out float height;
@@ -34,15 +35,20 @@ out vec3 fragPos;
 out vec4 fragPosLightSpace;
 out vec2 TextCoord;
 out vec4 normalVec;
+out vec3 Tangent;
+out vec3 Bitangent;
+
+//out mat3 TBN;
 
 
 vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data11, vec2 data01);
 vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data11, vec4 data01);
 vec4 vertexNormal(vec2 textCoord,vec3 pos);
-//mat3 tbnMat(Chunk chunk,vec3 normal);
+mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model);
 
 void main()
 {
+
 
 	//coord of vertex within abstract patch in range [0,1]
 	float u = gl_TessCoord.x;
@@ -54,15 +60,36 @@ void main()
 
 	height = texture(heightMap, TextCoord).r;
 
-	pos.y = height*25-5; //go intÈgrer courbe de bÈzier ici 
+	pos.y = height*25-5; //go int√©grer courbe de b√©zier ici 
 	normalVec = vec4(0.0,1.0,0.0,0.0);
 
 	normalVec = vertexNormal(TextCoord, pos.xyz); 
 
 	gl_Position = projection*view*model*vec4(pos.xyz, 1.0);
 	fragPos = vec3(model * vec4(pos.xyz,1.0) );
-	fragPosLightSpace = lightSpaceMat * vec4(fragPos,1.0);																	//	^
-}																															//	|
+	fragPosLightSpace = lightSpaceMat * vec4(fragPos,1.0);		
+
+
+	/*C'EST LE BORDEL MAIS ON TEST SI C'EST DANS LE RANGE DE LA MAP ICI*/
+	
+	//transform chunk Coord from patch range to it's own [0,1] range he j'ai trop mal explique carrement en fait c'est meme pas je vais faire jsp je raconte quoi
+	float uMin = (area1.xRange[0] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
+	float uMax = (area1.xRange[1] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
+
+
+	float vMin = (area1.xRange[0] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
+	float vMax = (area1.xRange[1] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
+
+	if (((TextCoord.x > uMin) && (TextCoord.x < uMax)) && ((TextCoord.y > vMin) && (TextCoord.y < vMax))) //it's within the texture range
+	{
+		mat3 normalsModel = mat3(transpose(inverse(model)));
+		tbnMat(area1,normalVec.xyz,pos.xyz,TextCoord,normalsModel);
+		
+	}
+}					
+
+
+
 																															//	v		3	2
 																															//	u->	   0,1   1,1
 vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data11, vec2 data01)							//			+---+
@@ -108,28 +135,38 @@ vec4 vertexNormal(vec2 textCoord,vec3 pos)
 }
 
 
-/*
-mat3 tbnMat(Chunk chunk,vec3 normal)
+mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
 {
 
 	vec3 tangent;
 	vec3 bitangent;
 
-	// positions of the 4 edges of the whole chunk JE SAIS PAS ENCORE POUR LES NOMS genre c'est pas le chunk mais le terrain entier en tout cas le bout de terrain qui correspond ‡ la height 
-	vec3 pos1 = vec3(chunk.xRange[1],  0.0, chunk.yRange[0]);
-	vec3 pos2 = vec3(chunk.xRange[1],  0.0, chunk.yRange[1]);
-	vec3 pos3 = vec3(chunk.xRange[0], 0.0, chunk.yRange[1]);
+	float xOffset = 1.0 / 400.0; //le truc qu'on va se servir pour se deplacer sur x
+	float yOffset = 1.0 / 400.0; //le truc qu'on va se servir pour se deplacer 
+
+	vec2 rightSampleCoord = vec2(textCoord.x + xOffset, textCoord.y); //coord of a sample of the texture a the right of current vertex
+	vec2 topSampleCoord = vec2(textCoord.x, textCoord.y + yOffset); //coord of a sample of the texture a the top of current vertex
+
+	//positions
+	vec3 pos0 = pos;
+	vec3 pos1 = vec3(pos.x + xOffset * 400.0, pos.y, pos.z); //the rightSample in world space
+	vec3 pos3 = vec3(pos.x, pos.y, pos.z + yOffset * 400.0); //the topSample in world space
 
 	// texture coordinates
-	vec2 uv10 = vec2(1.0, 0.0);
-	vec2 uv11 = vec2(1.0, 1.0);
-	vec2 uv01 = vec2(0.0, 1.0);
+	
+	//transform area Coord from patch uv range to it's own uv [0,1] range 
+	vec2 uv00; //uv of current vertex
+	uv00.x = (pos.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
+	uv00.y = (pos.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
 
-	vec3 edge1 = pos3 - pos2;
+	vec2 uv01 = vec2(uv00.x + xOffset, uv00.y);
+	vec2 uv10 = vec2(uv00.x, uv00.x + yOffset);
+
+	vec3 edge1 = pos0 - pos3;
 	vec3 edge2 = pos1 - pos3;
 
-	vec2 deltaUV1 = uv11 - uv10;
-	vec2 deltaUV2 = uv10 - uv11;
+	vec2 deltaUV1 = uv00 - uv10;
+	vec2 deltaUV2 = uv01 - uv10;
 
 	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
@@ -137,6 +174,24 @@ mat3 tbnMat(Chunk chunk,vec3 normal)
 	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
 	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
 
-	
+
+	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+	tangent = normalize(model * tangent);
+	normal = normalize(model * tangent);
+	bitangent = normalize(model * bitangent);
+
+	//bitangent = normalize ( cross(normal.xyz, tangent.xyz) ); //probl√®me a cause de racine de n√©gatif 
+	//bitangent = normalize ( cross(tangent.xyz, normal.xyz) );
+
+	Tangent = tangent;
+	Bitangent = bitangent;
+
+	return mat3(tangent, normal, bitangent);
+
 }
-*/
+
+
+
