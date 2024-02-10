@@ -161,7 +161,7 @@ public:
 	void draw();
 };
 
-class Terrain 
+class Terrain
 {
 public:
 
@@ -185,13 +185,14 @@ public:
 		int width{};
 		int height{};
 
+		glm::mat4 model{ glm::mat4(1.0f) };
 		int startingXpos{}; //le nom est moche faudra changer mais
 		int startingZpos{};
 
 		//id of chunks in order: at north/est/south/west of the chunk object, init at -1 by default
-		std::array<float, 4> boardingChunkId{-1,-1,-1 ,-1};
+		std::array<float, 4> boardingChunkId{ -1,-1,-1 ,-1 };
 
-		
+
 		std::vector<Area> areas{};
 	};
 
@@ -199,20 +200,20 @@ public:
 	int width{};
 	int height{};
 
-	
+
 
 	Terrain() {};
-	Terrain(int patchNb,const char* heightMapPath); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
+	Terrain(int patchNb, const char* heightMapPath); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
 	void addChunk(int targetChunkId, Direction direction, int patchNb, const char* heightMapPath); //targetChunkId is the id of the chunk the new chunk is placed next to, and direction indicate it's place north/est/south/west to the chunk
-	void addArea(int chunkId,std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange);
+	void addArea(int chunkId, std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange);
 
 	void draw(Shader& shader);
 
-private: 
+private:
 
-	
-	void drawChunk(int chunkId,Shader& shader);
-	void loadHeightMap(Chunk& chunk,const char* heightMapPath);
+
+	void drawChunk(int chunkId, Shader& shader);
+	void loadHeightMap(Chunk& chunk, const char* heightMapPath);
 	void setupChunk(int chunkId);
 
 };

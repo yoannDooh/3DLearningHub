@@ -6,11 +6,6 @@ in float Height;
 in vec3 fragPos;
 in vec4 fragPosLightSpace;
 in mat3 TBN;
-in vec3 Tangent;
-in vec3 Bitangent;
-in float inAreaRange;
-in float inAreaRange;
-
 
 out vec4 FragColor;
 
@@ -75,26 +70,29 @@ struct SpotLight
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+};
+
  
 uniform int chunkId;
-uniform int activateNormalMap=1;
-uniform int chunkId;
-uniform int chunkId;
+uniform int activateNormalMap = 1;
 uniform sampler2D shadowMap;
 uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform Area area1;
-uniform int chunkWidth; 
+uniform int chunkWidth;
 uniform int chunkHeight;
-uniform int chunkWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passé je vais peter mon crane 
-uniform int chunkHeight;//même chose 
-
-uniform int chunkWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passé je vais peter mon crane 
+uniform vec3 viewPos;
+uniform DirectLight sunLight;
 
 
-//vec3 calcNormalMap(Area area, vec2 uv);
+vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText);
 vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
 vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
- 
+vec3 areaFragText(Area area, vec2 textCoord,vec3 normal,vec3 viewDir,vec3 fragPos, vec3 baseColor);
+float calcShadow(vec4 fragPosLightSpace);
+
+void main()
+{
+
     //direction vectors and normal vector
     vec3 normVec = normalize(vec3(normalVec));
     vec3 viewDir = normalize(viewPos - fragPos);
@@ -103,7 +101,8 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
 	vec3 baseTerrainFragColor = vec3(Height, Height, Height);
 
     vec3 textColor;
-    //faudra transfomer les chunks en uniform buffer objects et faire un fonction qui parse tous les chunks pour faire le lightning
+
+    //faudra transfomer les chunks en uniform buffer objects et faire un fonction qui parse tous les chunks pour faire le lightning  
     if (activateNormalMap == 1)
     {
         vec2 uv;
@@ -118,30 +117,24 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
         textColor = areaFragText(area1, TextCoord, normal, viewDir, fragPos, baseTerrainFragColor);
     }
     else
-        textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor);
+         textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor);
 
-    vec3 normVec = normalize(vec3(normalVec));
-    vec3 fragePos = TBN * fragPos;
-    vec3 textColor = areaFragText(area1, TextCoord, normal, viewDir, fragePos, baseTerrainFragColor);
-
-    vec3 fragePos = TBN * fragPos;
-    vec3 textColor = areaFragText(area1, TextCoord, normal, viewDir, fragePos, baseTerrainFragColor);
-
-    vec3 diffuse = texture(area1.texture_diffuse1, TextCoord).rgb;
-    FragColor = vec4(baseTerrainFragColor,1.0);
+    FragColor = vec4(textColor,1.0);
 }
 
 vec3 areaFragText(Area area,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragPos, vec3 baseColor)
 {
+    vec2 maxUvVertexPos = vec2(chunkWidth / 2, chunkHeight / 2);
+    vec2 minUvVertexPos = vec2(-chunkWidth / 2, -chunkHeight / 2);
+
     //transform chunk Coord from patch range to it's own [0,1] range he j'ai trop mal expliqu� carr�ment en fait c'est m�me pas je vais faire jsp je raconte quoi
-    float uMin = (area.xRange[0] + abs(minUvVertexPos.x) ) / ( maxUvVertexPos.x + abs(minUvVertexPos.x) ) ;
-    if (chunkId==0 && ( (textCoord.x > uMin) && (textCoord.x < uMax) ) && ( (textCoord.y > vMin ) && (textCoord.y < vMax) ) ) //it's within the texture range
+    float uMin = (area.xRange[0] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
+    float uMax = (area.xRange[1] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
 
-
-    if (inAreaRange==1.0) //it's within the texture range
+    float vMin = (area.xRange[0] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
     float vMax = (area.xRange[1] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
     
-    if (inAreaRange==1.0) //it's within the texture range
+    if (((textCoord.x > uMin) && (textCoord.x < uMax)) && ((textCoord.y > vMin) && (textCoord.y < vMax))) //it's within the texture range
     {
        //transform area Coord from patch range to it's own [0,1] range tjr mal expliqu� mais l� c'est vraiment �a
         vec2 uv;
@@ -175,12 +168,11 @@ vec3 calcDirLight(Area area,DirectLight light, vec3 normal, vec3 viewDir,vec3 di
     //diffuse / specular / ambient 
     vec3 ambient = light.ambient * diffuseText;
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
-    vec3 specular = light.specular * spec  * area.specularIntensity* light.color;
+    vec3 specular = light.specular * spec * area.specularIntensity * light.color;
 
     return (ambient + diffuse + specular);
 }
 
-//JE COMPREND PAS CE QUE FAIT LE SPECULAR 
 vec3 calcPointLight(Area area,PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
@@ -204,6 +196,7 @@ vec3 calcPointLight(Area area,PointLight light, vec3 normal, vec3 viewDir, vec3 
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
+
     return (ambient + diffuse + specular);
 
 }
@@ -234,8 +227,14 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
     vec3 specular = light.specular * spec  * light.color;
 
+    return (ambient + diffuse + specular);
+
 }
-*/
+
+/*
+vec3 calcNormalMap(Area area, vec2 uv)
+{
+ space
 
 }
 */
