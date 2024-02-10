@@ -5,7 +5,6 @@ in vec2 vertexTextCoord[];
 
 struct Area {
 
-	int chunkId;
 	float[2] xRange; //first is xPosLEft and second xPosRight in WORLD unit, to indicate where the texture expand and until where it stretch 
 	float[2] zRange; //same with z 
 	float[2] yRange; //range in height of the texture
@@ -18,16 +17,19 @@ struct Area {
 	float shininess;
 };
 
-uniform Area area1;
-uniform float inverseWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passé je vais peter mon crane 
-uniform float inverseHeight;//même chose 
 uniform sampler2D heightMap;
+uniform int chunkId;
+uniform int chunkWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passé je vais peter mon crane 
+uniform int chunkHeight;//même chose 
+uniform Area area1;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
 uniform mat4 lightSpaceMat;
-uniform vec2 maxUvVertexPos;
-uniform vec2 minUvVertexPos; //it should be negative since terrain extend from negative to positive so 0 is at the center 
+//uniform vec2 maxUvVertexPos;
+//uniform vec2 minUvVertexPos; //it should be negative since terrain extend from negative to positive so 0 is at the center 
 
 
 out float height;
@@ -37,14 +39,15 @@ out vec2 TextCoord;
 out vec4 normalVec;
 out vec3 Tangent;
 out vec3 Bitangent;
-
-//out mat3 TBN;
+out float inAreaRange;
+out mat3 TBN;
 
 
 vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data11, vec2 data01);
 vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data11, vec4 data01);
-vec4 vertexNormal(vec2 textCoord,vec3 pos);
+vec4 vertexNormal(float u, float v,vec2 textCoord, vec3 pos);
 mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model);
+mat3 tbnMate(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord, mat3 model);
 
 void main()
 {
@@ -60,10 +63,10 @@ void main()
 
 	height = texture(heightMap, TextCoord).r;
 
-	pos.y = height*25-5; //go intégrer courbe de bézier ici 
+	pos.y = height;//*25-5; //go intégrer courbe de bézier ici 
 	normalVec = vec4(0.0,1.0,0.0,0.0);
 
-	normalVec = vertexNormal(TextCoord, pos.xyz); 
+	normalVec = vertexNormal(u,v,TextCoord, pos.xyz); 
 
 	gl_Position = projection*view*model*vec4(pos.xyz, 1.0);
 	fragPos = vec3(model * vec4(pos.xyz,1.0) );
@@ -71,7 +74,10 @@ void main()
 
 
 	/*C'EST LE BORDEL MAIS ON TEST SI C'EST DANS LE RANGE DE LA MAP ICI*/
-	
+	vec2 maxUvVertexPos = vec2(chunkWidth / 2, chunkHeight / 2);
+	vec2 minUvVertexPos = vec2(-chunkWidth / 2, -chunkHeight / 2);
+
+
 	//transform chunk Coord from patch range to it's own [0,1] range he j'ai trop mal explique carrement en fait c'est meme pas je vais faire jsp je raconte quoi
 	float uMin = (area1.xRange[0] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
 	float uMax = (area1.xRange[1] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
@@ -80,18 +86,16 @@ void main()
 	float vMin = (area1.xRange[0] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
 	float vMax = (area1.xRange[1] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
 
-	if (((TextCoord.x > uMin) && (TextCoord.x < uMax)) && ((TextCoord.y > vMin) && (TextCoord.y < vMax))) //it's within the texture range
+	inAreaRange = 1.0;
+	if ( chunkId==0 && ((TextCoord.x > uMin) && (TextCoord.x < uMax)) && ((TextCoord.y > vMin) && (TextCoord.y < vMax))) //it's within the texture range
 	{
+		inAreaRange = 1.0;
 		mat3 normalsModel = mat3(transpose(inverse(model)));
-		tbnMat(area1,normalVec.xyz,pos.xyz,TextCoord,normalsModel);
+		TBN = transpose ( tbnMat(area1,normalVec.xyz,pos.xyz,TextCoord,normalsModel) ) ;
 		
 	}
 }					
-
-
-
-																															//	v		3	2
-																															//	u->	   0,1   1,1
+																															//	v		3	2																															//	u->	   0,1   1,1
 vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data11, vec2 data01)							//			+---+
 {																															//	lefData	|   | rightData
 	vec2 leftData = data00 + v * (data01 - data00);																			//			+---+																						//		   00   10																						//	^																						//	|																						//	v
@@ -107,22 +111,23 @@ vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data
 	return  vec4(leftData + u * (rightData - leftData));
 }
 
-vec4 vertexNormal(vec2 textCoord,vec3 pos)
+vec4 vertexNormal(float u, float v, vec2 textCoord, vec3 pos)
 {
 
-	 float xOffset = 1.0 / 400.0; //le truc qu'on va se servir pour se deplacer sur x
-	 float yOffset = 1.0 / 400.0; //le truc qu'on va se servir pour se deplacer 
+	float xOffset = 1.0 / chunkWidth; //used to move sample across x axis
+	float yOffset = 1.0 / chunkHeight; //used to move sample across y axis
 
-	vec2 rightSampleCoord = vec2(textCoord.x + xOffset, textCoord.y); //coord of a sample of the texture a the right of current vertex
-	vec2 topSampleCoord = vec2(textCoord.x, textCoord.y + yOffset); //coord of a sample of the texture a the top of current vertex
 
-	vec3 rightVertex = vec3(pos.x+ xOffset*400.0, pos.y, pos.z); //the rightSample in world space
-	vec3 topVertex = vec3(pos.x, pos.y, pos.z+ yOffset*400.0); //the topSample in world space
+	vec2 rightSampleCoord = bilinearInterpolation(u + xOffset, v, vertexTextCoord[0], vertexTextCoord[1], vertexTextCoord[2], vertexTextCoord[3]);
+	vec2 topSampleCoord = bilinearInterpolation(u, v + yOffset, vertexTextCoord[0], vertexTextCoord[1], vertexTextCoord[2], vertexTextCoord[3]);
 
-	if (rightSampleCoord.x <= 1 && rightSampleCoord.y <= 1 && topSampleCoord.x <= 1 && topSampleCoord.y <= 1) //do the sampled vertices texCoord are in the range of the texture
+	vec3 rightVertex = vec3( bilinearInterpolation(u + xOffset, v, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position) );
+	vec3 topVertex = vec3(bilinearInterpolation(u, v + yOffset, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position) );
+
+	if (rightSampleCoord.x <= 1 && rightSampleCoord.y <= 1 && topSampleCoord.x <= 1 && topSampleCoord.y <= 1) //do the sampled vertices texCoord are in the range of the patch
 	{
-		rightVertex.y = texture(heightMap, rightSampleCoord).r * 25-5;
-		topVertex.y = texture(heightMap, topSampleCoord).r * 25-5;
+		rightVertex.y = texture(heightMap, rightSampleCoord).r; //* 25-5;
+		topVertex.y = texture(heightMap, topSampleCoord).r; //* 25-5;
 
 		vec3 rightVector = rightVertex - pos;
 		vec3 topVector = topVertex - pos;
@@ -131,9 +136,8 @@ vec4 vertexNormal(vec2 textCoord,vec3 pos)
 	}
 
 	else
-		return vec4(0.0, 1.0 ,0.0, 0.0);
+		return vec4(0.0, 1.0, 0.0, 0.0);
 }
-
 
 mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
 {
@@ -141,8 +145,8 @@ mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
 	vec3 tangent;
 	vec3 bitangent;
 
-	float xOffset = 1.0 / 400.0; //le truc qu'on va se servir pour se deplacer sur x
-	float yOffset = 1.0 / 400.0; //le truc qu'on va se servir pour se deplacer 
+	float xOffset = 1.0 / chunkWidth; //used to move sample across x axis
+	float yOffset = 1.0 / chunkHeight; //used to move sample across y axis
 
 	vec2 rightSampleCoord = vec2(textCoord.x + xOffset, textCoord.y); //coord of a sample of the texture a the right of current vertex
 	vec2 topSampleCoord = vec2(textCoord.x, textCoord.y + yOffset); //coord of a sample of the texture a the top of current vertex
@@ -174,7 +178,7 @@ mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
 	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
 	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
 
-
+	
 	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
 	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
 	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
@@ -193,5 +197,62 @@ mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
 
 }
 
+mat3 tbnMate(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
+{
+
+	vec3 tangent;
+	vec3 bitangent;
+
+	float xOffset = 1.0 / chunkWidth; //used to move sample across x axis
+	float yOffset = 1.0 / chunkHeight; //used to move sample across y axis
 
 
+	//positions
+	vec3 pos0 = pos;
+	vec3 pos1 = vec3(bilinearInterpolation(u + xOffset, v, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position));
+	vec3 pos3 = vec3(bilinearInterpolation(u, v + yOffset, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position));
+
+	// texture coordinates
+
+	//transform area Coord from patch uv range to it's own uv [0,1] range 
+	vec2 uv00; //uv of current vertex
+	uv00.x = (pos0.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
+	uv00.y = (pos0.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
+
+	vec2 uv01;
+	uv01.x = (pos1.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
+	uv01.y = (pos1.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
+
+	vec2 uv10;
+	uv10.x = (pos3.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
+	uv10.y = (pos3.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
+
+	vec3 edge1 = pos0 - pos3;
+	vec3 edge2 = pos1 - pos3;
+
+	vec2 deltaUV1 = uv00 - uv10;
+	vec2 deltaUV2 = uv01 - uv10;
+
+	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+
+	/*
+	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+	*/
+
+	tangent = normalize(model * tangent);
+	normal = normalize(model * tangent);
+	bitangent = normalize(model * bitangent);
+
+
+	Tangent = tangent;
+	Bitangent = bitangent;
+
+	return mat3(tangent, normal, bitangent);
+}

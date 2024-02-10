@@ -17,7 +17,7 @@ std::vector<float>circleCenter{
 };
 
   int main()
-  {
+   {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
@@ -174,8 +174,8 @@ std::vector<float>circleCenter{
 			terrainShader.setFloat("inverseWidth", a);
 			terrainShader.setFloat("inverseHeight", b);
 
-			terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
-			terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
+			//terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
+			//terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
 			terrainShader.setFloat("area1.shininess", 0.00001f);
 
 
@@ -230,7 +230,7 @@ std::vector<float>circleCenter{
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(woodBoxShader);
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\sandRock\\diffuseMap.jpg" }, { diffuse }), { meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, { 0.0f, 0.0f });
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, { 0.0f, 0.0f });
 	 
 
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
