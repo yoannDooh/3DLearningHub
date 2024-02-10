@@ -5,6 +5,7 @@ in vec2 vertexTextCoord[];
 
 struct Area {
 
+	int chunkId;
 	float[2] xRange; //first is xPosLEft and second xPosRight in WORLD unit, to indicate where the texture expand and until where it stretch 
 	float[2] zRange; //same with z 
 	float[2] yRange; //range in height of the texture
@@ -15,6 +16,7 @@ struct Area {
 	sampler2D texture_displacement1;
 	sampler2D texture_emission1;
 	float shininess;
+	float specularIntensity;
 };
 
 uniform sampler2D heightMap;
@@ -22,32 +24,31 @@ uniform int chunkId;
 uniform int chunkWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passé je vais peter mon crane 
 uniform int chunkHeight;//même chose 
 uniform Area area1;
+uniform int activateNormalMap = 1;
+
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 uniform mat4 lightSpaceMat;
-//uniform vec2 maxUvVertexPos;
-//uniform vec2 minUvVertexPos; //it should be negative since terrain extend from negative to positive so 0 is at the center 
 
 
-out float height;
+
+
+out float Height;
 out vec3 fragPos;
 out vec4 fragPosLightSpace;
 out vec2 TextCoord;
 out vec4 normalVec;
-out vec3 Tangent;
-out vec3 Bitangent;
-out float inAreaRange;
 out mat3 TBN;
 
 
 vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data11, vec2 data01);
 vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data11, vec4 data01);
 vec4 vertexNormal(float u, float v,vec2 textCoord, vec3 pos);
-mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model);
-mat3 tbnMate(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord, mat3 model);
+mat3 tbnMat(float u, float v, Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model);
+float heightCurve(float height); //should make it a bezier curve
 
 void main()
 {
@@ -61,10 +62,9 @@ void main()
 
 	vec4 pos = bilinearInterpolation(u, v, gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position);
 
-	height = texture(heightMap, TextCoord).r;
+	Height = texture(heightMap, TextCoord).r;
 
-	pos.y = height;//*25-5; //go intégrer courbe de bézier ici 
-	normalVec = vec4(0.0,1.0,0.0,0.0);
+	pos.y = heightCurve(Height);
 
 	normalVec = vertexNormal(u,v,TextCoord, pos.xyz); 
 
@@ -73,26 +73,11 @@ void main()
 	fragPosLightSpace = lightSpaceMat * vec4(fragPos,1.0);		
 
 
-	/*C'EST LE BORDEL MAIS ON TEST SI C'EST DANS LE RANGE DE LA MAP ICI*/
-	vec2 maxUvVertexPos = vec2(chunkWidth / 2, chunkHeight / 2);
-	vec2 minUvVertexPos = vec2(-chunkWidth / 2, -chunkHeight / 2);
-
-
-	//transform chunk Coord from patch range to it's own [0,1] range he j'ai trop mal explique carrement en fait c'est meme pas je vais faire jsp je raconte quoi
-	float uMin = (area1.xRange[0] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
-	float uMax = (area1.xRange[1] + abs(minUvVertexPos.x)) / (maxUvVertexPos.x + abs(minUvVertexPos.x));
-
-
-	float vMin = (area1.xRange[0] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
-	float vMax = (area1.xRange[1] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
-
-	inAreaRange = 1.0;
-	if ( chunkId==0 && ((TextCoord.x > uMin) && (TextCoord.x < uMax)) && ((TextCoord.y > vMin) && (TextCoord.y < vMax))) //it's within the texture range
+	if (activateNormalMap == 1)
 	{
-		inAreaRange = 1.0;
 		mat3 normalsModel = mat3(transpose(inverse(model)));
-		TBN = transpose ( tbnMat(area1,normalVec.xyz,pos.xyz,TextCoord,normalsModel) ) ;
-		
+		TBN = tbnMat(u, v, area1, normalVec.xyz, pos.xyz, TextCoord, normalsModel);
+
 	}
 }					
 																															//	v		3	2																															//	u->	   0,1   1,1
@@ -139,7 +124,7 @@ vec4 vertexNormal(float u, float v, vec2 textCoord, vec3 pos)
 		return vec4(0.0, 1.0, 0.0, 0.0);
 }
 
-mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
+mat3 tbnMat(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
 {
 
 	vec3 tangent;
@@ -147,65 +132,6 @@ mat3 tbnMat(Area area,vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
 
 	float xOffset = 1.0 / chunkWidth; //used to move sample across x axis
 	float yOffset = 1.0 / chunkHeight; //used to move sample across y axis
-
-	vec2 rightSampleCoord = vec2(textCoord.x + xOffset, textCoord.y); //coord of a sample of the texture a the right of current vertex
-	vec2 topSampleCoord = vec2(textCoord.x, textCoord.y + yOffset); //coord of a sample of the texture a the top of current vertex
-
-	//positions
-	vec3 pos0 = pos;
-	vec3 pos1 = vec3(pos.x + xOffset * 400.0, pos.y, pos.z); //the rightSample in world space
-	vec3 pos3 = vec3(pos.x, pos.y, pos.z + yOffset * 400.0); //the topSample in world space
-
-	// texture coordinates
-	
-	//transform area Coord from patch uv range to it's own uv [0,1] range 
-	vec2 uv00; //uv of current vertex
-	uv00.x = (pos.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
-	uv00.y = (pos.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
-
-	vec2 uv01 = vec2(uv00.x + xOffset, uv00.y);
-	vec2 uv10 = vec2(uv00.x, uv00.x + yOffset);
-
-	vec3 edge1 = pos0 - pos3;
-	vec3 edge2 = pos1 - pos3;
-
-	vec2 deltaUV1 = uv00 - uv10;
-	vec2 deltaUV2 = uv01 - uv10;
-
-	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-
-	
-	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-
-	tangent = normalize(model * tangent);
-	normal = normalize(model * tangent);
-	bitangent = normalize(model * bitangent);
-
-	//bitangent = normalize ( cross(normal.xyz, tangent.xyz) ); //problème a cause de racine de négatif 
-	//bitangent = normalize ( cross(tangent.xyz, normal.xyz) );
-
-	Tangent = tangent;
-	Bitangent = bitangent;
-
-	return mat3(tangent, normal, bitangent);
-
-}
-
-mat3 tbnMate(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord, mat3 model)
-{
-
-	vec3 tangent;
-	vec3 bitangent;
-
-	float xOffset = 1.0 / chunkWidth; //used to move sample across x axis
-	float yOffset = 1.0 / chunkHeight; //used to move sample across y axis
-
 
 	//positions
 	vec3 pos0 = pos;
@@ -219,19 +145,19 @@ mat3 tbnMate(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord,
 	uv00.x = (pos0.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
 	uv00.y = (pos0.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
 
-	vec2 uv01;
-	uv01.x = (pos1.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
-	uv01.y = (pos1.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
-
 	vec2 uv10;
-	uv10.x = (pos3.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
-	uv10.y = (pos3.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
+	uv10.x = (pos1.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
+	uv10.y = (pos1.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
+
+	vec2 uv01;
+	uv01.x = (pos3.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
+	uv01.y = (pos3.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
 
 	vec3 edge1 = pos0 - pos3;
 	vec3 edge2 = pos1 - pos3;
 
-	vec2 deltaUV1 = uv00 - uv10;
-	vec2 deltaUV2 = uv01 - uv10;
+	vec2 deltaUV1 = uv00 - uv01;
+	vec2 deltaUV2 = uv10 - uv01;
 
 	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
@@ -239,20 +165,18 @@ mat3 tbnMate(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord,
 	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
 	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
 
-
-	/*
 	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
 	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
 	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-	*/
 
 	tangent = normalize(model * tangent);
 	normal = normalize(model * tangent);
 	bitangent = normalize(model * bitangent);
 
-
-	Tangent = tangent;
-	Bitangent = bitangent;
-
 	return mat3(tangent, normal, bitangent);
+}
+
+float heightCurve(float height)
+{
+	return height;// *25 - 5;
 }
