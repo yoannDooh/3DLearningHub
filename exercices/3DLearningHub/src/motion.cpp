@@ -478,10 +478,9 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 //woodCube function
 void setWoodCube(Shader& shader) 
 {
-	/*
+
 	World::woodCube.scale(glm::vec3(2.0f));
-	World::woodCube.move(glm::vec3(0.0f, meterToWorldUnit(0.75f), 0.0f));
-	*/
+	World::woodCube.move(glm::vec3(0.0f, meterToWorldUnit(0.10f), 0.0f));
 
 	shader.use();
 	shader.setMat4("model", World::woodCube.model);

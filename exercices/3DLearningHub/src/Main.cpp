@@ -170,12 +170,12 @@ std::vector<float>circleCenter{
 			terrainShader.setMat4("model", model);
 			terrainShader.setFloat("maxDistLod", 3000);
 
-			terrainShader.setFloat("inverseWidth", a);
-			terrainShader.setFloat("inverseHeight", b);
 
-			terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
-			terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
-			terrainShader.setFloat("area1.shininess", 0.00001f);
+			terrainShader.setFloat("area1.shininess", 256.0f);
+			terrainShader.setFloat("area1.specularIntensity", 0.2f);
+
+			//terrainShader.set2Float("maxUvVertexPos", { 200.0f, 200.0f });
+			//terrainShader.set2Float("minUvVertexPos", { -200.0f, -200.0f });
 
 
 			setLighting(terrainShader);
