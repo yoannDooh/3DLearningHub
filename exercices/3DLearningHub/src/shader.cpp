@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 
-#define UNIFORM_BUFFER_NB 1
-
+#define UNIFORM_BUFFER_NB 2
+#define MAX_LIGHTS_NB 200
 
 /*--SHADER CLASSE--*/
 static std::string readGlslFile(std::string filePath)
@@ -282,7 +282,7 @@ void Shader::setMat4(const std::string& name, glm::mat4& mat) const
 
 //UBO AND SSO FUNCTIONS / VARIABLES
 
-std::array<unsigned int, UNIFORM_BUFFER_NB> uniformBuffId{};
+std::array<unsigned int, UNIFORM_BUFFER_NB> buffersId{};
 
 void genUbo0()
 {
@@ -293,16 +293,18 @@ void genUbo0()
     glBindBuffer(GL_UNIFORM_BUFFER, uniformBuff);
     glBufferData(GL_UNIFORM_BUFFER,size, NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uniformBuff, 0, size);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, uniformBuff);
 
-    uniformBuffId[0] = uniformBuff;
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    buffersId[0] = uniformBuff;
 }
 
 void fillUbo0(int dataToFill) 
 {
     glm::vec4 cameraPos{};
 
-    glBindBuffer(GL_UNIFORM_BUFFER, uniformBuffId[0] );
+    glBindBuffer(GL_UNIFORM_BUFFER, buffersId[0] );
 
     switch (dataToFill)
     {
@@ -316,12 +318,46 @@ void fillUbo0(int dataToFill)
 
         case 2:
             cameraPos = glm::vec4(World::camera.pos, 0.0f);
-            glBufferSubData(GL_UNIFORM_BUFFER,2*sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cameraPos));
+            glBufferSubData(GL_UNIFORM_BUFFER,2*sizeof(glm::mat4), sizeof(glm::vec4), glm::value_ptr(cameraPos));
             break;
-
+             
         default : 
             std::cerr << "INCORECT INDEX FOR UBO 0";
             break;
     }
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+
+void genUbo1()
+{
+    std::size_t size{ MAX_LIGHTS_NB * sizeof(Light::lightPoint) };
+
+    unsigned int ssbo;
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    buffersId[1] = ssbo;
+}
+
+void fillUbo1(int lightElemNr)
+{
+    if (lightElemNr ==-1)
+    {
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER,0, World::lightPoints.size()*sizeof(Light::lightPoint), &World::lightPoints[0]);
+
+    }
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffersId[1]);
+
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER,lightElemNr*sizeof(Light::lightPoint), sizeof(Light::lightPoint), &World::lightPoints[lightElemNr-1] );
+
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 }

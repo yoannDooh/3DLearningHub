@@ -267,7 +267,7 @@ void setLighting(Shader& shader)
 	shader.set3Float("sunLight.specular", Light::sunLight.specular);
 
 	//PointsLights attribute 
-	for (int lightIndex{}; lightIndex < POINT_LIGHTS_NB; ++lightIndex)
+	for (int lightIndex{}; lightIndex < World::lightPoints.size(); ++lightIndex)
 	{
 		for (int attributeIndex{}; attributeIndex < attributes.size(); ++attributeIndex)
 		{

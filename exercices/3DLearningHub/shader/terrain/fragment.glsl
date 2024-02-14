@@ -1,4 +1,4 @@
-#version 420 core
+#version 460 core
 
 in vec2 TextCoord;
 in vec4 normalVec;
@@ -9,8 +9,9 @@ in mat3 TBN;
 
 out vec4 FragColor;
 
-#define POINT_LIGHTS_NB 2
+#define MAX_POINT_LIGHTS_NB 200
 
+#define POINT_LIGHTS_NB 2
 
 
 struct Area {
@@ -74,13 +75,16 @@ struct SpotLight
     vec3 specular;
 };
 
-
-
 layout(std140, binding = 0) uniform camAndProject
 {
     mat4 view;
     mat4 projection;
     vec4 viewPosition;
+};
+
+layout(std140, binding = 1) buffer pointLightes
+{
+    PointLight pointLightess[];
 };
 
  
@@ -91,9 +95,7 @@ uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform Area area1;
 uniform int chunkWidth;
 uniform int chunkHeight;
-uniform vec3 viewPos;
 uniform DirectLight sunLight;
-
 
 vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText);
 vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
@@ -103,7 +105,7 @@ float calcShadow(vec4 fragPosLightSpace);
 
 void main()
 {
-   //vec3 viewPos = viewPosition.xyz;
+   vec3 viewPos = viewPosition.xyz;
 
     //direction vectors and normal vector
     vec3 normVec = normalize(vec3(normalVec));

@@ -44,4 +44,6 @@ void fillUbo0(int dataToFill); //ubo of binding point 0 is the view/projection a
 							//dataToFill : 0 for mat4 view 1: mat4 projection and 2 for vec4 viewPos 
 
 
+void genUbo1(); // for pointLIghts array
+void fillUbo1(int lightIndex);
 
