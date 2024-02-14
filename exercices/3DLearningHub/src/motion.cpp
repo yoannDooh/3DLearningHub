@@ -374,6 +374,9 @@ void updateViewProject()
 {
 	World::view = glm::lookAt(World::camera.pos, World::camera.pos + World::camera.front, World::camera.up);
 	World::projection = glm::perspective(glm::radians(Mouse::fov), World::projectionWidth / World::projectionHeight, World::projectionNear, World::projectionFar);
+
+	fillUbo0(0);
+	fillUbo0(1);
 }
 
 void passViewProject(Shader& shader)

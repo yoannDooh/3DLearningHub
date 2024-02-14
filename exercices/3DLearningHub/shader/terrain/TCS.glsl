@@ -6,8 +6,13 @@ in vec2 textCoord[];
 out vec2 vertexTextCoord[];
 
 
-uniform mat4 model;
-uniform vec3 viewPos;
+layout(std140, binding = 0) uniform camAndProject
+{
+    mat4 view;
+    mat4 projection;
+    vec4 viewPosition;
+};
+
 uniform float maxDistLod;
 
 vec4 scale(vec4 data, float scaleFactor);

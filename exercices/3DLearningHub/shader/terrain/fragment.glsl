@@ -1,4 +1,4 @@
-#version 410 core
+#version 420 core
 
 in vec2 TextCoord;
 in vec4 normalVec;
@@ -10,6 +10,8 @@ in mat3 TBN;
 out vec4 FragColor;
 
 #define POINT_LIGHTS_NB 2
+
+
 
 struct Area {
 
@@ -72,6 +74,15 @@ struct SpotLight
     vec3 specular;
 };
 
+
+
+layout(std140, binding = 0) uniform camAndProject
+{
+    mat4 view;
+    mat4 projection;
+    vec4 viewPosition;
+};
+
  
 uniform int chunkId;
 uniform int activateNormalMap = 1;
@@ -92,6 +103,7 @@ float calcShadow(vec4 fragPosLightSpace);
 
 void main()
 {
+   //vec3 viewPos = viewPosition.xyz;
 
     //direction vectors and normal vector
     vec3 normVec = normalize(vec3(normalVec));
@@ -230,14 +242,6 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
     return (ambient + diffuse + specular);
 
 }
-
-/*
-vec3 calcNormalMap(Area area, vec2 uv)
-{
- space
-
-}
-*/
 
 float calcShadow(vec4 fragPosLightSpace)
 {

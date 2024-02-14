@@ -19,6 +19,13 @@ struct Area {
 	float specularIntensity;
 };
 
+layout(std140, binding = 0) uniform camAndProject
+{
+	mat4 view;
+	mat4 projection;
+	vec4 viewPosition;
+};
+
 uniform sampler2D heightMap;
 uniform int chunkId;
 uniform int chunkWidth; //je sais pas pourquoi la dljkgwsngfmkldjqasznbfjmdkoslgndfjomzfghjdsoqkljgsfkmdljkmflqshjgsdfl de ses muertos l'uniform elle est pas passé je vais peter mon crane 
@@ -26,15 +33,8 @@ uniform int chunkHeight;//même chose
 uniform Area area1;
 uniform int activateNormalMap = 1;
 
-
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
 uniform mat4 lightSpaceMat;
-
-
-
 
 out float Height;
 out vec3 fragPos;
@@ -176,5 +176,5 @@ mat3 tbnMat(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord, 
 
 float heightCurve(float height)
 {
-	return height;// *25 - 5;
+	return height*25 - 5;
 }

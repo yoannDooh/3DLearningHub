@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 
 in vec3 normal;
 in vec3 FragPos; 
@@ -61,12 +61,19 @@ struct Material {
     float shininess;
 };
 
+
+layout(std140, binding = 0) uniform camAndProject
+{
+    mat4 view;
+    mat4 projection;
+    vec4 viewPosition;
+};
+
 uniform samplerCube skyBox;
 //uniform sampler2D shadowMap;
 uniform Material material;
- uniform PointLight pointLights[POINT_LIGHTS_NB];
+uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform SpotLight spotLight;
-uniform vec3 viewPos;
 uniform DirectLight sunLight;
 uniform float emmissionStrength;
 uniform vec3 emmissionColor;
@@ -79,6 +86,7 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
 
 void main()
 {
+    vec3 viewPos = viewPosition.xyz;
     //direction vectors and normal vector
     vec3 normVec = normalize(normal);
     vec3 viewDir = normalize(viewPos - FragPos);

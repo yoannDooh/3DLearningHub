@@ -109,6 +109,7 @@ public:
 			break;
 
 		}
+		fillUbo0(2);
 	}
 
 	glm::vec3 pos{};

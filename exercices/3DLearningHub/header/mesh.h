@@ -32,9 +32,10 @@ enum Direction
 
 struct Texture
 {
-	unsigned int ID;
-	TextureMap type{};
 	std::string path{};
+	TextureMap type{};
+	unsigned int ID{};
+
 };
 
 struct Vertex
@@ -56,11 +57,11 @@ struct terrainVertex
 class Mesh
 {
 public:
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	std::vector<Texture> textures;
 	glm::vec3 tangent;
 	glm::vec3 bitangent;
+	std::vector<Vertex> vertices;
+	std::vector<Texture> textures;
+	std::vector<unsigned int> indices;
 
 	Mesh() {}
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
@@ -175,25 +176,18 @@ public:
 
 	struct Chunk //a chunk = one drawCall
 	{
-		int id{};
-
-		unsigned int VAO{}, VBO{}, EBO{};
-		std::vector<terrainVertex> vertices{};
-		std::vector<unsigned int> indices{};
-
 		Texture heightMap{};
+		glm::mat4 model{ glm::mat4(1.0f) };
+		std::vector<Area> areas{};
+		std::vector<terrainVertex> vertices{};
+		std::array<float, 4> boardingChunkId{ -1,-1,-1 ,-1 }; //id of chunks in order: at north/est/south/west of the chunk object, init at -1 by default
 		int width{};
 		int height{};
-
-		glm::mat4 model{ glm::mat4(1.0f) };
-		int startingXpos{}; //le nom est moche faudra changer mais
+		int startingXpos{}; 
 		int startingZpos{};
-
-		//id of chunks in order: at north/est/south/west of the chunk object, init at -1 by default
-		std::array<float, 4> boardingChunkId{ -1,-1,-1 ,-1 };
-
-
-		std::vector<Area> areas{};
+		int id{};	
+		std::vector<unsigned int> indices{};
+		unsigned int VAO{}, VBO{}, EBO{};
 	};
 
 	std::vector<Chunk> chunks{}; //chunk0 is at the center, it's the first chunk constructed with the constructor of Terrain

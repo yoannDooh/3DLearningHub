@@ -71,6 +71,9 @@ std::vector<float>circleCenter{
 	glEnable(GL_DEPTH_CLAMP);
 	glPatchParameteri(GL_PATCH_VERTICES, 4);
 
+	//init Uniforms buffer 
+	genUbo0();
+
 
 	//callback functions/ window inputMode
 	glfwSetCursorPosCallback(window.windowPtr, mouse_callback);
@@ -165,7 +168,7 @@ std::vector<float>circleCenter{
 			float b{ 1.0f / static_cast<float>(terrain.height) };
 
 			terrainShader.use();
-			updateViewProject();
+			//updateViewProject();
 			passViewProject(terrainShader);
 			terrainShader.set3Float("viewPos", World::camera.pos);
 			terrainShader.setMat4("model", model);
@@ -227,10 +230,9 @@ std::vector<float>circleCenter{
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(woodBoxShader);
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-2), meterToWorldUnit(2) }, { meterToWorldUnit(-2),meterToWorldUnit(2) }, { 0.0f, 0.0f });
-	 
-
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-4), meterToWorldUnit(4) }, { meterToWorldUnit(-4),meterToWorldUnit(4) }, { 0.0f, 0.0f });
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
+	terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 
 
 	// render loop

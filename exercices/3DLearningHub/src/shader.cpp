@@ -1,6 +1,10 @@
 #include "../header/shader.h"
+#include "../header/motion.h"
 #include <iostream>
 #include <fstream>
+
+#define UNIFORM_BUFFER_NB 1
+
 
 /*--SHADER CLASSE--*/
 static std::string readGlslFile(std::string filePath)
@@ -263,7 +267,6 @@ void Shader::set3Float(const std::string& name, glm::vec3& value) const
 
 }
 
-
 void Shader::set4Float(const std::string& name, float values[4]) const
 {
     glUniform4f(glGetUniformLocation(ID, name.c_str()), values[0], values[1], values[2], values[3]);
@@ -274,4 +277,51 @@ void Shader::setMat4(const std::string& name, glm::mat4& mat) const
 {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str() ), 1, GL_FALSE, glm::value_ptr(mat));
 
+}
+
+
+//UBO AND SSO FUNCTIONS / VARIABLES
+
+std::array<unsigned int, UNIFORM_BUFFER_NB> uniformBuffId{};
+
+void genUbo0()
+{
+    std::size_t size{ 2 * sizeof(glm::mat4) + sizeof(glm::vec4) };
+
+    unsigned int uniformBuff;
+    glGenBuffers(1, &uniformBuff);
+    glBindBuffer(GL_UNIFORM_BUFFER, uniformBuff);
+    glBufferData(GL_UNIFORM_BUFFER,size, NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uniformBuff, 0, size);
+
+    uniformBuffId[0] = uniformBuff;
+}
+
+void fillUbo0(int dataToFill) 
+{
+    glm::vec4 cameraPos{};
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uniformBuffId[0] );
+
+    switch (dataToFill)
+    {
+        case 0 : 
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(World::view));
+            break;
+
+        case 1:
+            glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(World::projection));
+            break;
+
+        case 2:
+            cameraPos = glm::vec4(World::camera.pos, 0.0f);
+            glBufferSubData(GL_UNIFORM_BUFFER,2*sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cameraPos));
+            break;
+
+        default : 
+            std::cerr << "INCORECT INDEX FOR UBO 0";
+            break;
+    }
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

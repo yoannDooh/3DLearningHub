@@ -8,6 +8,9 @@
 #include "../header/stb_image.h"
 #include "../header/motion.h"
 
+#define UNIFORM_BUFFER_NB 1
+
+
 /*--Texture FUNCTION--*/
 std::vector<Texture> loadTextures(std::vector<const char*> pathes, std::vector<TextureMap> types)
 {
