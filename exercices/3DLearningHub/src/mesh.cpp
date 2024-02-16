@@ -1289,8 +1289,6 @@ void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, cons
 	//proceed only if targetChunkId is valid
 	try
 	{
-		
-
 		//exeption handling
 		if (targetChunkId < 0 || targetChunkId >= chunks.size())	
 			throw(targetChunkId);

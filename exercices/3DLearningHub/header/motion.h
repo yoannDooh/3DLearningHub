@@ -138,6 +138,7 @@ class Object
 		void move(glm::vec3 vector);
 		void rotate(float rad,glm::vec3 rotateAxis);
 		void scale(glm::vec3 scaleVec);
+		void updateLightPoint(glm::vec3 newValue,int memberIndex); //memberIndex : 0 for color ... 4 for specular 
 };
 
 namespace Mouse
@@ -268,7 +269,6 @@ glm::mat4 orbit(Object& object, float horizontalAxis, float verticalAxis, float 
 
 //view & projection function
 void updateViewProject(); //update world::view and world::projection
-void passViewProject(Shader& shader); //pass view and projection matrix to shader 
 
 //emissionMap
 float frameGlow(); //return currentFrameGlowStrenght for emmision map

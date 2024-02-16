@@ -170,8 +170,6 @@ std::vector<float>circleCenter{
 			float b{ 1.0f / static_cast<float>(terrain.height) };
 
 			terrainShader.use();
-			//updateViewProject();
-			passViewProject(terrainShader);
 			terrainShader.set3Float("viewPos", World::camera.pos);
 			terrainShader.setMat4("model", model);
 			terrainShader.setFloat("maxDistLod", 3000);
@@ -181,7 +179,6 @@ std::vector<float>circleCenter{
 			terrainShader.setFloat("area1.specularIntensity", 0.2f);
 
 
-			//setLighting(terrainShader);
 			setLighting();
 			terrain.draw(terrainShader);
 
@@ -197,7 +194,6 @@ std::vector<float>circleCenter{
 		{
 			//pass uniforms to  draw
 			setWoodCube(simpleShadowShader);
-			passViewProject(simpleShadowShader);
 
 			//setup viewPort size dans fbo
 			setupShadowMap(simpleShadowShader,depthMap, lightSpaceMat);

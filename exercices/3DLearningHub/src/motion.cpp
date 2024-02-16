@@ -126,6 +126,45 @@ void Object::scale(glm::vec3 scaleVec)
 		spotLightPtr->pos = pos;
 }
 
+void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
+{
+	try
+	{
+		if (lightPointPtr == nullptr)
+			throw(-1);
+
+		switch (memberIndex)
+		{
+		case 0:
+			lightPointPtr->color = newValue;
+			break;
+
+		case 1:
+			lightPointPtr->pos = newValue;
+			break;
+
+		case 2:
+			lightPointPtr->ambient = newValue;
+			break;
+
+		case 3:
+			lightPointPtr->diffuse = newValue;
+			break;
+
+		case 4:
+			lightPointPtr->specular = newValue;
+			break;
+
+		}
+	}
+
+	catch (const std::exception&)
+	{
+		std::cerr << "DEREFENCING NULL POINTER WITH animateLightsCube FUNCTION CALL" << std::endl;
+	}
+
+}
+
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation)
 {
@@ -393,12 +432,6 @@ void updateViewProject()
 	fillUbo0(1);
 }
 
-void passViewProject(Shader& shader)
-{
-	shader.setMat4("view", World::view);
-	shader.setMat4("projection", World::projection);
-}
-
 //EmmisionMap
 float frameGlow()
 {
@@ -476,13 +509,24 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 		
 		//update light pos
 		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));
-		lightCube.lightPointPtr->pos = newPos;
+
+		try
+		{
+			if (lightCube.lightPointPtr == nullptr)
+				throw(-1);
+
+			lightCube.lightPointPtr->pos = newPos;
+		}
+
+		catch (const std::exception&)
+		{
+			std::cerr << "DEREFENCING NULL POINTER WITH animateLightsCube FUNCTION CALL" << std::endl;
+		}
 
 		shader.set3Float("lightColor", lightCube.lightPointPtr->color);
 		shader.setMat4("model", lightCube.model);
 		shader.setMat4("orbit", orbitMat);
 
-		passViewProject(shader);
 		lightCubeMesh.draw(shader);
 	}
 }
@@ -515,7 +559,6 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMes
 
 	//updateLightsCubePos();
 
-	passViewProject(shader);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 	woodCubeMesh.draw(shader);
 }
@@ -542,7 +585,6 @@ void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, uns
 	outlineShader.setFloat("outLineWeight", weight);
 
 	outlineShader.setMat4("model", World::woodCube.model);
-	passViewProject(outlineShader);
 	woodCubeVao.draw(outlineShader);
 
 	glStencilMask(0xFF);

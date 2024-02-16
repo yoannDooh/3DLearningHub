@@ -348,7 +348,7 @@ void genUbo1()
         float linearCoef; // offset 80 (+4)
         float squareCoef; // offset 84 (+4)
     
-        //bottom-padding: +12, to be the nearest up multiple of 16 (size of vec4)
+        //bottom-padding: +12, to be the next multiple of 16 (size of vec4)
         //total-size : 96 bits
     };
     */
@@ -484,11 +484,12 @@ void genUbo2()
     vec3 diffuse; // offset 48 (+16)
     vec3 specular; // offset 64 (+16)
     
-    //total-size : 64 bits
+    //bottom-padding: +16, to be the next multiple of 16 (size of vec4)
+    //total-size : 80 bits
     };
    */
 
-    std::size_t size{ DIRECT_LIGHTS_NB*64 };
+    std::size_t size{ DIRECT_LIGHTS_NB*80 };
 
     unsigned int uniformBuff;
     glGenBuffers(1, &uniformBuff);
@@ -513,6 +514,7 @@ void fillUbo2(int lightIndex,int dataToFill)
        vec3 diffuse; // offset 48 (+16)
        vec3 specular; // offset 64 (+16)
 
+       +16 
        //total-size : 64 bits
        };
       */
