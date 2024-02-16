@@ -73,6 +73,8 @@ std::vector<float>circleCenter{
 
 	//init Uniforms buffer 
 	genUbo0();
+	genUbo1();
+	genUbo2();
 
 
 	//callback functions/ window inputMode
@@ -179,7 +181,8 @@ std::vector<float>circleCenter{
 			terrainShader.setFloat("area1.specularIntensity", 0.2f);
 
 
-			setLighting(terrainShader);
+			//setLighting(terrainShader);
+			setLighting();
 			terrain.draw(terrainShader);
 
 			//DRAW IN LAST
@@ -222,7 +225,7 @@ std::vector<float>circleCenter{
 
 		};
 
-	setEffect(postProcessShader, edgeDetection);
+	//setEffect(postProcessShader, edgeDetection);
 
 	//wireframe On
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

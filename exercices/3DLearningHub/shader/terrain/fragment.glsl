@@ -82,20 +82,22 @@ layout(std140, binding = 0) uniform camAndProject
     vec4 viewPosition;
 };
 
-layout(std140, binding = 1) buffer pointLightes
+layout(std140, binding = 1) buffer pointLightBuff
 {
-    PointLight pointLightess[];
+    PointLight pointLights[];
 };
 
- 
+layout(std140, binding = 2) uniform directLightBuff
+{
+    DirectLight sunLight;
+};
+
 uniform int chunkId;
 uniform int activateNormalMap = 1;
 uniform sampler2D shadowMap;
-uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform Area area1;
 uniform int chunkWidth;
 uniform int chunkHeight;
-uniform DirectLight sunLight;
 
 vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText);
 vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);

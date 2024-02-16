@@ -69,12 +69,22 @@ layout(std140, binding = 0) uniform camAndProject
     vec4 viewPosition;
 };
 
+layout(std140, binding = 1) buffer pointLightBuff
+{
+    PointLight pointLights[];
+};
+
+
+layout(std140, binding = 2) uniform directLightBuff
+{
+    DirectLight sunLight;
+};
+
+
 uniform samplerCube skyBox;
 //uniform sampler2D shadowMap;
 uniform Material material;
-uniform PointLight pointLights[POINT_LIGHTS_NB];
 uniform SpotLight spotLight;
-uniform DirectLight sunLight;
 uniform float emmissionStrength;
 uniform vec3 emmissionColor;
 

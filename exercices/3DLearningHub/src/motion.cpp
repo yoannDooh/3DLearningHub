@@ -23,19 +23,6 @@ namespace Time
 	int currentFrame{ 1 };
 	int totalFrame{ 1 };
 }
-
-namespace Light
-{
-	glm::vec3 sunLightColor{ rgb(226, 239, 245) };
-	DirectLight sunLight{
-		sunLightColor,
-		{-0.2f, -1.0f, -0.3f },	//direction
-		{ 0.4f, 0.4f, 0.4f,	 },	//ambient
-		{ 0.5f, 0.5f, 0.5f,	 },	//diffuse
-		{ 1.0f,	 1.0f,  1.0f }, //specular 
-	};
-}
-
 namespace World
 {
 	float CameraSpeed{ 40.5 };
@@ -53,6 +40,15 @@ namespace World
 	std::vector<Object> objects{};
 	std::vector<Light::lightPoint> lightPoints{};
 	std::vector<Light::SpotLight> spotLights{};
+	std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights{
+		{
+		rgb(226, 239, 245), //color
+		{-0.2f, -1.0f, -0.3f },	//direction
+		{ 0.4f, 0.4f, 0.4f,	 },	//ambient
+		{ 0.5f, 0.5f, 0.5f,	 },	//diffuse
+		{ 1.0f,	 1.0f,  1.0f }, //specular 
+		}
+	};
 
 	Object woodCube ( glm::vec3(0.0f, 0.0f, 0.0f) );
 	std::array<Light::lightPoint, 2> lightCube {};
@@ -243,7 +239,8 @@ FrameBuffer::FrameBuffer(bool shadowMap)
 }
 
 //lights functions 
-void setLighting(Shader& shader)
+/*
+void setLightinge(Shader& shader)
 {
 	std::array<std::string, 8> attributes{
 	"ambient",
@@ -259,12 +256,14 @@ void setLighting(Shader& shader)
 
 	shader.use();
 
+
 	//directional light
 	shader.set3Float("sunLight.color", Light::sunLight.color);
 	shader.set3Float("sunLight.direction", Light::sunLight.direction);
 	shader.set3Float("sunLight.ambient", Light::sunLight.ambient);
 	shader.set3Float("sunLight.diffuse", Light::sunLight.diffuse);
 	shader.set3Float("sunLight.specular", Light::sunLight.specular);
+	
 
 	//PointsLights attribute 
 	for (int lightIndex{}; lightIndex < World::lightPoints.size(); ++lightIndex)
@@ -328,6 +327,21 @@ void setLighting(Shader& shader)
 	}
 
 	//SpotLights attributes
+}
+*/
+
+void setLighting()
+{
+	//directional light
+	fillUbo2(0, -1);
+	
+
+	for (int lightIndex{}; lightIndex < World::lightPoints.size(); ++lightIndex)
+	{
+		fillUbo1(lightIndex,-1);
+	}
+
+	//do the same for spotLights
 }
 
 //motion functions
@@ -486,7 +500,6 @@ void setWoodCube(Shader& shader)
 
 	
 	//updateLightsCubePos();
-	setLighting(shader);
 }
 
 void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMesh)
@@ -501,7 +514,6 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMes
 	shader.set3Float("viewPos", World::camera.pos);
 
 	//updateLightsCubePos();
-	setLighting(shader);
 
 	passViewProject(shader);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);

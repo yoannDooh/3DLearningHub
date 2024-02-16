@@ -1,6 +1,7 @@
 #pragma once
 
 #define POINT_LIGHTS_NB 2
+#define DIRECT_LIGHTS_NB 1
 
 #include <array>
 #include <vector>
@@ -179,6 +180,7 @@ namespace World
 	extern std::vector<Object> objects;
 	extern std::vector<Light::lightPoint> lightPoints;
 	extern std::vector<Light::SpotLight> spotLights;
+	extern std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights;
 
 	extern Object woodCube;
 	extern std::array<Light::lightPoint, POINT_LIGHTS_NB> lightCube;
@@ -191,9 +193,6 @@ namespace World
 /*LIGHT VARIABLES*/
 namespace Light
 {
-	//sunlight Ambient 
-	extern glm::vec3 sunLightColor;
-	extern DirectLight sunLight;
 
 	struct Material {
 		std::array<float, 3> ambient;
@@ -257,7 +256,7 @@ namespace Light
 }
 
 //lighting 
-void setLighting(Shader& shader);
+void setLighting();
 
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
