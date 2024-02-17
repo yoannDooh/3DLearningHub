@@ -261,7 +261,7 @@ void setLighting();
 
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
-void setupShadowMap(Shader& shadowMapShader, FrameBuffer depthMap, glm::mat4 lightSpaceMat);
+void setupShadowMap(FrameBuffer depthMap, glm::mat4 lightSpaceMat);
 
 //motion 
 void rotatePlane(Object& object, double degree);

@@ -23,11 +23,11 @@ namespace Time
 	int currentFrame{ 1 };
 	int totalFrame{ 1 };
 }
+
 namespace World
 {
 	float CameraSpeed{ 40.5 };
-	Camera camera{ glm::vec3(meterToWorldUnit(-0.43f) , meterToWorldUnit(0.008f), meterToWorldUnit(-0.008f) ), glm::vec3(meterToWorldUnit(0.43f) , meterToWorldUnit(-0.008f), meterToWorldUnit(0.008f)), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
-	
+	Camera camera{ glm::vec3(-85.39f, 120.91f, -119.96f),glm::vec3(85.39f, -120.91f, 119.96f), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
 	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar)  };
 
@@ -175,16 +175,12 @@ glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::
 	return lightProjection * lightView;			
 }
 
-void setupShadowMap(Shader& shadowMapShader,FrameBuffer depthMap, glm::mat4 lightSpaceMat)
+void setupShadowMap(FrameBuffer depthMap, glm::mat4 lightSpaceMat)
 {
 	//setup texture size and frameBuffer
 	glViewport(0, 0, depthMap.SHADOW_WIDTH, depthMap.SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMap.id);
 	glClear(GL_DEPTH_BUFFER_BIT);
-
-	//send lightSpaceMatrix
-	shadowMapShader.use();
-	shadowMapShader.setMat4("lightSpaceMat", lightSpaceMat);
 }
 
 //frameBuffer CLASS
@@ -276,98 +272,6 @@ FrameBuffer::FrameBuffer(bool shadowMap)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 }
-
-//lights functions 
-/*
-void setLightinge(Shader& shader)
-{
-	std::array<std::string, 8> attributes{
-	"ambient",
-	"diffuse",
-	"specular",
-	"color",
-	"pos",
-	"constant",
-	"linearCoef",
-	"squareCoef",
-	};
-	std::string name{};
-
-	shader.use();
-
-
-	//directional light
-	shader.set3Float("sunLight.color", Light::sunLight.color);
-	shader.set3Float("sunLight.direction", Light::sunLight.direction);
-	shader.set3Float("sunLight.ambient", Light::sunLight.ambient);
-	shader.set3Float("sunLight.diffuse", Light::sunLight.diffuse);
-	shader.set3Float("sunLight.specular", Light::sunLight.specular);
-	
-
-	//PointsLights attribute 
-	for (int lightIndex{}; lightIndex < World::lightPoints.size(); ++lightIndex)
-	{
-		for (int attributeIndex{}; attributeIndex < attributes.size(); ++attributeIndex)
-		{
-			name = "pointLights[";
-			name += std::to_string(lightIndex);
-			name += "].";
-			name += attributes[attributeIndex];
-
-			if (attributeIndex < 5)
-			{
-				glm::vec3 value{};
-				switch (attributeIndex)
-				{
-				case 0:
-					value = World::lightPoints[lightIndex].ambient;
-					break;
-
-				case 1:
-					value = World::lightPoints[lightIndex].diffuse;
-					break;
-
-				case 2:
-					value = World::lightPoints[lightIndex].specular;
-					break;
-
-				case 3:
-					value = World::lightPoints[lightIndex].color;
-					break;
-
-				case 4:
-					value = World::lightPoints[lightIndex].pos;
-					break;
-				}
-
-				shader.set3Float(name, value);
-			}
-
-			else
-			{
-				float value{};
-				switch (attributeIndex)
-				{
-				case 5:
-					value = World::lightPoints[lightIndex].constant;
-					break;
-
-				case 6:
-					value = World::lightPoints[lightIndex].linearCoef;
-					break;
-
-				case 7:
-					value = World::lightPoints[lightIndex].squareCoef;
-					break;
-				}
-				shader.setFloat(name, value);
-			}
-		}
-	}
-
-	//SpotLights attributes
-}
-*/
 
 void setLighting()
 {
@@ -548,16 +452,11 @@ void setWoodCube(Shader& shader)
 
 void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMesh)
 {
-	//updateLightPos
-	//incompleted ?
 	shader.use();
 	glm::vec3 emmissionColor{ rgb(255, 255, 0) };
 
 	shader.setFloat("emmissionStrength", frameGlow() );
 	shader.set3Float("emmissionColor", emmissionColor);
-	shader.set3Float("viewPos", World::camera.pos);
-
-	//updateLightsCubePos();
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 	woodCubeMesh.draw(shader);

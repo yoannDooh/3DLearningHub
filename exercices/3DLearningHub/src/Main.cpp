@@ -17,12 +17,13 @@ std::vector<float>circleCenter{
 };
 
   int main()
-   {
+    {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
 	//init shaders
-	Shader woodBoxShader(".\\shader\\woodBox\\vertex.glsl", ".\\shader\\woodBox\\fragment.glsl");
+    Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
+	Shader objectDirectShadowShader(".\\shader\\objectDirectShadow\\vertex.glsl", ".\\shader\\objectDirectShadow\\fragment.glsl");
 	Shader lightSourcesShader(".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
 	Shader skyboxShader(".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
 	Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
@@ -30,7 +31,8 @@ std::vector<float>circleCenter{
 	Shader geometryShader(".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
 	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
 	Shader terrainShader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
-	Shader simpleShadowShader(".\\shader\\simpleShadowMap\\vertex.glsl", ".\\shader\\simpleShadowMap\\fragment.glsl");
+	Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
+
 
 
 	//woodCube parameters
@@ -130,19 +132,19 @@ std::vector<float>circleCenter{
 			circle.draw();
 		};
 
-	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &woodBoxShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
+	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
 		{
 			//DrawScene
 			updateViewProject();
 			animateLightsCube(lightSourcesShader, lightCube);
-			animateWoodCubeAndOutline(woodBoxShader, outlineShader, skyBox.texture.ID, woodCube);
+			animateWoodCubeAndOutline(objectShader, outlineShader, skyBox.texture.ID, woodCube);
 
 			//DRAW IN LAST
 			skyBox.draw(skyboxShader);
 
 		};
 
-	auto drawSceneWithEffect = [&drawScene,&fbo, &lightSourcesShader, &lightCube, &woodBoxShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &quad, &postProcessShader, &newFrame]()
+	auto drawSceneWithEffect = [&drawScene,&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &quad, &postProcessShader, &newFrame]()
 		{
 			//BindFbo
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
@@ -175,8 +177,8 @@ std::vector<float>circleCenter{
 			terrainShader.setFloat("maxDistLod", 3000);
 
 
-			terrainShader.setFloat("area1.shininess", 256.0f);
-			terrainShader.setFloat("area1.specularIntensity", 0.2f);
+			terrainShader.setFloat("area1.shininess", 512.0f);
+			terrainShader.setFloat("area1.specularIntensity", 0.0f);
 
 
 			setLighting();
@@ -188,24 +190,35 @@ std::vector<float>circleCenter{
 		};
 
 	Texture shadowMap;
+	shadowMap.type = TextureMap::shadowMap;
+
 	FrameBuffer depthMap(true);
-	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(7.5f, glm::vec3(0.11236f, 1.28743f, -1.49997f), glm::vec3(0.0f)));
-	auto drawShadow = [&simpleShadowShader,&depthMap,&shadowMap,&lightSpaceMat,&woodCube,&woodBoxShader,&drawScene,&terrainShader,&drawTerrain]()
+
+	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(1000.0f, glm::vec3(-85.39f, 120.91f, -119.96f), glm::vec3(0.0f)));
+	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&lightSpaceMat,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain]()
 		{
-			//pass uniforms to  draw
-			setWoodCube(simpleShadowShader);
-
 			//setup viewPort size dans fbo
-			setupShadowMap(simpleShadowShader,depthMap, lightSpaceMat);
-		
-			//draw to fbo
-			woodCube.draw(simpleShadowShader);
+			setupShadowMap(depthMap, lightSpaceMat);
 
-			woodBoxShader.use();
-			woodBoxShader.setMat4("lightSpaceMat", lightSpaceMat);
+			//pass uniforms to  draw
+			objectDirectShadowShader.use();
+			setWoodCube(objectDirectShadowShader);
+			objectDirectShadowShader.setMat4("model", model);
+			objectDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
+
+			//draw to fbo
+			woodCube.draw(objectDirectShadowShader);
+
+			//same for terrain 
+			terrainDirectShadowShader.use();
+			terrainDirectShadowShader.setMat4("model", model);
+			terrainDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
+			terrain.draw(terrainDirectShadowShader);
+
+			objectShader.use();
+			objectShader.setMat4("lightSpaceMat", lightSpaceMat);
 
 			shadowMap.ID = depthMap.texId;
-			shadowMap.type = TextureMap::shadowMap;
 			woodCube.addTexture(shadowMap);
 			
 			terrainShader.use();
@@ -228,11 +241,10 @@ std::vector<float>circleCenter{
 
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
-	setWoodCube(woodBoxShader);
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-4), meterToWorldUnit(4) }, { meterToWorldUnit(-4),meterToWorldUnit(4) }, { 0.0f, 0.0f });
+	setWoodCube(objectShader);
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\sandRock\\diffuseMap.jpg",".\\rsc\\terrain\\sandRock\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-4), meterToWorldUnit(4) }, { meterToWorldUnit(-4),meterToWorldUnit(4) }, { 0.0f, 0.0f });
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
-	terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
-
+	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 
 	// render loop
 	glfwSetTime(0);
@@ -240,8 +252,7 @@ std::vector<float>circleCenter{
 	{	
 		newFrame();
 
-		drawScene();
-		drawTerrain();
+		drawShadow();
 
 		swapBuffer();
 	}

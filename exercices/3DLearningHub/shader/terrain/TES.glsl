@@ -80,10 +80,11 @@ void main()
 
 	}
 }					
-																															//	v		3	2																															//	u->	   0,1   1,1
+																															//			3	2
+																															//		  0,1   1,1
 vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data11, vec2 data01)							//			+---+
 {																															//	lefData	|   | rightData
-	vec2 leftData = data00 + v * (data01 - data00);																			//			+---+																						//		   00   10																						//	^																						//	|																						//	v
+	vec2 leftData = data00 + v * (data01 - data00);																			//			+---+																					
 	vec2 rightData = data10 + v * (data11 - data10);																		//		   0,0   1,0
 	return  vec2(leftData + u * (rightData - leftData));																	//			0    1
 
@@ -176,5 +177,5 @@ mat3 tbnMat(float u, float v, Area area, vec3 normal, vec3 pos, vec2 textCoord, 
 
 float heightCurve(float height)
 {
-	return height*25 - 5;
+	return (height*50 - 10);
 }

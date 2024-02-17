@@ -21,8 +21,8 @@
     <ClInclude Include="header\window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\woodBox\fragment.glsl" />
-    <None Include="shader\woodBox\vertex.glsl" />
+    <None Include="shader\object\fragment.glsl" />
+    <None Include="shader\object\vertex.glsl" />
     <None Include="openGl.props" />
     <None Include="shader\lightSources\vertex.glsl" />
     <None Include="shader\lightSources\fragment.glsl" />
@@ -45,8 +45,7 @@
     <None Include="shader\colorVertexNormal\vertex.glsl" />
     <None Include="shader\colorVertexNormal\geometry.glsl" />
     <None Include="shader\colorVertexNormal\fragment.glsl" />
-    <None Include="shader\simpleShadowMap\vertex.glsl" />
-    <None Include="shader\simpleShadowMap\fragment.glsl" />
+    <None Include="shader\objectDirectShadow\fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

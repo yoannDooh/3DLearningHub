@@ -169,22 +169,21 @@
     <None Include="shader\house\fragment.glsl" />
     <None Include="shader\house\geometry.glsl" />
     <None Include="shader\house\vertex.glsl" />
+    <None Include="shader\objectDirectShadow\fragment.glsl" />
     <None Include="shader\outline\fragment.glsl" />
     <None Include="shader\outline\vertex.glsl" />
     <None Include="shader\postProcess\fragment.glsl" />
     <None Include="shader\postProcess\vertex.glsl" />
-    <None Include="shader\simpleShadowMap\fragment.glsl" />
-    <None Include="shader\simpleShadowMap\vertex.glsl" />
     <None Include="shader\skyBox\fragment.glsl" />
     <None Include="shader\skyBox\vertex.glsl" />
     <None Include="shader\terrain\fragment.glsl" />
     <None Include="shader\terrain\TCS.glsl" />
     <None Include="shader\terrain\TES.glsl" />
     <None Include="shader\terrain\vertex.glsl" />
-    <None Include="shader\woodBox\fragment.glsl" />
+    <None Include="shader\object\fragment.glsl" />
     <None Include="shader\lightSources\fragment.glsl" />
     <None Include="shader\lightSources\vertex.glsl" />
-    <None Include="shader\woodBox\vertex.glsl" />
+    <None Include="shader\object\vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

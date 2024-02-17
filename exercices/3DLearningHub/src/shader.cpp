@@ -3,12 +3,9 @@
 #include <iostream>
 #include <fstream>
 
-
-
 #define UNIFORM_BUFFER_NB 3
 #define MAX_LIGHTS_NB 200
 #define DIRECT_LIGHTS_NB 1
-
 
 /*--SHADER CLASSE--*/
 static std::string readGlslFile(std::string filePath)
@@ -282,7 +279,6 @@ void Shader::setMat4(const std::string& name, glm::mat4& mat) const
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str() ), 1, GL_FALSE, glm::value_ptr(mat));
 
 }
-
 
 //UBO AND SSO FUNCTIONS / VARIABLES
 
