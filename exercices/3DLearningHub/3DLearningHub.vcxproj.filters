@@ -46,6 +46,7 @@
     <None Include="shader\colorVertexNormal\geometry.glsl" />
     <None Include="shader\colorVertexNormal\fragment.glsl" />
     <None Include="shader\objectDirectShadow\fragment.glsl" />
+    <None Include="shader\objectDirectShadow\vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

@@ -4,7 +4,7 @@ in vec2 TextCoord;
 in vec4 normalVec;
 in float Height;
 in vec3 fragPos;
-in vec4 fragPosLightSpace;
+in vec4 FragPosLightSpace;
 in mat3 TBN;
 
 out vec4 FragColor;
@@ -101,22 +101,27 @@ uniform int chunkWidth;
 uniform int chunkHeight;
 
 
-vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText);
+vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText, float shadow);
 vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
 vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
-vec3 areaFragText(Area area, vec2 textCoord,vec3 normal,vec3 viewDir,vec3 fragPos, vec3 baseColor);
-float calcShadow(vec4 fragPosLightSpace);
+vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 baseColor,float shadow);
+float calcShadow(vec4 fragPosLightSpace, vec3 normal);
 
 void main()
 {
-   vec3 viewPos = viewPosition.xyz;
+    vec3 viewPos = viewPosition.xyz;
 
     //direction vectors and normal vector
     vec3 normVec = normalize(vec3(normalVec));
     vec3 viewDir = normalize(viewPos - fragPos);
 
-    float shadow = calcShadow(fragPosLightSpace);
-	vec3 baseTerrainFragColor = vec3(Height, Height, Height);
+    float shadow;
+    if (activatShadow == 1)
+        shadow = calcShadow(FragPosLightSpace, normVec);
+    else
+        shadow = 0;
+
+    vec3 baseTerrainFragColor = vec3(Height, Height, Height);
 
     vec3 textColor;
 
@@ -132,15 +137,17 @@ void main()
         normal = normalize(normal * 2.0 - 1.0);
         normal = normalize(TBN * normal);
 
-        textColor = areaFragText(area1, TextCoord, normal, viewDir, fragPos, baseTerrainFragColor);
+        textColor = areaFragText(area1, TextCoord, normal, viewDir, fragPos, baseTerrainFragColor,shadow);
     }
+    
     else
-         textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor);
+        textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor, shadow);
 
-    FragColor = vec4(textColor,1.0);
+    FragColor = vec4(textColor, 1.0);
+   
 }
 
-vec3 areaFragText(Area area,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragPos, vec3 baseColor)
+vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 baseColor, float shadow)
 {
     vec2 maxUvVertexPos = vec2(chunkWidth / 2, chunkHeight / 2);
     vec2 minUvVertexPos = vec2(-chunkWidth / 2, -chunkHeight / 2);
@@ -151,22 +158,23 @@ vec3 areaFragText(Area area,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragP
 
     float vMin = (area.xRange[0] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
     float vMax = (area.xRange[1] + abs(minUvVertexPos.y)) / (maxUvVertexPos.y + abs(minUvVertexPos.y));
-    
+
     if (((textCoord.x > uMin) && (textCoord.x < uMax)) && ((textCoord.y > vMin) && (textCoord.y < vMax))) //it's within the texture range
     {
-       //transform area Coord from patch range to it's own [0,1] range tjr mal expliqu� mais l� c'est vraiment �a
+        //transform area Coord from patch range to it's own [0,1] range tjr mal expliqu� mais l� c'est vraiment �a
         vec2 uv;
-        
-        uv.x = (fragPos.x - area.xRange[0] ) / (area.xRange[1] - area.xRange[0]);
+
+        uv.x = (fragPos.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
         uv.y = (fragPos.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
 
         vec3 diffuse = texture(area.texture_diffuse1, uv).rgb;
 
-        vec3 lightning = calcDirLight(area, sunLight, normal, viewDir, diffuse);
+        vec3 lightning = calcDirLight(area, sunLight, normal, viewDir, diffuse, shadow);
 
+        
         for (int index = 0; index < POINT_LIGHTS_NB; ++index)
             lightning += calcPointLight(area, pointLights[index], normal, viewDir, fragPos, diffuse);
-
+        
 
         return lightning;
     }
@@ -174,10 +182,10 @@ vec3 areaFragText(Area area,vec2 textCoord,vec3 normal, vec3 viewDir ,vec3 fragP
     return baseColor;
 }
 
-vec3 calcDirLight(Area area,DirectLight light, vec3 normal, vec3 viewDir,vec3 diffuseText)
+vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText,float shadow)
 {
     vec3 lightDir = normalize(-light.direction);
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diff = max(dot(lightDir, normal), 0.0); 
     vec3 reflectDir = reflect(-lightDir, normal);
 
     //simple phong spec
@@ -188,10 +196,10 @@ vec3 calcDirLight(Area area,DirectLight light, vec3 normal, vec3 viewDir,vec3 di
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
     vec3 specular = light.specular * spec * area.specularIntensity * light.color;
 
-    return (ambient + diffuse + specular);
+    return (ambient + (1.0-shadow)*(diffuse + specular ));
 }
 
-vec3 calcPointLight(Area area,PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
+vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -209,8 +217,8 @@ vec3 calcPointLight(Area area,PointLight light, vec3 normal, vec3 viewDir, vec3 
 
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * diffuseText;
-    vec3 diffuse = light.diffuse * diff *  diffuseText * light.color;
-    vec3 specular = light.specular * spec  * light.color;
+    vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
+    vec3 specular = light.specular * spec * light.color;
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
@@ -225,10 +233,10 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
     //diffuse
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diff = max(dot(lightDir, normal), 0.0); //je comprend pas y a encore un blême avec les normals 
 
     //Blinn spec
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), area.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), area.shininess);//je comprend pas y a encore un blême avec les normals 
 
     // attenuation
     float distance = length(light.pos - fragPos);
@@ -243,24 +251,39 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
     //diffuse / specular / ambient final value
     vec3 ambient = light.ambient * diffuseText;
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
-    vec3 specular = light.specular * spec  * light.color;
+    vec3 specular = light.specular * spec * light.color;
 
     return (ambient + diffuse + specular);
 
 }
 
-float calcShadow(vec4 fragPosLightSpace)
+float calcShadow(vec4 fragPosLightSpace, vec3 normal)
 {
+    vec3 lightPos = vec3(-300.0, 1530.0, 22.0);
+
+    vec3 lightDir = normalize(lightPos - fragPos);
+
+    float bias = max(0.0009 * (1.0 - dot(normal, lightDir)), 0.0);
+    //bias = 0.0000009;
+
     // perspective division
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 
-    //map to [0,1] range as shadowMap
-    projCoords = projCoords * 0.5 + 0.5;
+    //create uv in [0,1] range 
+    vec2 uv;
+    uv.x = projCoords.x * 0.5 + 0.5;
+    uv.y = projCoords.y * 0.5 + 0.5;
 
     //retrieve depth of the closest element to the light at the coords of the fragment  
-    float closestFragDepth = texture(shadowMap, projCoords.xy).r;
-    float currentFragDepth = projCoords.r;
+    float currentFragDepth = projCoords.z * 0.5 + 0.5;
+    float closestFragDepth = texture(shadowMap, uv).r;
 
-    // if the depth of the current fragment is not greater than closestFragDepth it means it's in the shadow 
-    return currentFragDepth > closestFragDepth ? 1.0 : 0.0;
+    return currentFragDepth - bias > closestFragDepth ? 1.0 : 0.0;
+
+    /*
+    // if the depth of the current fragment is not greater than closestFragDepth it means it's in the shadow
+    float shadow = currentFragDepth > closestFragDepth ? 1.0 : 0.0;
+
+    return shadow;
+    */
 }

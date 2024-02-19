@@ -177,6 +177,8 @@ public:
 	struct Chunk //a chunk = one drawCall
 	{
 		Texture heightMap{};
+		Texture shadowMap{};
+		bool drawShadow{false};
 		glm::mat4 model{ glm::mat4(1.0f) };
 		std::vector<Area> areas{};
 		std::vector<terrainVertex> vertices{};
@@ -200,13 +202,12 @@ public:
 	Terrain(int patchNb, const char* heightMapPath); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
 	void addChunk(int targetChunkId, Direction direction, int patchNb, const char* heightMapPath); //targetChunkId is the id of the chunk the new chunk is placed next to, and direction indicate it's place north/est/south/west to the chunk
 	void addArea(int chunkId, std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange);
+	void addShadowMap(int chunkId, Texture shadowMap);
 
 	void draw(Shader& shader);
+	void drawChunk(int chunkId, Shader& shader);
 
 private:
-
-
-	void drawChunk(int chunkId, Shader& shader);
 	void loadHeightMap(Chunk& chunk, const char* heightMapPath);
 	void setupChunk(int chunkId);
 

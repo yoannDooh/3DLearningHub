@@ -5,6 +5,7 @@
 #include "../header/motion.h"
 #include "../header/mesh.h"
 
+
 std::vector<float>points  {
 -0.5f, 0.5f,0.0f, // top-left
 0.5f, 0.5f,0.0f, // top-right
@@ -16,8 +17,11 @@ std::vector<float>circleCenter{
 	0.0f, 0.0f,0.0f, 
 };
 
-  int main()
-    {
+void printVec3(std::string_view objectName, glm::vec3 object);
+void printLine(int dashNb);
+
+ int main()
+  {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
@@ -102,22 +106,6 @@ std::vector<float>circleCenter{
 			Time::lastFrameTime = Time::currentFrameTime;
 		};
 	 
-	auto swapBuffer = [&window]()
-		{
-			glfwSwapBuffers(window.windowPtr);
-			glfwPollEvents();
-
-			//increment time variables 
-			if (glfwGetTime() >= Time::sec + 1)
-			{
-				++Time::sec;
-				Time::currentFrame = 1;
-			}
-			Time::deltaSum += Time::deltaTime;
-			++Time::currentFrame;
-			++Time::totalFrame;
-		};
-
 	auto drawHouse = [&geometryShader, &quadPoints]()
 		{
 			geometryShader.use();
@@ -194,44 +182,73 @@ std::vector<float>circleCenter{
 
 	FrameBuffer depthMap(true);
 
-	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(1000.0f, glm::vec3(-85.39f, 120.91f, -119.96f), glm::vec3(0.0f)));
+	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(10000.0f, glm::vec3(-8.48925, 8.14973, -4.79794), glm::vec3(0.0f)));
 	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&lightSpaceMat,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain]()
 		{
 			//setup viewPort size dans fbo
 			setupShadowMap(depthMap, lightSpaceMat);
+			glCullFace(GL_FRONT);
 
-			//pass uniforms to  draw
+			//pass uniforms to objectDirectShadowShader
 			objectDirectShadowShader.use();
 			setWoodCube(objectDirectShadowShader);
 			objectDirectShadowShader.setMat4("model", model);
 			objectDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
-
-			//draw to fbo
 			woodCube.draw(objectDirectShadowShader);
-
-			//same for terrain 
+			
+			
+			//pass uniforms to terrainDirectShadowShader
+			
 			terrainDirectShadowShader.use();
 			terrainDirectShadowShader.setMat4("model", model);
 			terrainDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
+			terrain.drawChunk(0, terrainDirectShadowShader);
 			terrain.draw(terrainDirectShadowShader);
+			
+
+			glCullFace(GL_BACK); 
 
 			objectShader.use();
 			objectShader.setMat4("lightSpaceMat", lightSpaceMat);
 
+			terrainShader.use();
+			terrainShader.setMat4("lightSpaceMat", lightSpaceMat);
+
 			shadowMap.ID = depthMap.texId;
 			woodCube.addTexture(shadowMap);
-			
-			terrainShader.use();
-			terrainShader.setInt("shadowMap", depthMap.texId);
-
-
+			terrain.addShadowMap(0, shadowMap);
+			 
 			//render scene as usual
 			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			drawScene();
 			drawTerrain();
-				
+		};
 
+	auto debugInfo = []()
+		{
+			std::cout <<"seconds : " << Time::sec << "\tFrame number : " << Time::totalFrame << "\tFPS : " << Time::fps << "\n";
+			printLine(50);
+			std::cout << "\n";
+			printVec3("cameraPos", World::camera.pos);
+		};
+
+	auto swapBuffer = [&window,&debugInfo]()
+		{
+			glfwSwapBuffers(window.windowPtr);
+			glfwPollEvents();
+
+			//increment time variables and debugInfo
+			if (glfwGetTime() >= Time::sec + 1)
+			{
+				++Time::sec;
+				Time::currentFrame = 1;
+				Time::fps = static_cast<float>(Time::totalFrame) / static_cast<float>(Time::sec);
+				debugInfo();
+			}
+			Time::deltaSum += Time::deltaTime;
+			++Time::currentFrame;
+			++Time::totalFrame;
 		};
 
 	//setEffect(postProcessShader, edgeDetection);
@@ -242,7 +259,7 @@ std::vector<float>circleCenter{
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(objectShader);
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\sandRock\\diffuseMap.jpg",".\\rsc\\terrain\\sandRock\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-4), meterToWorldUnit(4) }, { meterToWorldUnit(-4),meterToWorldUnit(4) }, { 0.0f, 0.0f });
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
 	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 
@@ -258,5 +275,23 @@ std::vector<float>circleCenter{
 	}
 
 	glfwTerminate();
-	return 0;
+ 	return 0;
+}
+
+void printVec3(std::string_view objectName,glm::vec3 object)
+{
+	std::cout << objectName << ":" << '\n';
+
+	std::cout << '\t' << "x VALUE : "<< object.x << "\t(in world space unit : " << object.x/10.0f << ')'<<'\n';
+	std::cout << '\t' << "y VALUE : "<< object.y << "\t(in world space unit : " << object.y/10.0f << ')'<< '\n';
+	std::cout << '\t' << "z VALUE : "<< object.z << "\t(in world space unit : " << object.z/10.0f << ')'<< '\n';
+	std::cout << "\n\n";
+}
+
+void printLine(int dashNb)
+{
+	for (int count{};count<= dashNb; ++count)
+	{
+		std::cout << '-';
+	}
 }

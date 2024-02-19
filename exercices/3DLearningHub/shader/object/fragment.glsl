@@ -82,16 +82,16 @@ layout(std140, binding = 2) uniform directLightBuff
 
 
 uniform samplerCube skyBox;
-//uniform sampler2D shadowMap;
+uniform sampler2D shadowMap;
 uniform Material material;
 uniform SpotLight spotLight;
 uniform float emmissionStrength;
 uniform vec3 emmissionColor;
 
 
-float calcShadow(vec4 fragPosLightSpace);
-vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir);
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
+float calcShadow(vec4 fragPosLightSpace, vec3 normal);
+vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir, float shadow);
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow);
 vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos);
 
 void main()
@@ -103,8 +103,7 @@ void main()
     vec3 MinusviewDir = -viewDir;
 
 
-    //float shadow = calcShadow(FragPosLightSpace);
-    //float shadow = 0;
+    float shadow = calcShadow(FragPosLightSpace, normVec);
 
     //reflection 
     vec3 reflectDir = reflect(MinusviewDir, normVec);
@@ -116,18 +115,18 @@ void main()
     vec3 refractColor = texture(skyBox, refractDir).rgb;
 
     //DirectLight 
-    vec3 lightning = calcDirLight(sunLight, normVec, viewDir);
+    vec3 lightning = calcDirLight(sunLight, normVec, viewDir,shadow);
 
     for (int index = 0; index < POINT_LIGHTS_NB; ++index)
-        lightning += calcPointLight(pointLights[index], normVec, viewDir,FragPos);
+        lightning += calcPointLight(pointLights[index], normVec, viewDir,FragPos,shadow);
 
     vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb* emmissionColor;
 
-    FragColor = vec4(lightning /* + reflectColor * 0.3 + refractColor * 0.3*/ + emission, 1.0);
-   
+    FragColor = vec4(lightning /* + reflectColor * 0.3 + refractColor * 0.3*/ + emission, 1.0f);
+
 }
 
-vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
+vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir,float shadow)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
@@ -140,10 +139,10 @@ vec3 calcDirLight(DirectLight light, vec3 normal, vec3 viewDir)
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TextCoord));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TextCoord)) * light.color;
     vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TextCoord));
-    return (ambient + diffuse + specular );
+    return (ambient + (1.0 - shadow) * (diffuse + specular));
 }
 
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -166,11 +165,11 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
-    return (ambient + diffuse + specular);
+    return (ambient + (1.0 - shadow) * (diffuse + specular));
 
 }
 
-vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
+vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, float shadow)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -198,24 +197,37 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos)
     ambient *= attenuation*intensity;
     diffuse *= attenuation*intensity;
     specular *= attenuation*intensity;
-    return (ambient + diffuse + specular);
+    return (ambient + (1.0 - shadow) * (diffuse + specular));
 
 }
 
-/*
-float calcShadow(vec4 fragPosLightSpace)
+float calcShadow(vec4 fragPosLightSpace, vec3 normal)
 {
+    vec3 lightPos = vec3(-300.0, 1530.0, 22.0);
+
+    vec3 lightDir = normalize(lightPos - FragPos);
+
+    float bias = max(0.0009 * (1.0 - dot(normal, lightDir)), 0.0);
+    //bias = 0.0000009;
+
     // perspective division
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 
-    //map to [0,1] range as shadowMap
-    projCoords = projCoords * 0.5 + 0.5;
+    //create uv in [0,1] range 
+    vec2 uv;
+    uv.x = projCoords.x * 0.5 + 0.5;
+    uv.y = projCoords.y * 0.5 + 0.5;
 
     //retrieve depth of the closest element to the light at the coords of the fragment  
-    float closestFragDepth = texture(shadowMap, projCoords.xy).r;
-    float currentFragDepth = projCoords.r;
+    float currentFragDepth = projCoords.z * 0.5 + 0.5;
+    float closestFragDepth = texture(shadowMap, uv).r;
 
-    // if the depth of the current fragment is not greater than closestFragDepth it means it's in the shadow 
-    return currentFragDepth > closestFragDepth ? 1.0 : 0.0;
+    return currentFragDepth - bias > closestFragDepth ? 1.0 : 0.0;
+
+    /*
+    // if the depth of the current fragment is not greater than closestFragDepth it means it's in the shadow
+    float shadow = currentFragDepth > closestFragDepth ? 1.0 : 0.0;
+
+    return shadow;
+    */
 }
-*/

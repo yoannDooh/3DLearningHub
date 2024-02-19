@@ -1276,6 +1276,12 @@ void Terrain::loadHeightMap(Chunk& chunk,const char* heightMapPath)
 		std::cout << "Failed to load heightMap" << std::endl;
 }
 
+void Terrain::addShadowMap(int chunkId, Texture shadowMap)
+{
+	chunks[chunkId].shadowMap = shadowMap;
+	chunks[chunkId].drawShadow = true;
+}
+
 void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, const char* heightMapPath)
 {
 	Chunk chunk;
@@ -1598,6 +1604,13 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 	//activate heightMap
 	glActiveTexture(GL_TEXTURE0);
 	shader.setInt("heightMap", 0);
+	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].heightMap.ID);
+
+	//activate shadowMap
+	shader.setInt("activatShadow",chunks[chunkId].drawShadow);
+	glActiveTexture(GL_TEXTURE0+1);
+	shader.setInt("shadowMap", 1);
+	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].shadowMap.ID);
 
 	//setModel
 	shader.setMat4("chunkModel",chunks[chunkId].model);
@@ -1608,9 +1621,6 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 	//pass width and height
 	shader.setInt("chunkWidth", chunks[chunkId].width);
 	shader.setInt("chunkHeight", chunks[chunkId].height);
-
-
-	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].heightMap.ID);
 
 	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
 	std::fill_n(texturesCount.begin(), 6, 1);
@@ -1624,7 +1634,7 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 		for (unsigned int textIndex{}; textIndex < area.textures.size() ; textIndex++)
 		{
 
-			glActiveTexture(GL_TEXTURE0 + textIndex+1); //+1 because GL_TEXTURE0 is heightMap
+			glActiveTexture(GL_TEXTURE0 + textIndex+2); //+2 because GL_TEXTURE0 is heightMap and GL_TEXTURE2 is shadowMap
 			std::string number;
 			std::string name;
 			TextureMap type{ area.textures[textIndex].type };
@@ -1663,7 +1673,7 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 			}
 
 			name = (areaNr + name + number);
-			shader.setInt(name.c_str(), textIndex+1);
+			shader.setInt(name.c_str(), textIndex+2);
 
 			glBindTexture(GL_TEXTURE_2D, area.textures[textIndex].ID);
 		}

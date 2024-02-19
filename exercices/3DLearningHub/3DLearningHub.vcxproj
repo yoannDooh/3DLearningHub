@@ -170,6 +170,7 @@
     <None Include="shader\house\geometry.glsl" />
     <None Include="shader\house\vertex.glsl" />
     <None Include="shader\objectDirectShadow\fragment.glsl" />
+    <None Include="shader\objectDirectShadow\vertex.glsl" />
     <None Include="shader\outline\fragment.glsl" />
     <None Include="shader\outline\vertex.glsl" />
     <None Include="shader\postProcess\fragment.glsl" />

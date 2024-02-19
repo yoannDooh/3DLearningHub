@@ -1,9 +1,9 @@
-#version 330 core
+#version 460 core
 
 layout(location = 0) in vec3 inPos;
 
-uniform mat4 lightSpaceMat;
 uniform mat4 model;
+uniform mat4 lightSpaceMat;
 
 void main()
 {

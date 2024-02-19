@@ -161,6 +161,7 @@ namespace Time
 	extern int sec; //how many entire seconds has passed
 	extern int currentFrame;
 	extern int totalFrame;
+	extern float fps;
 }
 
 //GLOBAL VARIABLES

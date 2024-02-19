@@ -22,12 +22,13 @@ namespace Time
 	int sec{}; //how many entire seconds has passed
 	int currentFrame{ 1 };
 	int totalFrame{ 1 };
+	float fps;
 }
 
 namespace World
 {
 	float CameraSpeed{ 40.5 };
-	Camera camera{ glm::vec3(-85.39f, 120.91f, -119.96f),glm::vec3(85.39f, -120.91f, 119.96f), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
+	Camera camera{ glm::vec3(-26.2968f, 46.3522f, -40.89f),  glm::vec3(26.2968f, -46.3522f, 40.89f), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
 	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar)  };
 
@@ -43,9 +44,9 @@ namespace World
 	std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights{
 		{
 		rgb(226, 239, 245), //color
-		{-0.2f, -1.0f, -0.3f },	//direction
+		{0.391486f, -0.690055f, 0.608738f},//direction
 		{ 0.4f, 0.4f, 0.4f,	 },	//ambient
-		{ 0.5f, 0.5f, 0.5f,	 },	//diffuse
+		{ 0.6f, 0.6f, 0.6f,	 },	//diffuse
 		{ 1.0f,	 1.0f,  1.0f }, //specular 
 		}
 	};
@@ -229,8 +230,12 @@ void FrameBuffer::genFrameBuffTex(int width, int height,bool depthAttachment)
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		//elments outside of the fbo size won't be in shadow
+		float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texId, 0);
 	
@@ -439,15 +444,12 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 void setWoodCube(Shader& shader) 
 {
 
-	World::woodCube.scale(glm::vec3(2.0f));
+	World::woodCube.scale(glm::vec3(10.0f));
 	World::woodCube.move(glm::vec3(0.0f, meterToWorldUnit(0.10f), 0.0f));
 
 	shader.use();
 	shader.setMat4("model", World::woodCube.model);
 	shader.setFloat("material.shininess", 64.0f);
-
-	
-	//updateLightsCubePos();
 }
 
 void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMesh)
