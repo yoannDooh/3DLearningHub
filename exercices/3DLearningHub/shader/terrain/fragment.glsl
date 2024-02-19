@@ -138,12 +138,15 @@ void main()
         normal = normalize(TBN * normal);
 
         textColor = areaFragText(area1, TextCoord, normal, viewDir, fragPos, baseTerrainFragColor,shadow);
+
     }
     
     else
         textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor, shadow);
 
-    FragColor = vec4(textColor, 1.0);
+    //FragColor = vec4(textColor, 1.0);
+    FragColor = vec4(shadow,0.0,0.0,1.0);
+
    
 }
 
@@ -196,7 +199,7 @@ vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
     vec3 specular = light.specular * spec * area.specularIntensity * light.color;
 
-    return (ambient + (1.0-shadow)*(diffuse + specular ));
+    return ((1.0-shadow)*(diffuse + specular + ambient ) ); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
 }
 
 vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
@@ -259,12 +262,13 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
 
 float calcShadow(vec4 fragPosLightSpace, vec3 normal)
 {
-    vec3 lightPos = vec3(-300.0, 1530.0, 22.0);
+    float shadow = 0.0;
+
+    vec3 lightPos = vec3(-25.32f, 78.77f, -20.65f);
 
     vec3 lightDir = normalize(lightPos - fragPos);
 
-    float bias = max(0.0009 * (1.0 - dot(normal, lightDir)), 0.0);
-    //bias = 0.0000009;
+    float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.0);
 
     // perspective division
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -278,7 +282,22 @@ float calcShadow(vec4 fragPosLightSpace, vec3 normal)
     float currentFragDepth = projCoords.z * 0.5 + 0.5;
     float closestFragDepth = texture(shadowMap, uv).r;
 
-    return currentFragDepth - bias > closestFragDepth ? 1.0 : 0.0;
+
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+
+            shadow += currentFragDepth - bias > pcfDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0;
+    return shadow;
+
+   // return currentFragDepth - bias > closestFragDepth ? 1.0 : 0.0;
 
     /*
     // if the depth of the current fragment is not greater than closestFragDepth it means it's in the shadow

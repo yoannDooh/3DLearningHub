@@ -43,15 +43,33 @@ public:
 
 	FrameBuffer(bool activateBufferTex, bool activateRenderBuff);
 	FrameBuffer(bool shadowMap);
+	FrameBuffer() {} 
 
+	void genCubeMap();
 	unsigned int SHADOW_WIDTH{};
 	unsigned int SHADOW_HEIGHT{};
 
 
-private:
+protected:
 	void genFrameBuffTex(int width, int height, bool depthAttachment);
 	void genRenderBuff();
 };
+
+
+class ShadowBuffer : public FrameBuffer
+{
+public:
+	ShadowBuffer() {}
+	unsigned int texId{};
+
+	unsigned int SHADOW_WIDTH{};
+	unsigned int SHADOW_HEIGHT{};
+
+	void genDepthMapBuff();
+	void genCubeMapBuff();
+
+};
+
 
 /*CAMERA AND MOUSE*/
 class Camera
@@ -244,17 +262,7 @@ namespace Light
 		float constant{};
 		float linearCoef{};
 		float squareCoef{};
-	};
-
-	/*
-	struct Light {
-		std::array<float, 3> ambient{};
-		std::array<float, 3> diffuse{};
-		std::array<float, 3> specular{};
-	};
-	*/
-
-	
+	};	
 }
 
 //lighting 

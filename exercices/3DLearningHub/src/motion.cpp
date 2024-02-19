@@ -44,8 +44,8 @@ namespace World
 	std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights{
 		{
 		rgb(226, 239, 245), //color
-		{0.391486f, -0.690055f, 0.608738f},//direction
-		{ 0.4f, 0.4f, 0.4f,	 },	//ambient
+		{ -0.545f, 0.629f, -0.552f },//direction
+		{ 0.7f, 0.7f, 0.7f,	 },	//ambient
 		{ 0.6f, 0.6f, 0.6f,	 },	//diffuse
 		{ 1.0f,	 1.0f,  1.0f }, //specular 
 		}
@@ -169,12 +169,24 @@ void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation)
 {
-	float near_plane = 1.0f, far_plane = lightRange;
+	float near_plane{ 1.0f }, far_plane{ lightRange };
 	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,near_plane, far_plane);
 	glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(lookAtLocation), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	return lightProjection * lightView;			
 }
+
+/*
+glm::mat4 toOmnidirectionalLightSpaceMat(FrameBuffer cubeMap,float lightRange, int faceIndex)
+{
+	float near_plane{ 1.0f }, far_plane{ lightRange };
+
+	float aspect = static_cast<float>(cubeMap.SHADOW_WIDTH) / static_cast<float>(cubeMap.SHADOW_HEIGHT);
+
+	glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f),aspect,near_plane, far_plane);
+
+}
+*/
 
 void setupShadowMap(FrameBuffer depthMap, glm::mat4 lightSpaceMat)
 {
@@ -276,6 +288,69 @@ FrameBuffer::FrameBuffer(bool shadowMap)
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
+}
+
+void FrameBuffer::genCubeMap()
+{
+	SHADOW_WIDTH = 1024;
+	SHADOW_HEIGHT = 1024;
+
+	glGenFramebuffers(1, &id);
+	glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+	//genTexture
+	glGenTextures(1, &texId);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texId);
+
+	for (unsigned int count = 0; count < 6; ++count)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + count, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+
+	glBindFramebuffer(GL_FRAMEBUFFER, id);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texId, 0);
+
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	if (!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE))
+	{
+		auto error{ glCheckFramebufferStatus(GL_FRAMEBUFFER) };
+		std::cerr << "CUBEMAP BUFFER failed, error : " << error;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+
+//ShadowBuffer CLASS
+void ShadowBuffer::genDepthMapBuff()
+{
+	SHADOW_WIDTH = 1024;
+	SHADOW_HEIGHT = 1024;
+	glGenFramebuffers(1, &id);
+	glBindFramebuffer(GL_FRAMEBUFFER, id);
+	
+	genFrameBuffTex(SHADOW_WIDTH, SHADOW_HEIGHT, true);
+	
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	
+	if (!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE))
+	{
+		auto error{ glCheckFramebufferStatus(GL_FRAMEBUFFER) };
+		std::cerr << "renderBuffer failed, error : " << error;
+	}
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 }
 
 void setLighting()
@@ -445,7 +520,7 @@ void setWoodCube(Shader& shader)
 {
 
 	World::woodCube.scale(glm::vec3(10.0f));
-	World::woodCube.move(glm::vec3(0.0f, meterToWorldUnit(0.10f), 0.0f));
+	World::woodCube.move(glm::vec3(0.0f, meterToWorldUnit(0.1f), 0.0f));
 
 	shader.use();
 	shader.setMat4("model", World::woodCube.model);

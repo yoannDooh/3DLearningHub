@@ -181,32 +181,37 @@ void printLine(int dashNb);
 	shadowMap.type = TextureMap::shadowMap;
 
 	FrameBuffer depthMap(true);
+	FrameBuffer cubeMap;
+	cubeMap.genCubeMap();
 
-	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(10000.0f, glm::vec3(-8.48925, 8.14973, -4.79794), glm::vec3(0.0f)));
+	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(10000.0f, glm::vec3(-2532.0f, 7877.0f, -2065.0f), glm::vec3(0.0f)));
+
+
 	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&lightSpaceMat,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain]()
 		{
+
+			//lightSpaceMat = toDirectionalLightSpaceMat(1000.0f,World::camera.pos, glm::vec3(0.0f) );
+
 			//setup viewPort size dans fbo
 			setupShadowMap(depthMap, lightSpaceMat);
 			glCullFace(GL_FRONT);
 
 			//pass uniforms to objectDirectShadowShader
 			objectDirectShadowShader.use();
-			setWoodCube(objectDirectShadowShader);
-			objectDirectShadowShader.setMat4("model", model);
+			objectDirectShadowShader.setMat4("model", World::woodCube.model);
 			objectDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
 			woodCube.draw(objectDirectShadowShader);
 			
-			
+
 			//pass uniforms to terrainDirectShadowShader
 			
 			terrainDirectShadowShader.use();
 			terrainDirectShadowShader.setMat4("model", model);
 			terrainDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
 			terrain.drawChunk(0, terrainDirectShadowShader);
-			terrain.draw(terrainDirectShadowShader);
 			
+			glCullFace(GL_BACK);
 
-			glCullFace(GL_BACK); 
 
 			objectShader.use();
 			objectShader.setMat4("lightSpaceMat", lightSpaceMat);
@@ -223,6 +228,27 @@ void printLine(int dashNb);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			drawScene();
 			drawTerrain();
+		};
+
+	auto drawPointShadow = []()
+		{
+			/*
+			// 1. first render to depth cubemap
+			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			ConfigureShaderAndMatrices();
+			RenderScene();
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			// 2. then render scene as normal with shadow mapping (using depth cubemap)
+			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			ConfigureShaderAndMatrices();
+			glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+			RenderScene();
+
+			*/
 		};
 
 	auto debugInfo = []()
