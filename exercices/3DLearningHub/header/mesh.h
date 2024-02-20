@@ -16,6 +16,7 @@ enum TextureMap
 	heightmap,
 	shadowMap,
 	cubeMap,
+	shadowCubeMap,
 };
 
 enum Direction

@@ -94,7 +94,7 @@ layout(std140, binding = 2) uniform directLightBuff
 
 uniform int chunkId;
 uniform int activateNormalMap = 1;
-uniform int activatShadow = 1;
+uniform int activatShadow = 0;
 uniform sampler2D shadowMap;
 uniform Area area1;
 uniform int chunkWidth;

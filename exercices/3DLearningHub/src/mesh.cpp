@@ -588,6 +588,13 @@ void Cube::draw(Shader& shader)
 			continue;
 		}
 
+		if (textures[index].type == shadowCubeMap)
+		{
+			shader.setInt("cubeShadowMap", textures[index].ID);  //hardcoded the name but pour l'instant 
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[index].ID);
+			continue;
+		}
+
 		name = ("material." + name + number);
 		shader.setInt(name.c_str(), index + cNUl);
 

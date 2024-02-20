@@ -42,19 +42,12 @@ public:
 	unsigned int renderId{};
 
 	FrameBuffer(bool activateBufferTex, bool activateRenderBuff);
-	FrameBuffer(bool shadowMap);
 	FrameBuffer() {} 
 
-	void genCubeMap();
-	unsigned int SHADOW_WIDTH{};
-	unsigned int SHADOW_HEIGHT{};
-
-
 protected:
-	void genFrameBuffTex(int width, int height, bool depthAttachment);
+	void genFrameBuffTex(int width, int height);
 	void genRenderBuff();
 };
-
 
 class ShadowBuffer : public FrameBuffer
 {
@@ -62,12 +55,20 @@ public:
 	ShadowBuffer() {}
 	unsigned int texId{};
 
+	glm::mat4 depthMapLightSpaceMat{};
+	std::array<glm::mat4,6> cubeMapLightSpaceMat{}; // in order : +x,-x,+y,-y,+z,-z
+
 	unsigned int SHADOW_WIDTH{};
 	unsigned int SHADOW_HEIGHT{};
 
 	void genDepthMapBuff();
-	void genCubeMapBuff();
+	void genDepthMapTex(int width, int height);
+	void genDepthMapLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
 
+	
+	void genCubeMapBuff();
+	void genCubeMapTex(int width, int height);
+	void genCubeMapLightSpaceMat(float lightRange, glm::vec3 lightPos);
 };
 
 
@@ -270,7 +271,7 @@ void setLighting();
 
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
-void setupShadowMap(FrameBuffer depthMap, glm::mat4 lightSpaceMat);
+void setupShadowMap(ShadowBuffer depthMap);
 
 //motion 
 void rotatePlane(Object& object, double degree);

@@ -21,13 +21,14 @@ void printVec3(std::string_view objectName, glm::vec3 object);
 void printLine(int dashNb);
 
  int main()
-  {
+ {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
-	//init shaders
+	//init shaders 
     Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
 	Shader objectDirectShadowShader(".\\shader\\objectDirectShadow\\vertex.glsl", ".\\shader\\objectDirectShadow\\fragment.glsl");
+	Shader objectPointShadowShader(".\\shader\\objectPointShadow\\vertex.glsl", ".\\shader\\objectPointShadow\\fragment.glsl", ".\\shader\\objectPointShadow\\geometry.glsl");
 	Shader lightSourcesShader(".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
 	Shader skyboxShader(".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
 	Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
@@ -36,7 +37,6 @@ void printLine(int dashNb);
 	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
 	Shader terrainShader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
 	Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
-
 
 
 	//woodCube parameters
@@ -82,11 +82,18 @@ void printLine(int dashNb);
 	genUbo1();
 	genUbo2();
 
-
 	//callback functions/ window inputMode
 	glfwSetCursorPosCallback(window.windowPtr, mouse_callback);
 	glfwSetScrollCallback(window.windowPtr, scroll_callback);
 	glfwSetInputMode(window.windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	//set models
+	setLightCubes(lightSourcesShader, cubeEdge);
+	setWoodCube(objectShader);
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
+	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
+
 
 	FrameBuffer fbo(true, true);
 
@@ -123,6 +130,7 @@ void printLine(int dashNb);
 	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
 		{
 			//DrawScene
+			setLighting();
 			updateViewProject();
 			animateLightsCube(lightSourcesShader, lightCube);
 			animateWoodCubeAndOutline(objectShader, outlineShader, skyBox.texture.ID, woodCube);
@@ -180,26 +188,29 @@ void printLine(int dashNb);
 	Texture shadowMap;
 	shadowMap.type = TextureMap::shadowMap;
 
-	FrameBuffer depthMap(true);
-	FrameBuffer cubeMap;
-	cubeMap.genCubeMap();
+	Texture cubeShadowMap;
+	cubeShadowMap.type = TextureMap::shadowCubeMap;
 
-	glm::mat4 lightSpaceMat(toDirectionalLightSpaceMat(10000.0f, glm::vec3(-2532.0f, 7877.0f, -2065.0f), glm::vec3(0.0f)));
+	ShadowBuffer depthMap;
+	depthMap.genDepthMapBuff();
+	depthMap.genDepthMapLightSpaceMat(10000.0f, glm::vec3(-2532.0f, 7877.0f, -2065.0f), glm::vec3(0.0f));
 
+	ShadowBuffer cubeDepthMap;
+	cubeDepthMap.genCubeMapBuff();
 
-	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&lightSpaceMat,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain]()
+	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain]()
 		{
 
 			//lightSpaceMat = toDirectionalLightSpaceMat(1000.0f,World::camera.pos, glm::vec3(0.0f) );
-
+			
 			//setup viewPort size dans fbo
-			setupShadowMap(depthMap, lightSpaceMat);
+			setupShadowMap(depthMap);
 			glCullFace(GL_FRONT);
 
 			//pass uniforms to objectDirectShadowShader
 			objectDirectShadowShader.use();
 			objectDirectShadowShader.setMat4("model", World::woodCube.model);
-			objectDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
+			objectDirectShadowShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 			woodCube.draw(objectDirectShadowShader);
 			
 
@@ -207,17 +218,17 @@ void printLine(int dashNb);
 			
 			terrainDirectShadowShader.use();
 			terrainDirectShadowShader.setMat4("model", model);
-			terrainDirectShadowShader.setMat4("lightSpaceMat", lightSpaceMat);
+			terrainDirectShadowShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 			terrain.drawChunk(0, terrainDirectShadowShader);
 			
 			glCullFace(GL_BACK);
 
 
 			objectShader.use();
-			objectShader.setMat4("lightSpaceMat", lightSpaceMat);
+			objectShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 
 			terrainShader.use();
-			terrainShader.setMat4("lightSpaceMat", lightSpaceMat);
+			terrainShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 
 			shadowMap.ID = depthMap.texId;
 			woodCube.addTexture(shadowMap);
@@ -230,8 +241,45 @@ void printLine(int dashNb);
 			drawTerrain();
 		};
 
-	auto drawPointShadow = []()
+	auto drawPointShadow = [&cubeDepthMap,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene]()
 		{
+
+			setLighting();
+
+			//animateLightsCube(lightSourcesShader, lightCube);
+			cubeDepthMap.genCubeMapLightSpaceMat(1000000.0f, World::lightPoints[0].pos);
+
+			//setup viewPort size dans fbo
+			setupShadowMap(cubeDepthMap);
+			glCullFace(GL_FRONT);
+
+			//pass uniforms to objectPointShadowShader
+			objectPointShadowShader.use();
+			objectPointShadowShader.setMat4("model", World::woodCube.model);
+			objectPointShadowShader.set3Float("lightPos", World::lightPoints[0].pos);
+			objectPointShadowShader.setFloat("farPlane", 1000.0f);
+
+			//pass to it lightSpaceMat
+			std::string name{};
+			for (int matIndex{}; matIndex < 6; ++matIndex)
+			{
+				name = "pointShadowLightSpaceMat[";
+				name += std::to_string(matIndex);
+				name += "]";
+
+				objectPointShadowShader.setMat4(name,cubeDepthMap.cubeMapLightSpaceMat[matIndex]);
+			}
+
+			woodCube.draw(objectPointShadowShader);
+
+			cubeShadowMap.ID = cubeDepthMap.texId;
+			woodCube.addTexture(cubeShadowMap);
+
+			//render scene as usual
+			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			drawScene();
+
 			/*
 			// 1. first render to depth cubemap
 			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -277,17 +325,11 @@ void printLine(int dashNb);
 			++Time::totalFrame;
 		};
 
+
 	//setEffect(postProcessShader, edgeDetection);
 
 	//wireframe On
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	//set models
-	setLightCubes(lightSourcesShader, cubeEdge);
-	setWoodCube(objectShader);
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
-	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
-	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 
 	// render loop
 	glfwSetTime(0);
@@ -295,7 +337,8 @@ void printLine(int dashNb);
 	{	
 		newFrame();
 
-		drawShadow();
+		drawPointShadow();
+	
 
 		swapBuffer();
 	}

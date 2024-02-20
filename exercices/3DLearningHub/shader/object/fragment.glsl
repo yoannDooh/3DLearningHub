@@ -82,11 +82,13 @@ layout(std140, binding = 2) uniform directLightBuff
 
 
 uniform samplerCube skyBox;
+uniform samplerCube cubeShadowMap;
 uniform sampler2D shadowMap;
 uniform Material material;
 uniform SpotLight spotLight;
 uniform float emmissionStrength;
 uniform vec3 emmissionColor;
+uniform int activateShadow = 0;
 
 
 float calcShadow(vec4 fragPosLightSpace, vec3 normal);
@@ -101,13 +103,18 @@ void main()
     vec3 normVec = normalize(normal);
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 MinusviewDir = -viewDir;
+    
+    float shadow;
+    if (activateShadow == 1)
+        shadow = calcShadow(FragPosLightSpace, normVec);
+    else
+        shadow = 0.0;
 
-
-    float shadow = calcShadow(FragPosLightSpace, normVec);
+    shadow = 0.0;
 
     //reflection 
     vec3 reflectDir = reflect(MinusviewDir, normVec);
-    vec3 reflectColor = texture(skyBox, reflectDir).rgb;
+    vec3 reflectColor = texture(cubeShadowMap, reflectDir).rgb;
 
     //refraction
     float ratio = 1.00 / 1.52;
@@ -122,7 +129,7 @@ void main()
 
     vec3 emission = emmissionStrength * texture(material.texture_emission1, TextCoord).rgb* emmissionColor;
 
-    FragColor = vec4(lightning /* + reflectColor * 0.3 + refractColor * 0.3*/ + emission, 1.0f);
+    FragColor = vec4(lightning  + reflectColor * 0.3 + refractColor * 0.3 + emission, 1.0f);
 
 }
 
