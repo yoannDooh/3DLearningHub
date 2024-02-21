@@ -9,6 +9,7 @@
 #include "../header/stb_image.h"
 #include "../header/motion.h"
 
+# define M_PI 3.141592  /* pi */
 #define UNIFORM_BUFFER_NB 1
 
 
@@ -1739,24 +1740,27 @@ Icosahedron::Icosahedron(float radius,glm::vec3 originCoord)
 
 	float height{};
 	float halfArcTan{ atan(1.0f/2.0f) }; //tan^-1(1/2)
+	float rad72{ glm::radians(72.0f) } ;
+	float piOver2{ M_PI / 2 };
 
 	//topVertex
 	vertices[0] = originCoord + glm::vec3(0.0f,radius,0.0f);
 
 	//first sector at angle with y axis +tan(1/2) 
+	//start at pi/2 rad
 	height = radius * sin(halfArcTan);
 
 	for (int verticesIndex{}; verticesIndex<5 ; ++verticesIndex)
 	{
-		vertices[verticesIndex + 1] = glm::vec3(radius*cos(halfArcTan)*cos(72*verticesIndex), height, radius*cos(halfArcTan)*sin(72 * verticesIndex));
+		vertices[verticesIndex + 1] = glm::vec3(radius*cos(halfArcTan)*cos(piOver2 + rad72 * verticesIndex), height, radius * cos(halfArcTan) * sin(piOver2 + rad72 * verticesIndex));
 	}
 
 	//second sector at angle with y axis -tan(1/2) starting with indice 6 which is just below indice 2 
-	height = radius * sin(-halfArcTan);
-	vertices[6] = glm::vec3(vertices[2].x,height, vertices[2].z);
-	for (int verticesIndex{}; verticesIndex < 4; ++verticesIndex)
+	height = radius * -sin(halfArcTan);
+	//vertices[6] = glm::vec3(vertices[2].x, height, vertices[2].z);
+	for (int verticesIndex{}; verticesIndex < 5; ++verticesIndex)
 	{
-		vertices[verticesIndex + 7] = glm::vec3(radius * cos(-halfArcTan) * cos(72 * verticesIndex), height, radius * cos(-halfArcTan) * sin(72 * verticesIndex));
+		vertices[verticesIndex + 6] = glm::vec3(radius * cos(-halfArcTan) * cos(-piOver2 - rad72 * verticesIndex), height, radius * cos(-halfArcTan) * sin(-piOver2 - rad72 * verticesIndex));
 	}
 
 	//bottomVertex

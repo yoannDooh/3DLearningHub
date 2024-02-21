@@ -66,7 +66,7 @@ void printLine(int dashNb);
 	woodCube.addTexture(skyBox.texture);
 
 	Terrain terrain(2,".\\rsc\\terrain\\heightMaps\\drole.png");
-	Icosahedron isocahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
+	Icosahedron icosahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
 
 	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -321,6 +321,16 @@ void printLine(int dashNb);
 			++Time::totalFrame;
 		};
 
+	glm::mat4 modele{ glm::mat4(1.0f) };
+	auto drawIcosahedron = [&skyboxShader, &modele, &jsp, &icosahedron, &skyBox]()
+		{
+			updateViewProject();
+			jsp.use();
+			jsp.setMat4("model", modele);
+			icosahedron.draw();
+			skyBox.draw(skyboxShader);
+		};
+
 	//setEffect(postProcessShader, edgeDetection);
 
 	//wireframe On
@@ -331,10 +341,9 @@ void printLine(int dashNb);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{	
 		newFrame();
-
 		//drawPointShadow();
-		isocahedron.draw();
-
+		drawIcosahedron();
+	
 		swapBuffer();
 	}
 
