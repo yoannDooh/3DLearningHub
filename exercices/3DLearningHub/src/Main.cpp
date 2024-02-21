@@ -37,6 +37,8 @@ void printLine(int dashNb);
 	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
 	Shader terrainShader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
 	Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
+	Shader jsp(".\\shader\\jsp\\vertex.glsl", ".\\shader\\jsp\\fragment.glsl");
+
 
 
 	//woodCube parameters
@@ -54,10 +56,17 @@ void printLine(int dashNb);
 	};
 
 	//init models
-	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}),true);
+	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}) );
+	woodCube.activateCubeMap = true;
+	woodCube.activateShadow = true;
+
 	Cube lightCube(woodCube.getVbo(), woodCube.getEbo());
 	CubeMap skyBox (skyBoxTextPaths);
+
+	woodCube.addTexture(skyBox.texture);
+
 	Terrain terrain(2,".\\rsc\\terrain\\heightMaps\\drole.png");
+	Icosahedron isocahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
 
 	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -133,7 +142,7 @@ void printLine(int dashNb);
 			setLighting();
 			updateViewProject();
 			animateLightsCube(lightSourcesShader, lightCube);
-			animateWoodCubeAndOutline(objectShader, outlineShader, skyBox.texture.ID, woodCube);
+			animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
 
 			//DRAW IN LAST
 			skyBox.draw(skyboxShader);
@@ -241,13 +250,13 @@ void printLine(int dashNb);
 			drawTerrain();
 		};
 
-	auto drawPointShadow = [&cubeDepthMap,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene]()
+	auto drawPointShadow = [&cubeDepthMap,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader]()
 		{
 
 			setLighting();
 
 			//animateLightsCube(lightSourcesShader, lightCube);
-			cubeDepthMap.genCubeMapLightSpaceMat(1000000.0f, World::lightPoints[0].pos);
+			cubeDepthMap.genCubeMapLightSpaceMat(25.0f, World::lightPoints[0].pos);
 
 			//setup viewPort size dans fbo
 			setupShadowMap(cubeDepthMap);
@@ -257,7 +266,7 @@ void printLine(int dashNb);
 			objectPointShadowShader.use();
 			objectPointShadowShader.setMat4("model", World::woodCube.model);
 			objectPointShadowShader.set3Float("lightPos", World::lightPoints[0].pos);
-			objectPointShadowShader.setFloat("farPlane", 1000.0f);
+			objectPointShadowShader.setFloat("farPlane",25.0f);
 
 			//pass to it lightSpaceMat
 			std::string name{};
@@ -274,29 +283,16 @@ void printLine(int dashNb);
 
 			cubeShadowMap.ID = cubeDepthMap.texId;
 			woodCube.addTexture(cubeShadowMap);
+			terrain.addCubeShadowMap(0, cubeShadowMap);
 
+			terrainShader.use();
+			terrainShader.setFloat("pointLightFarPlane", 25.0f);
+		
 			//render scene as usual
 			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			drawScene();
-
-			/*
-			// 1. first render to depth cubemap
-			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-			glClear(GL_DEPTH_BUFFER_BIT);
-			ConfigureShaderAndMatrices();
-			RenderScene();
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-			// 2. then render scene as normal with shadow mapping (using depth cubemap)
-			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			ConfigureShaderAndMatrices();
-			glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-			RenderScene();
-
-			*/
+			drawTerrain();
 		};
 
 	auto debugInfo = []()
@@ -325,7 +321,6 @@ void printLine(int dashNb);
 			++Time::totalFrame;
 		};
 
-
 	//setEffect(postProcessShader, edgeDetection);
 
 	//wireframe On
@@ -337,8 +332,8 @@ void printLine(int dashNb);
 	{	
 		newFrame();
 
-		drawPointShadow();
-	
+		//drawPointShadow();
+		isocahedron.draw();
 
 		swapBuffer();
 	}

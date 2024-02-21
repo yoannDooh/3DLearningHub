@@ -290,10 +290,10 @@ void animateLightsCube(Shader& shader, Cube lightCubeVao);
 
 //woodCube   
 void setWoodCube(Shader& shader);//just translate and scale then pass to shader 
-void animateWoodCube(Shader& shader,unsigned int cubeMapTexture,Cube woodCubeVao);
+void animateWoodCube(Shader& shader,Cube woodCubeVao);
 
 /*POST PROCESSING EFFECT*/
-void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao);
+void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, Cube woodCubeVao);
 void setEffect(Shader& shader, Effects effect);
 
 //diverse useful function

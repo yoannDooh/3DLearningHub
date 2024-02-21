@@ -47,6 +47,15 @@
     <None Include="shader\colorVertexNormal\fragment.glsl" />
     <None Include="shader\objectDirectShadow\fragment.glsl" />
     <None Include="shader\objectDirectShadow\vertex.glsl" />
+    <None Include="shader\objectPointShadow\fragment.glsl" />
+    <None Include="shader\objectPointShadow\geometry.glsl" />
+    <None Include="shader\objectPointShadow\vertex.glsl" />
+    <None Include="shader\sphere\vertex.glsl" />
+    <None Include="shader\sphere\fragment.glsl" />
+    <None Include="shader\sphere\TCS.glsl" />
+    <None Include="shader\sphere\TES.glsl" />
+    <None Include="shader\jsp\vertex.glsl" />
+    <None Include="shader\jsp\fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

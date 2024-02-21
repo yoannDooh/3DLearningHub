@@ -474,7 +474,7 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 
 	for (auto& const lightCube : World::lightCubesObject)
 	{ 
-		orbitMat = orbit(lightCube, 4.0f, 4.0f, 15);
+		orbitMat = orbit(lightCube, 8.0f, 8.0f, 5);
 		
 		//update light pos
 		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));
@@ -512,7 +512,7 @@ void setWoodCube(Shader& shader)
 	shader.setFloat("material.shininess", 64.0f);
 }
 
-void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMesh)
+void animateWoodCube(Shader& shader,Cube woodCubeMesh)
 {
 	shader.use();
 	glm::vec3 emmissionColor{ rgb(255, 255, 0) };
@@ -520,17 +520,16 @@ void animateWoodCube(Shader& shader,unsigned int cubemapTexture,Cube woodCubeMes
 	shader.setFloat("emmissionStrength", frameGlow() );
 	shader.set3Float("emmissionColor", emmissionColor);
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 	woodCubeMesh.draw(shader);
 }
 
 //POST PROCESSING EFFECT FUNCTION
-void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, unsigned int cubemapTexture, Cube woodCubeVao)
+void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, Cube woodCubeVao)
 {
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	glStencilMask(0xFF);
 
-	animateWoodCube(woodBoxShader, cubemapTexture, woodCubeVao);
+	animateWoodCube(woodBoxShader, woodCubeVao);
 
 	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 	glStencilMask(0x00);

@@ -169,6 +169,8 @@
     <None Include="shader\house\fragment.glsl" />
     <None Include="shader\house\geometry.glsl" />
     <None Include="shader\house\vertex.glsl" />
+    <None Include="shader\jsp\fragment.glsl" />
+    <None Include="shader\jsp\vertex.glsl" />
     <None Include="shader\objectDirectShadow\fragment.glsl" />
     <None Include="shader\objectDirectShadow\vertex.glsl" />
     <None Include="shader\objectPointShadow\fragment.glsl" />
@@ -180,6 +182,10 @@
     <None Include="shader\postProcess\vertex.glsl" />
     <None Include="shader\skyBox\fragment.glsl" />
     <None Include="shader\skyBox\vertex.glsl" />
+    <None Include="shader\sphere\fragment.glsl" />
+    <None Include="shader\sphere\TCS.glsl" />
+    <None Include="shader\sphere\TES.glsl" />
+    <None Include="shader\sphere\vertex.glsl" />
     <None Include="shader\terrain\fragment.glsl" />
     <None Include="shader\terrain\TCS.glsl" />
     <None Include="shader\terrain\TES.glsl" />

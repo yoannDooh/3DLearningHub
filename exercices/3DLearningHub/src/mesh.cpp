@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <cstddef>
 #include <iostream>
+#include <math.h> 
 #include "../header/stb_image.h"
 #include "../header/motion.h"
 
@@ -165,9 +166,7 @@ void Mesh::draw(Shader& shader)
 		glBindTexture(GL_TEXTURE_2D, textures[index].ID);
 	}
 
-
-
-	glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);
 
 	 // draw mesh
 	glBindVertexArray(VAO);
@@ -239,10 +238,8 @@ void Mesh::setEbo(unsigned int ebo)
 }
 
 /*--CUBE CLASS--*/
-Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures,bool cubeMapPresence)
+Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures)
 {
-	isThereCubeMap = cubeMapPresence;
-
 	//vertice and face order :
 	//topLeft -> bottomLeft -> bottomRight -> topRight
 	//bottomFace ->  topFace ->frontFace -> backFace -> leftFace -> Rightface 
@@ -533,17 +530,10 @@ void Cube::draw(Shader& shader)
 {
 	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
 	std::fill_n(texturesCount.begin(), 6, 1);
-	int cNUl{};
-	//cubeMap
-	if (isThereCubeMap)
-	{
-		shader.setInt("skyBox",0); //hardcoded the name but pour l'instant 
-		cNUl = 1;
-	}
 
 	for (unsigned int index = 0; index < textures.size(); index++)
 	{
-		glActiveTexture(GL_TEXTURE0 + index+ cNUl);
+		glActiveTexture(GL_TEXTURE0 + index);
 		std::string number;
 		std::string name;
 		TextureMap type = textures[index].type;
@@ -581,27 +571,35 @@ void Cube::draw(Shader& shader)
 			break;
 		}
 
-		if (textures[index].type == shadowMap)
+		if (activateCubeMap && textures[index].type == cubeMap)
 		{
-			shader.setInt("shadowMap", textures[index].ID);  //hardcoded the name but pour l'instant 
+			shader.setInt("skyBox", index); //hardcoded the name but pour l'instant 
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[index].ID);
+			continue;
+		}
+
+
+		if (activateShadow && textures[index].type == shadowMap)
+		{
+			shader.setInt("shadowMap", index);  //hardcoded the name but pour l'instant 
 			glBindTexture(GL_TEXTURE_2D, textures[index].ID);
 			continue;
 		}
 
-		if (textures[index].type == shadowCubeMap)
+		if (activateShadow && textures[index].type == shadowCubeMap)
 		{
-			shader.setInt("cubeShadowMap", textures[index].ID);  //hardcoded the name but pour l'instant 
+			shader.setInt("cubeShadowMap", index);  //hardcoded the name but pour l'instant 
 			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[index].ID);
 			continue;
 		}
 
 		name = ("material." + name + number);
-		shader.setInt(name.c_str(), index + cNUl);
+		shader.setInt(name.c_str(), index);
 
 		glBindTexture(GL_TEXTURE_2D, textures[index].ID);
 	}
 
-	glActiveTexture(GL_TEXTURE0);  //????
+	//glActiveTexture(GL_TEXTURE0);  //????
 
 	 // draw mesh
 	glBindVertexArray(VAO);
@@ -843,12 +841,8 @@ void CubeMap::loadTexture(std::vector<const char*>& pathes)
 	unsigned char* data{};
 	int index{};
 
-	unsigned int textureId{};
-	glGenTextures(1, &textureId);
-	texture.ID = textureId;
+	glGenTextures(1, &texture.ID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture.ID);
-	
-
 	for (auto& const path : pathes)
 	{
 		data = stbi_load(path, &width, &height, &nrChannels, 0);
@@ -1287,6 +1281,14 @@ void Terrain::addShadowMap(int chunkId, Texture shadowMap)
 {
 	chunks[chunkId].shadowMap = shadowMap;
 	chunks[chunkId].drawShadow = true;
+	chunks[chunkId].activateShadowMap = true;
+}
+
+void Terrain::addCubeShadowMap(int chunkId, Texture shadowMap)
+{
+	chunks[chunkId].cubeShadowMap = shadowMap;
+	chunks[chunkId].drawShadow = true;
+	chunks[chunkId].activateCubeShadowMap = true;
 }
 
 void Terrain::addChunk(int targetChunkId, Direction direction, int patchNb, const char* heightMapPath)
@@ -1606,18 +1608,35 @@ void Terrain::addArea(int chunkId,std::vector<Texture> textures, std::array<floa
 
 void Terrain::drawChunk(int chunkId, Shader& shader)
 {
+	int offset{};
 	shader.use();
 
 	//activate heightMap
 	glActiveTexture(GL_TEXTURE0);
 	shader.setInt("heightMap", 0);
 	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].heightMap.ID);
+	++offset;
 
-	//activate shadowMap
-	shader.setInt("activatShadow",chunks[chunkId].drawShadow);
-	glActiveTexture(GL_TEXTURE0+1);
-	shader.setInt("shadowMap", 1);
-	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].shadowMap.ID);
+	if (chunks[chunkId].activateShadowMap)
+	{
+		//activate shadowMap
+		shader.setInt("activatShadow", chunks[chunkId].drawShadow);
+		glActiveTexture(GL_TEXTURE0 + offset);
+		shader.setInt("shadowMap", offset);
+		glBindTexture(GL_TEXTURE_2D, chunks[chunkId].shadowMap.ID);
+		++offset;
+
+	}
+
+	if (chunks[chunkId].activateCubeShadowMap)
+	{
+		//activate CubeshadowMap
+		glActiveTexture(GL_TEXTURE0 + offset);
+		shader.setInt("cubeShadowMap", offset);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, chunks[chunkId].cubeShadowMap.ID);
+		++offset;
+	}
+
 
 	//setModel
 	shader.setMat4("chunkModel",chunks[chunkId].model);
@@ -1640,8 +1659,7 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 		//set and pass texture uniform
 		for (unsigned int textIndex{}; textIndex < area.textures.size() ; textIndex++)
 		{
-
-			glActiveTexture(GL_TEXTURE0 + textIndex+2); //+2 because GL_TEXTURE0 is heightMap and GL_TEXTURE2 is shadowMap
+			glActiveTexture(GL_TEXTURE0 + textIndex+ offset);
 			std::string number;
 			std::string name;
 			TextureMap type{ area.textures[textIndex].type };
@@ -1680,7 +1698,7 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 			}
 
 			name = (areaNr + name + number);
-			shader.setInt(name.c_str(), textIndex+2);
+			shader.setInt(name.c_str(), textIndex+ offset);
 
 			glBindTexture(GL_TEXTURE_2D, area.textures[textIndex].ID);
 		}
@@ -1707,6 +1725,135 @@ void Terrain::draw(Shader& shader)
 {
 	for (int chunkIndex{}; chunkIndex < chunks.size(); ++chunkIndex)
 	{
-		drawChunk(chunkIndex,shader);
+ 		drawChunk(chunkIndex,shader);
 	}
 }
+
+/*--icosahedron CLASS--*/
+Icosahedron::Icosahedron(float radius,glm::vec3 originCoord)
+{
+//construct icosahedron 12 vertices
+
+	//we begin with the top vertex then go down to the next down sector and create the 5 vertex along it then the next one and finally the bottom vertex 
+	std::array<std::array<unsigned int,3>,20> icosahedronindices{};
+
+	float height{};
+	float halfArcTan{ atan(1.0f/2.0f) }; //tan^-1(1/2)
+
+	//topVertex
+	vertices[0] = originCoord + glm::vec3(0.0f,radius,0.0f);
+
+	//first sector at angle with y axis +tan(1/2) 
+	height = radius * sin(halfArcTan);
+
+	for (int verticesIndex{}; verticesIndex<5 ; ++verticesIndex)
+	{
+		vertices[verticesIndex + 1] = glm::vec3(radius*cos(halfArcTan)*cos(72*verticesIndex), height, radius*cos(halfArcTan)*sin(72 * verticesIndex));
+	}
+
+	//second sector at angle with y axis -tan(1/2) starting with indice 6 which is just below indice 2 
+	height = radius * sin(-halfArcTan);
+	vertices[6] = glm::vec3(vertices[2].x,height, vertices[2].z);
+	for (int verticesIndex{}; verticesIndex < 4; ++verticesIndex)
+	{
+		vertices[verticesIndex + 7] = glm::vec3(radius * cos(-halfArcTan) * cos(72 * verticesIndex), height, radius * cos(-halfArcTan) * sin(72 * verticesIndex));
+	}
+
+	//bottomVertex
+	vertices[11] = originCoord + glm::vec3(0.0f, -radius, 0.0f);
+
+	
+//THE INDICES
+	std::array<unsigned int, 3> triangleIndices{}; //the first vertex will serve as the anchoring vertex, to construct all triangles link to it 
+	//so we change choose an anchoring vertex, create indices all triangle he is a part it then change anchoring vertex
+
+	//first anchoring vertex is topVertex (0)
+	triangleIndices[0] = 0;
+
+	for (int faceIndex{}; faceIndex < 5; ++faceIndex)
+	{
+		triangleIndices[1] = faceIndex+1;
+		triangleIndices[2] = faceIndex+2;
+
+		if (faceIndex + 2 == 6)
+			triangleIndices[2] = 1;
+
+		icosahedronindices[faceIndex] = triangleIndices;
+	}
+
+	//then anchoring vertex is vertex 3
+	icosahedronindices[5] = { 3,4,6 };
+	icosahedronindices[6] = { 3,6,7 };
+	icosahedronindices[7] = { 3,7,2 };
+
+	//then anchoring vertex is vertex 2
+	icosahedronindices[8] = { 2,7,8 };
+	icosahedronindices[9] = { 2,8,1 };
+
+	//then anchoring vertex is vertex 1
+	icosahedronindices[10] = { 1,8,9 };
+	icosahedronindices[11] = { 1,5,9 };
+
+	//then anchoring vertex is vertex 5
+	icosahedronindices[12] = { 5,9,10 };
+	icosahedronindices[13] = { 5,4,10 };
+
+	//then anchoring vertex is vertex 4
+	icosahedronindices[14] = { 4,10,6 };
+
+	//lastly anchoring vertex is bottomVertex (11)
+	triangleIndices[0] = 11;
+	for (int faceIndex{}; faceIndex < 5; ++faceIndex)
+	{
+		triangleIndices[1] = faceIndex + 6;
+		triangleIndices[2] = faceIndex + 7;
+
+		if (faceIndex + 7 == 11)
+			triangleIndices[2] = 6;
+
+		icosahedronindices[faceIndex+15] = triangleIndices;
+	}
+
+	//fuse the icosahedronindices into the vector Indices  
+	for (int faceIndex{}; faceIndex < 20; ++faceIndex)
+	{
+		for (int indiceIndex{}; indiceIndex < 3; ++indiceIndex)
+		{
+			indices.push_back( icosahedronindices[faceIndex][indiceIndex] );
+		}
+	}
+
+	setupIcosahedron();
+}
+
+void Icosahedron::setupIcosahedron()
+{
+	//VAO
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	//VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+
+	//EBO
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+	//coord attribute
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	glBindVertexArray(0);
+}
+
+
+void Icosahedron::draw()
+{
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+

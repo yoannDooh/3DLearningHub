@@ -58,15 +58,17 @@ struct terrainVertex
 class Mesh
 {
 public:
-	glm::vec3 tangent;
-	glm::vec3 bitangent;
-	std::vector<Vertex> vertices;
-	std::vector<Texture> textures;
-	std::vector<unsigned int> indices;
-
+	glm::vec3 tangent{};
+	glm::vec3 bitangent{};
+	std::vector<Vertex> vertices{};
+	std::vector<Texture> textures{};
+	std::vector<unsigned int> indices{};
+	bool activateCubeMap{}; //for refraction/reflection
+	bool activateShadow{};
 	Mesh() {}
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, bool cubeMapPresence);
+
 
 	void addTexture(Texture texture);
 	void draw(Shader& shader);
@@ -85,7 +87,6 @@ public:
 protected:
 	// render data
 	unsigned int VAO{}, VBO{}, EBO {};
-	bool isThereCubeMap;
 
 private: 
 	void setupMesh();
@@ -99,7 +100,7 @@ public:
 	void draw(Shader& shader);
 
 	Cube() {}
-	Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures, bool isThereCubeMap);
+	Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures);
 	//generate VAO,VBO and EBO from the provided cote and originCoor
 	//there is 5 attribute, in order : coord(3 floats) -> coolors coord (https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/RGB_color_solid_cube.png/220px-RGB_color_solid_cube.png) (3 floats)
 	//->normal vector (3 float) -> texture coord (2 float) -> the vertex number within the 8 vertices of the cube (1 float) 
@@ -114,7 +115,7 @@ protected:
 class CubeMap : public Cube
 {
 	public:
-		Texture texture;
+		Texture texture{"",cubeMap};
 		std::array<float, 72> vertices;
 
 		CubeMap(std::vector<const char*>& texturesPath);
@@ -177,33 +178,37 @@ public:
 
 	struct Chunk //a chunk = one drawCall
 	{
-		Texture heightMap{};
-		Texture shadowMap{};
-		bool drawShadow{false};
+		Texture heightMap{"",TextureMap::heightmap};
+		Texture shadowMap{ "",TextureMap::shadowMap };
+		Texture cubeShadowMap{ "",TextureMap::shadowCubeMap };
 		glm::mat4 model{ glm::mat4(1.0f) };
-		std::vector<Area> areas{};
-		std::vector<terrainVertex> vertices{};
 		std::array<float, 4> boardingChunkId{ -1,-1,-1 ,-1 }; //id of chunks in order: at north/est/south/west of the chunk object, init at -1 by default
 		int width{};
 		int height{};
 		int startingXpos{}; 
 		int startingZpos{};
 		int id{};	
-		std::vector<unsigned int> indices{};
 		unsigned int VAO{}, VBO{}, EBO{};
+		bool drawShadow{ false };
+		bool activateShadowMap{ false };
+		bool activateCubeShadowMap{ false };
+		std::vector<unsigned int> indices{};
+		std::vector<Area> areas{};
+		std::vector<terrainVertex> vertices{};
 	};
 
 	std::vector<Chunk> chunks{}; //chunk0 is at the center, it's the first chunk constructed with the constructor of Terrain
 	int width{};
 	int height{};
 
-
+	
 
 	Terrain() {};
 	Terrain(int patchNb, const char* heightMapPath); //width and weight correspond to the height map's resolution and patchNb the number of patch along an axis 
 	void addChunk(int targetChunkId, Direction direction, int patchNb, const char* heightMapPath); //targetChunkId is the id of the chunk the new chunk is placed next to, and direction indicate it's place north/est/south/west to the chunk
 	void addArea(int chunkId, std::vector<Texture> textures, std::array<float, 2> xRange, std::array<float, 2> zRange, std::array<float, 2> yRange);
 	void addShadowMap(int chunkId, Texture shadowMap);
+	void addCubeShadowMap(int chunkId, Texture cubeShadowMap);
 
 	void draw(Shader& shader);
 	void drawChunk(int chunkId, Shader& shader);
@@ -212,6 +217,19 @@ private:
 	void loadHeightMap(Chunk& chunk, const char* heightMapPath);
 	void setupChunk(int chunkId);
 
+};
+
+class Icosahedron : public Mesh
+{
+public:
+	std::array<glm::vec3, 12> vertices;
+
+	Icosahedron() {}
+	Icosahedron(float radius,glm::vec3 orginCoord);
+	void draw();
+
+private:
+	void setupIcosahedron();
 };
 
 //function declaration

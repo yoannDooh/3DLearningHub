@@ -94,8 +94,10 @@ layout(std140, binding = 2) uniform directLightBuff
 
 uniform int chunkId;
 uniform int activateNormalMap = 1;
-uniform int activatShadow = 0;
+uniform int activatShadow = 1;
 uniform sampler2D shadowMap;
+uniform samplerCube cubeShadowMap;
+uniform float pointLightFarPlane;
 uniform Area area1;
 uniform int chunkWidth;
 uniform int chunkHeight;
@@ -106,6 +108,7 @@ vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3
 vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
 vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 baseColor,float shadow);
 float calcShadow(vec4 fragPosLightSpace, vec3 normal);
+float calcPointShadow(vec3 fragPos,PointLight light);
 
 void main()
 {
@@ -116,10 +119,17 @@ void main()
     vec3 viewDir = normalize(viewPos - fragPos);
 
     float shadow;
+    float pointShadow;
     if (activatShadow == 1)
-        shadow = calcShadow(FragPosLightSpace, normVec);
+    {
+        //shadow = calcShadow(FragPosLightSpace, normVec);
+        pointShadow = calcPointShadow(fragPos, pointLights[0]);
+    }
+
     else
+    {
         shadow = 0;
+    }
 
     vec3 baseTerrainFragColor = vec3(Height, Height, Height);
 
@@ -145,7 +155,7 @@ void main()
         textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor, shadow);
 
     //FragColor = vec4(textColor, 1.0);
-    FragColor = vec4(shadow,0.0,0.0,1.0);
+    //FragColor = vec4(pointShadow,0.0,0.0,1.0);
 
    
 }
@@ -199,7 +209,7 @@ vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
     vec3 specular = light.specular * spec * area.specularIntensity * light.color;
 
-    return ((1.0-shadow)*(diffuse + specular + ambient ) ); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
+    return ((1.0-shadow)*(diffuse + specular + ambient) ); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
 }
 
 vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
@@ -305,4 +315,22 @@ float calcShadow(vec4 fragPosLightSpace, vec3 normal)
 
     return shadow;
     */
+}
+
+float calcPointShadow(vec3 fragPos,PointLight light)
+{
+    vec3 fragToLightVec = fragPos - light.pos;
+    float closestFragDepth = texture(cubeShadowMap, fragToLightVec).r;
+
+    //map to the range [0,farPlane]
+    closestFragDepth *= pointLightFarPlane;
+
+    float currentFragDepth = length(fragToLightVec);
+
+    float bias = 0.0;
+    float shadow = currentFragDepth - bias > closestFragDepth ? 1.0 : 0.0;
+    
+    FragColor = vec4(vec3(closestFragDepth / pointLightFarPlane), 1.0);
+
+    return shadow;
 }
