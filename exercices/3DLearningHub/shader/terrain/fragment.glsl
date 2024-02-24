@@ -147,12 +147,12 @@ void main()
         normal = normalize(normal * 2.0 - 1.0);
         normal = normalize(TBN * normal);
 
-        textColor = areaFragText(area1, TextCoord, normal, viewDir, fragPos, baseTerrainFragColor,shadow);
+        textColor = areaFragText(area1, TextCoord, normal, viewDir, fragPos, baseTerrainFragColor, -pointShadow);
 
     }
-    
+
     else
-        textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor, shadow);
+        textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor, pointShadow);
 
     //FragColor = vec4(textColor, 1.0);
     //FragColor = vec4(pointShadow,0.0,0.0,1.0);

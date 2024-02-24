@@ -1609,6 +1609,8 @@ void Terrain::addArea(int chunkId,std::vector<Texture> textures, std::array<floa
 
 void Terrain::drawChunk(int chunkId, Shader& shader)
 {
+	glPatchParameteri(GL_PATCH_VERTICES, 4);
+
 	int offset{};
 	shader.use();
 
@@ -1853,11 +1855,13 @@ void Icosahedron::setupIcosahedron()
 	glBindVertexArray(0);
 }
 
-
 void Icosahedron::draw()
 {
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
+
 	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	//glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_PATCHES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
