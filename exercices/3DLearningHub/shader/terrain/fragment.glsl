@@ -94,8 +94,10 @@ layout(std140, binding = 2) uniform directLightBuff
 
 uniform int chunkId;
 uniform int activateNormalMap = 1;
-uniform int activatShadow = 1;
+uniform int activateShadow = 1;
+uniform int activateParallaxMapping=1;
 uniform sampler2D shadowMap;
+uniform float parallaxScale = 0.1;
 uniform samplerCube cubeShadowMap;
 uniform float pointLightFarPlane;
 uniform Area area1;
@@ -103,12 +105,23 @@ uniform int chunkWidth;
 uniform int chunkHeight;
 
 
+vec2 parallaxMapping(Area area, vec2 textCoord, vec3 viewDir);
 vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText, float shadow);
-vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
+vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText, float shadow);
 vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
 vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 baseColor,float shadow);
 float calcShadow(vec4 fragPosLightSpace, vec3 normal);
-float calcPointShadow(vec3 fragPos,PointLight light);
+float calcPointShadow(vec3 fragPos, vec3 viewPos, PointLight light);
+
+vec3 sampleOffsetDirections[20] = vec3[] //for pointShadow pcf
+(
+    vec3(1, 1, 1), vec3(1, -1, 1), vec3(-1, -1, 1), vec3(-1, 1, 1),
+    vec3(1, 1, -1), vec3(1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+    vec3(1, 1, 0), vec3(1, -1, 0), vec3(-1, -1, 0), vec3(-1, 1, 0),
+    vec3(1, 0, 1), vec3(-1, 0, 1), vec3(1, 0, -1), vec3(-1, 0, -1),
+    vec3(0, 1, 1), vec3(0, -1, 1), vec3(0, -1, -1), vec3(0, 1, -1)
+);
+
 
 void main()
 {
@@ -118,12 +131,19 @@ void main()
     vec3 normVec = normalize(vec3(normalVec));
     vec3 viewDir = normalize(viewPos - fragPos);
 
+
+    vec3 tangentFragPos = transpose(mat3(TBN)) * fragPos;
+    vec3 tangentViewPos = transpose(mat3(TBN)) * viewPos;
+
+    vec3 tangentViewDir = normalize(tangentFragPos - tangentViewPos);
+
     float shadow;
     float pointShadow;
-    if (activatShadow == 1)
+
+    if (activateShadow == 1)
     {
         //shadow = calcShadow(FragPosLightSpace, normVec);
-        pointShadow = calcPointShadow(fragPos, pointLights[0]);
+        pointShadow = calcPointShadow(fragPos,viewPos,pointLights[0]);
     }
 
     else
@@ -132,8 +152,17 @@ void main()
     }
 
     vec3 baseTerrainFragColor = vec3(Height, Height, Height);
-
     vec3 textColor;
+
+
+    vec2 textCoord = TextCoord;
+
+    /*
+    if (activateParallaxMapping == 1)
+    {
+        textCoord = parallaxMapping(area1, TextCoord, tangentViewDir);
+    }
+    */
 
     //faudra transfomer les chunks en uniform buffer objects et faire un fonction qui parse tous les chunks pour faire le lightning  
     if (activateNormalMap == 1)
@@ -147,17 +176,19 @@ void main()
         normal = normalize(normal * 2.0 - 1.0);
         normal = normalize(TBN * normal);
 
-        textColor = areaFragText(area1, TextCoord, normal, viewDir, fragPos, baseTerrainFragColor, -pointShadow);
+        textColor = areaFragText(area1, textCoord, normal, viewDir, fragPos, baseTerrainFragColor, pointShadow);
 
+        vec3 normalRgb = normal * 0.5 + 0.5;
+        vec3 normVecRgb = normVec * 0.5 + 0.5;
+        //FragColor = vec4(normalRgb, 1.0);
     }
 
     else
-        textColor = areaFragText(area1, TextCoord, normVec, viewDir, fragPos, baseTerrainFragColor, pointShadow);
+        textColor = areaFragText(area1, textCoord, normVec, viewDir, fragPos, baseTerrainFragColor, pointShadow);
 
-    //FragColor = vec4(textColor, 1.0);
-    //FragColor = vec4(pointShadow,0.0,0.0,1.0);
+    FragColor = vec4(textColor, 1.0);
+    //FragColor = vec4(pointShadow,0.0,0.0,1.0);  
 
-   
 }
 
 vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 baseColor, float shadow)
@@ -186,7 +217,7 @@ vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fra
 
         
         for (int index = 0; index < POINT_LIGHTS_NB; ++index)
-            lightning += calcPointLight(area, pointLights[index], normal, viewDir, fragPos, diffuse);
+            lightning += calcPointLight(area, pointLights[index], normal, viewDir, fragPos, diffuse, shadow);
         
 
         return lightning;
@@ -209,10 +240,10 @@ vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
     vec3 specular = light.specular * spec * area.specularIntensity * light.color;
 
-    return ((1.0-shadow)*(diffuse + specular + ambient) ); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
+    return ((1.0-0.0)*(diffuse + specular + ambient) ); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
 }
 
-vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText)
+vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText, float shadow)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -236,7 +267,7 @@ vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3
     diffuse *= attenuation;
     specular *= attenuation;
 
-    return (ambient + diffuse + specular);
+    return ( ambient + (1.0 - shadow) * (diffuse + specular)); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
 
 }
 
@@ -317,20 +348,49 @@ float calcShadow(vec4 fragPosLightSpace, vec3 normal)
     */
 }
 
-float calcPointShadow(vec3 fragPos,PointLight light)
+float calcPointShadow(vec3 fragPos,vec3 viewPos,PointLight light) 
 {
+
     vec3 fragToLightVec = fragPos - light.pos;
+
     float closestFragDepth = texture(cubeShadowMap, fragToLightVec).r;
+    //FragColor = vec4(vec3(closestFragDepth), 1.0);
 
-    //map to the range [0,farPlane]
-    closestFragDepth *= pointLightFarPlane;
+    if (closestFragDepth == 1.0)
+        return 0.0;
 
-    float currentFragDepth = length(fragToLightVec);
+    if (closestFragDepth < 1.0)
+    {
+        //PCF for pointSHadow 
+        float currentFragDepth = length(fragToLightVec);
+        float shadow = 0.0;
+        float bias = 0.05;
+        int samples = 20;
+        float viewDist = length(viewPos - fragPos);
+        float diskRadius = (1.0 + (viewDist / pointLightFarPlane)) / 25.0;
 
-    float bias = 0.0;
-    float shadow = currentFragDepth - bias > closestFragDepth ? 1.0 : 0.0;
+        for (int sampleIndex = 0; sampleIndex < samples; ++sampleIndex)
+        {
+            closestFragDepth = texture(cubeShadowMap, fragToLightVec + sampleOffsetDirections[sampleIndex] * diskRadius).r;
+
+            closestFragDepth *= pointLightFarPlane; // undo mapping [0;1]
+            if (currentFragDepth - bias > closestFragDepth)
+                shadow += 1.0;
+
+        }
+
+        shadow /= float(samples);
+
+        return shadow;  
+    }
+
+}
+
+vec2 parallaxMapping(Area area, vec2 textCoord, vec3 viewDir)
+{    
+    float height = texture(area.texture_displacement1, textCoord).r;
+
+    vec2 projectedFragment =  viewDir.xy / viewDir.z * (height);
     
-    FragColor = vec4(vec3(closestFragDepth / pointLightFarPlane), 1.0);
-
-    return shadow;
+    return textCoord - projectedFragment;
 }

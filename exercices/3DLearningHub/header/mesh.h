@@ -13,6 +13,7 @@ enum TextureMap
 	normal,
 	roughness,
 	refraction,
+	displacement,
 	heightmap,
 	shadowMap,
 	cubeMap,

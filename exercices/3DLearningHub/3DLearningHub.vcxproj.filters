@@ -54,8 +54,8 @@
     <None Include="shader\sphere\fragment.glsl" />
     <None Include="shader\sphere\TCS.glsl" />
     <None Include="shader\sphere\TES.glsl" />
-    <None Include="shader\jsp\vertex.glsl" />
-    <None Include="shader\jsp\fragment.glsl" />
+    <None Include="shader\passThrough\vertex.glsl" />
+    <None Include="shader\passThrough\fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

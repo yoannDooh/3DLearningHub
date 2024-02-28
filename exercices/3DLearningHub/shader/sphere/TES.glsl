@@ -4,7 +4,8 @@ layout(triangles, equal_spacing) in;
 
 //in vec2 vertexTextCoord[];
 
-out vec3 fragPos;
+out vec3 FragPos;
+out vec3 Normal;
 
 layout(std140, binding = 0) uniform camAndProject
 {
@@ -14,11 +15,12 @@ layout(std140, binding = 0) uniform camAndProject
 };
 
 uniform mat4 model;
+uniform float radius;
 
 vec4 barycentricInterpolation(float u, float v,float w, vec4 data001, vec4 data010, vec4 data100);
 vec4 extrude(vec4 pos);
-
-//vec4 barycentricInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data11, vec4 data01);
+vec3 slerpNormal(vec3 pos);
+int[2] twoSmallestElemIndex(float[6] array);
 
 void main()
 {
@@ -34,8 +36,10 @@ void main()
 
 	pos = extrude(pos);
 
+	Normal = normalize(slerpNormal(pos.xyz));
+
 	gl_Position = projection*view*model * vec4(pos);
-	fragPos = vec3(model * vec4(pos.xyz, 1.0));
+	FragPos = vec3(model * vec4(pos.xyz, 1.0));
 
 	/*
 	if (activateNormalMap == 1)
@@ -61,18 +65,64 @@ vec4 extrude(vec4 pos)
 	return pos;
 }
 
-/*
 vec3 slerpNormal(vec3 pos)
 {
-	vec3 sphereTopNormal = vec3(0.0, 1.0, 0.0);
-	vec3 sphereBottomNormal = vec3(0.0, -1.0, 0.0);
-	
-	float angleTopBottomVertex = 180.0; //in degree
+	vec3 interpolatedNormal;
 
-	float angleWithPos = degrees ( acos((dot(pos, sphereTopNormal))  ) ); //no need to divide by individual length as it 1 because of the radius 
+	vec3 normalsOfReference[6] = { vec3(1.0,0.0,0.0),vec3(0.0,0.0,-1.0),vec3(0.0,1.0,0.0),vec3(-1.0,0.0,0.0),vec3(0.0,0.0,1.0),vec3(0.0,-1.0,0.0) }; //TODO: change the variable name 
 
-	float parameter = (angleWithPos - angleTopBottomVertex) / 360.0;
-	
+	vec3 vertexOfReferencePos[6] = { vec3(radius,0.0,0.0),vec3(0.0,0.0,-radius),vec3(0.0,radius,0.0),vec3(-radius,0.0,0.0),vec3(0.0,0.0,radius),vec3(0.0,-radius,0.0) }; //TODO: change the variable name 
+
+	float angleBetweenSection = 60.0; //in degree //TODO: change the variable name 
+
+	float posAndVertexDist[6]; //LE NOM DE VARIABLE EST TROP MOCHE 
+	for (int index = 0; index < 6; ++index)
+	{
+		posAndVertexDist[index] = length(pos - vertexOfReferencePos[index]);
+	}
+
+	int pointOfControlIndex[2] = twoSmallestElemIndex(posAndVertexDist);
+
+	if (pointOfControlIndex[0] == 5 && pointOfControlIndex[1] == 0)
+	{
+		int temp = pointOfControlIndex[0];
+		pointOfControlIndex[0] = pointOfControlIndex[1];
+		pointOfControlIndex[1] = temp;
+	}
+
+
+	float tParameter = (acos((dot(pos,vertexOfReferencePos[pointOfControlIndex[0]])) / (radius*radius) )) / angleBetweenSection;
+
+	interpolatedNormal = ((sin((1 - tParameter) * angleBetweenSection)) / sin(angleBetweenSection)) * vertexOfReferencePos[pointOfControlIndex[0]]; 
+
+	interpolatedNormal += ((sin(tParameter * angleBetweenSection)) / sin(angleBetweenSection)) * vertexOfReferencePos[pointOfControlIndex[1]];
+
+	return interpolatedNormal;
 }
-*/
+
+int[2] twoSmallestElemIndex(float[6] array)
+{
+	int result[2];
+	int smallestElemIndex = 0;
+
+	for (int index1 = 1; index1 < 6; ++index1)
+	{
+		if (array[index1] < array[smallestElemIndex])
+			smallestElemIndex = index1;
+	}
+	result[0] = smallestElemIndex;
+
+	smallestElemIndex = 0;
+	for (int index1 = 1; index1 < 6; ++index1)
+	{
+		if(index1 == result[0])
+			continue;
+
+		if (array[index1] < array[smallestElemIndex])
+			smallestElemIndex = index1;
+	}
+	result[1] = smallestElemIndex;
+
+	return result;
+}
 

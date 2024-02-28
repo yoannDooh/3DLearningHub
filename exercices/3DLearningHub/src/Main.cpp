@@ -37,7 +37,7 @@ void printLine(int dashNb);
 	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
 	Shader terrainShader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
 	Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
-	Shader jsp(".\\shader\\jsp\\vertex.glsl", ".\\shader\\jsp\\fragment.glsl");
+	Shader passThrough(".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
 	Shader sphere(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
 
 
@@ -86,7 +86,7 @@ void printLine(int dashNb);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_CLAMP);
 
-	glPatchParameteri(GL_PATCH_VERTICES, 4);
+	//glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 	//init Uniforms buffer 
 	genUbo0();
@@ -101,7 +101,8 @@ void printLine(int dashNb);
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(objectShader);
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\cobblestone\\diffuseMap.jpg",".\\rsc\\terrain\\cobblestone\\normalMap.jpg",".\\rsc\\terrain\\cobblestone\\displacementMap.jpg" }, { diffuse,normal,displacement}), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
 	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 
@@ -179,7 +180,6 @@ void printLine(int dashNb);
 			float b{ 1.0f / static_cast<float>(terrain.height) };
 
 			terrainShader.use();
-			terrainShader.set3Float("viewPos", World::camera.pos);
 			terrainShader.setMat4("model", model);
 			terrainShader.setFloat("maxDistLod", 3000);
 
@@ -324,12 +324,13 @@ void printLine(int dashNb);
 		};
 
 	glm::mat4 modele{ glm::mat4(1.0f) };
-	auto drawIcosphere = [&skyboxShader, &modele, &jsp, &icosahedron, &skyBox,&sphere]()
+	auto drawIcosphere = [&skyboxShader, &modele, &passThrough, &icosahedron, &skyBox,&sphere]()
 		{
 			updateViewProject();
 			sphere.use();
-			modele = modele * glm::rotate(glm::mat4(1.0f), glm::radians(-0.5f), glm::vec3(1.0, 0.0f, 0.0f));
+			//modele = modele * glm::rotate(glm::mat4(1.0f), glm::radians(-0.5f), glm::vec3(1.0, 0.0f, 0.0f));
 			sphere.setMat4("model", modele);
+			sphere.setFloat("radius", 1.0f);
 			icosahedron.draw();
 			skyBox.draw(skyboxShader);
 		}; 
@@ -344,8 +345,15 @@ void printLine(int dashNb);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{	
 		newFrame();
-		drawPointShadow();
+
+	/*--------------------*/
+		//drawScene();
+		//drawTerrain();
+	/*--------------------*/
+
 		//drawIcosphere();
+
+		drawPointShadow();
 	
 		swapBuffer();
 	}

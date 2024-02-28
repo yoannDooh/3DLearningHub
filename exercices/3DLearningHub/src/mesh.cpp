@@ -1620,6 +1620,7 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 	glBindTexture(GL_TEXTURE_2D, chunks[chunkId].heightMap.ID);
 	++offset;
 
+	//activate ShadowMap
 	if (chunks[chunkId].activateShadowMap)
 	{
 		//activate shadowMap
@@ -1631,6 +1632,7 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 
 	}
 
+	//activate CubeShadowMap
 	if (chunks[chunkId].activateCubeShadowMap)
 	{
 		//activate CubeshadowMap
@@ -1651,8 +1653,8 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 	shader.setInt("chunkWidth", chunks[chunkId].width);
 	shader.setInt("chunkHeight", chunks[chunkId].height);
 
-	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
-	std::fill_n(texturesCount.begin(), 6, 1);
+	std::array<unsigned int, 7> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
+	std::fill_n(texturesCount.begin(), 7, 1);
 	
 	int areaIndex{};
 	for (auto& const area : chunks[chunkId].areas)
@@ -1698,6 +1700,12 @@ void Terrain::drawChunk(int chunkId, Shader& shader)
 				name = "texture_refraction";
 				number = std::to_string(texturesCount[refraction]++);
 				break;
+
+			case displacement:
+				name = "texture_displacement";
+				number = std::to_string(texturesCount[displacement]++);
+				break;
+
 			}
 
 			name = (areaNr + name + number);
@@ -1864,4 +1872,3 @@ void Icosahedron::draw()
 	glDrawElements(GL_PATCHES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
-

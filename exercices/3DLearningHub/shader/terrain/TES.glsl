@@ -169,16 +169,16 @@ mat3 tbnMat(float u, float v, Area area, vec3 normal, vec3 pos, mat3 model)
 
 	tangent = normalize(model * tangent);
 	normal = normalize(model * normal);
-	bitangent = normalize(model * bitangent);
+	//bitangent = normalize(model * bitangent);
 	tangent = normalize(tangent - dot(tangent, normal) * normal);
-	//bitangent = normalize(cross(normal, tangent));
+	bitangent = normalize(cross(normal, tangent));
 	
 	
-	return mat3(tangent, normal, -bitangent);
+	return mat3(tangent, normal, bitangent);
 }
 
 float heightCurve(float height)
 {
 	//return ( (height* 20)*(height * 20));
 	return (height);
-}
+} 

@@ -45,8 +45,8 @@ namespace World
 		{
 		rgb(226, 239, 245), //color
 		{ -0.545f, 0.629f, -0.552f },//direction
-		{ 0.7f, 0.7f, 0.7f,	 },	//ambient
-		{ 0.6f, 0.6f, 0.6f,	 },	//diffuse
+		{ 0.8f, 0.8f, 0.8f,	 },	//ambient
+		{ 0.8f, 0.8f, 0.8f,	 },	//diffuse
 		{ 1.0f,	 1.0f,  1.0f }, //specular 
 		}
 	};
@@ -474,7 +474,7 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 
 	for (auto& const lightCube : World::lightCubesObject)
 	{ 
-		orbitMat = orbit(lightCube, 8.0f, 8.0f, 5);
+		orbitMat = orbit(lightCube, 30.0f, 30.0f, 6);
 		
 		//update light pos
 		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));

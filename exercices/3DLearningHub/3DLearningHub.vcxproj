@@ -169,8 +169,8 @@
     <None Include="shader\house\fragment.glsl" />
     <None Include="shader\house\geometry.glsl" />
     <None Include="shader\house\vertex.glsl" />
-    <None Include="shader\jsp\fragment.glsl" />
-    <None Include="shader\jsp\vertex.glsl" />
+    <None Include="shader\passThrough\fragment.glsl" />
+    <None Include="shader\passThrough\vertex.glsl" />
     <None Include="shader\objectDirectShadow\fragment.glsl" />
     <None Include="shader\objectDirectShadow\vertex.glsl" />
     <None Include="shader\objectPointShadow\fragment.glsl" />

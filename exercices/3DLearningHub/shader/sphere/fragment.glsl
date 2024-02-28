@@ -1,10 +1,7 @@
 ﻿#version 460 core
 
-in vec4 normalVec;
-in vec3 fragPos;
-in vec4 pos0;
-in vec4 pos1;
-in vec4 pos2;
+in vec3 Normal;
+in vec3 FragPos;
 
 
 out vec4 FragColor;
@@ -79,9 +76,11 @@ void main()
     vec3 viewPos = viewPosition.xyz;
 
     //direction vectors and normal vector
-    vec3 normVec = normalize(vec3(normalVec));
-    vec3 viewDir = normalize(viewPos - fragPos);
+    vec3 viewDir = normalize(viewPos - FragPos);
 
-    FragColor = vec4(1.0,0.0, 0.0,1.0);
+    //FragColor = vec4(1.0,0.0, 0.0,1.0);
+
+    vec3 normalRgb = Normal * 0.5 + 0.5;
+    FragColor = vec4(normalRgb, 1.0);
 
 }
