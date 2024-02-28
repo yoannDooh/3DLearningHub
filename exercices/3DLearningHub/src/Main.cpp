@@ -102,7 +102,7 @@ void printLine(int dashNb);
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(objectShader);
 	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\cobblestone\\diffuseMap.jpg",".\\rsc\\terrain\\cobblestone\\normalMap.jpg",".\\rsc\\terrain\\cobblestone\\displacementMap.jpg" }, { diffuse,normal,displacement}), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" }, { diffuse,normal,displacement}), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
 	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 
@@ -204,7 +204,7 @@ void printLine(int dashNb);
 
 	ShadowBuffer depthMap;
 	depthMap.genDepthMapBuff();
-	depthMap.genDepthMapLightSpaceMat(10000.0f, glm::vec3(-2532.0f, 7877.0f, -2065.0f), glm::vec3(0.0f));
+	depthMap.genDepthMapLightSpaceMat(1000.0f, glm::vec3(-2532.0f, 7877.0f, -2065.0f), glm::vec3(0.0f));
 
 	ShadowBuffer cubeDepthMap;
 	cubeDepthMap.genCubeMapBuff();
@@ -257,7 +257,6 @@ void printLine(int dashNb);
 
 			setLighting();
 
-			//animateLightsCube(lightSourcesShader, lightCube);
 			cubeDepthMap.genCubeMapLightSpaceMat(25.0f, World::lightPoints[0].pos);
 
 			//setup viewPort size dans fbo
@@ -347,13 +346,13 @@ void printLine(int dashNb);
 		newFrame();
 
 	/*--------------------*/
-		//drawScene();
-		//drawTerrain();
+		drawScene();
+		drawTerrain();
 	/*--------------------*/
 
 		//drawIcosphere();
 
-		drawPointShadow();
+		//drawPointShadow();
 	
 		swapBuffer();
 	}

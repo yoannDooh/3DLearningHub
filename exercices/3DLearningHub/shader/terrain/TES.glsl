@@ -31,7 +31,7 @@ uniform int chunkId;
 uniform int chunkWidth; 
 uniform int chunkHeight;
 uniform Area area1;
-uniform int activateNormalMap = 1;
+uniform int activateNormalMap = 0;
 
 uniform mat4 model;
 uniform mat4 lightSpaceMat;

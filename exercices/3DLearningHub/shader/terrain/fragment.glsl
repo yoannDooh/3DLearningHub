@@ -93,9 +93,9 @@ layout(std140, binding = 2) uniform directLightBuff
 };
 
 uniform int chunkId;
-uniform int activateNormalMap = 1;
-uniform int activateShadow = 1;
-uniform int activateParallaxMapping=1;
+uniform int activateNormalMap = 0;
+uniform int activateShadow = 0;
+uniform int activateParallaxMapping = 1;
 uniform sampler2D shadowMap;
 uniform float parallaxScale = 0.1;
 uniform samplerCube cubeShadowMap;
@@ -106,11 +106,11 @@ uniform int chunkHeight;
 
 
 vec2 parallaxMapping(Area area, vec2 textCoord, vec3 viewDir);
-vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText, float shadow);
-vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText, float shadow);
+vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText, float directShadow);
+vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText, float pointShadow);
 vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText);
 vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 baseColor,float shadow);
-float calcShadow(vec4 fragPosLightSpace, vec3 normal);
+float calcDirectShadow(vec4 fragPosLightSpace, vec3 normal);
 float calcPointShadow(vec3 fragPos, vec3 viewPos, PointLight light);
 
 vec3 sampleOffsetDirections[20] = vec3[] //for pointShadow pcf
@@ -137,18 +137,19 @@ void main()
 
     vec3 tangentViewDir = normalize(tangentFragPos - tangentViewPos);
 
-    float shadow;
+    float directShadow;
     float pointShadow;
 
     if (activateShadow == 1)
     {
-        //shadow = calcShadow(FragPosLightSpace, normVec);
+        //shadow = calcDirectShadow(FragPosLightSpace, normVec);
         pointShadow = calcPointShadow(fragPos,viewPos,pointLights[0]);
     }
 
     else
     {
-        shadow = 0;
+        directShadow = 0.0;
+        pointShadow = 0.0;
     }
 
     vec3 baseTerrainFragColor = vec3(Height, Height, Height);
@@ -157,12 +158,11 @@ void main()
 
     vec2 textCoord = TextCoord;
 
-    /*
+    
     if (activateParallaxMapping == 1)
     {
-        textCoord = parallaxMapping(area1, TextCoord, tangentViewDir);
+        textCoord = parallaxMapping(area1, TextCoord, viewDir);
     }
-    */
 
     //faudra transfomer les chunks en uniform buffer objects et faire un fonction qui parse tous les chunks pour faire le lightning  
     if (activateNormalMap == 1)
@@ -186,7 +186,9 @@ void main()
     else
         textColor = areaFragText(area1, textCoord, normVec, viewDir, fragPos, baseTerrainFragColor, pointShadow);
 
-    FragColor = vec4(textColor, 1.0);
+
+    FragColor = vec4(texture(area1.texture_diffuse1, textCoord).rgb,1.0);
+    //FragColor = vec4(textColor, 1.0);
     //FragColor = vec4(pointShadow,0.0,0.0,1.0);  
 
 }
@@ -223,10 +225,30 @@ vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fra
         return lightning;
     }
 
+    else
+    {
+        //transform area Coord from patch range to it's own [0,1] range tjr mal expliqu� mais l� c'est vraiment �a
+        vec2 uv;
+
+        uv.x = (fragPos.x - area.xRange[0]) / (area.xRange[1] - area.xRange[0]);
+        uv.y = (fragPos.z - area.zRange[0]) / (area.zRange[1] - area.zRange[0]);
+
+        vec3 diffuse = texture(area.texture_diffuse1, uv).rgb;
+
+        vec3 lightning = calcDirLight(area, sunLight, normal, viewDir, diffuse, shadow);
+
+
+        for (int index = 0; index < POINT_LIGHTS_NB; ++index)
+            lightning += calcPointLight(area, pointLights[index], normal, viewDir, fragPos, diffuse, shadow);
+
+
+        return lightning;
+    }
+
     return baseColor;
 }
 
-vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText,float shadow)
+vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 diffuseText,float directShadow)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(lightDir, normal), 0.0); 
@@ -240,10 +262,10 @@ vec3 calcDirLight(Area area, DirectLight light, vec3 normal, vec3 viewDir, vec3 
     vec3 diffuse = light.diffuse * diff * diffuseText * light.color;
     vec3 specular = light.specular * spec * area.specularIntensity * light.color;
 
-    return ((1.0-0.0)*(diffuse + specular + ambient) ); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
+    return (ambient+(1.0- directShadow)*(diffuse + specular ) ); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
 }
 
-vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText, float shadow)
+vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 diffuseText, float pointShadow)
 {
     vec3 lightDir = normalize(light.pos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -267,7 +289,7 @@ vec3 calcPointLight(Area area, PointLight light, vec3 normal, vec3 viewDir, vec3
     diffuse *= attenuation;
     specular *= attenuation;
 
-    return ( ambient + (1.0 - shadow) * (diffuse + specular)); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
+    return ( ambient + (1.0 - pointShadow) * (diffuse + specular)); //je sais pas pourquoi mais en depend de l'angle on voit pas l'ombre donc je met ambient dans la parenthese aussi
 
 }
 
@@ -301,7 +323,7 @@ vec3 calcSpotLight(Area area, SpotLight light, vec3 normal, vec3 viewDir, vec3 f
 
 }
 
-float calcShadow(vec4 fragPosLightSpace, vec3 normal)
+float calcDirectShadow(vec4 fragPosLightSpace, vec3 normal)
 {
     float shadow = 0.0;
 
@@ -388,9 +410,10 @@ float calcPointShadow(vec3 fragPos,vec3 viewPos,PointLight light)
 
 vec2 parallaxMapping(Area area, vec2 textCoord, vec3 viewDir)
 {    
-    float height = texture(area.texture_displacement1, textCoord).r;
+    float height =  texture(area.texture_displacement1, textCoord).r;
 
-    vec2 projectedFragment =  viewDir.xy / viewDir.z * (height);
+    vec2 projectedFragment =  viewDir.xy * (height* parallaxScale);
     
+
     return textCoord - projectedFragment;
 }
