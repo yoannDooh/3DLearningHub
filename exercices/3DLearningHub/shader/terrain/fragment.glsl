@@ -93,9 +93,9 @@ layout(std140, binding = 2) uniform directLightBuff
 };
 
 uniform int chunkId;
-uniform int activateNormalMap = 0;
-uniform int activateShadow = 0;
-uniform int activateParallaxMapping = 1;
+uniform int activateNormalMap = 1;
+uniform int activateShadow = 1;
+uniform int activateParallaxMapping = 0;
 uniform sampler2D shadowMap;
 uniform float parallaxScale = 0.1;
 uniform samplerCube cubeShadowMap;
@@ -132,8 +132,8 @@ void main()
     vec3 viewDir = normalize(viewPos - fragPos);
 
 
-    vec3 tangentFragPos = transpose(mat3(TBN)) * fragPos;
-    vec3 tangentViewPos = transpose(mat3(TBN)) * viewPos;
+    vec3 tangentFragPos = TBN * fragPos;
+    vec3 tangentViewPos = TBN * viewPos;
 
     vec3 tangentViewDir = normalize(tangentFragPos - tangentViewPos);
 
@@ -187,10 +187,8 @@ void main()
         textColor = areaFragText(area1, textCoord, normVec, viewDir, fragPos, baseTerrainFragColor, pointShadow);
 
 
-    FragColor = vec4(texture(area1.texture_diffuse1, textCoord).rgb,1.0);
-    //FragColor = vec4(textColor, 1.0);
-    //FragColor = vec4(pointShadow,0.0,0.0,1.0);  
-
+    //FragColor = vec4(texture(area1.texture_diffuse1, textCoord).rgb,1.0);
+    FragColor = vec4(textColor, 1.0); 
 }
 
 vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fragPos, vec3 baseColor, float shadow)
@@ -225,6 +223,7 @@ vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fra
         return lightning;
     }
 
+    /*
     else
     {
         //transform area Coord from patch range to it's own [0,1] range tjr mal expliqu� mais l� c'est vraiment �a
@@ -244,6 +243,7 @@ vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fra
 
         return lightning;
     }
+    */
 
     return baseColor;
 }
@@ -410,10 +410,7 @@ float calcPointShadow(vec3 fragPos,vec3 viewPos,PointLight light)
 
 vec2 parallaxMapping(Area area, vec2 textCoord, vec3 viewDir)
 {    
-    float height =  texture(area.texture_displacement1, textCoord).r;
+    float height = texture(area.texture_displacement1, textCoord).r;
 
-    vec2 projectedFragment =  viewDir.xy * (height* parallaxScale);
-    
-
-    return textCoord - projectedFragment;
+    return textCoord - viewDir.xy * (height * parallaxScale);
 }

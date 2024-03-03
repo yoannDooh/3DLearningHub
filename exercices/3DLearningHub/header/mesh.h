@@ -98,7 +98,6 @@ class Cube : public Mesh
 public:
 	std::array<float,288> vertices;
 	std::array<unsigned int,36> indices;
-	void draw(Shader& shader);
 
 	Cube() {}
 	Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures);
@@ -107,7 +106,8 @@ public:
 	//->normal vector (3 float) -> texture coord (2 float) -> the vertex number within the 8 vertices of the cube (1 float) 
 	//originCoord is bottomFace topLeft vertex 
 
-	Cube(unsigned int vbo, unsigned int ebo); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
+	Cube(float cote, std::array<float, 3>& originCoord);
+	Cube(unsigned int vbo, unsigned int ebo,unsigned int indiceNb); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
 	
 protected:
 	void setupCube();

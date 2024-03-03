@@ -19,9 +19,10 @@ std::vector<float>circleCenter{
 
 void printVec3(std::string_view objectName, glm::vec3 object);
 void printLine(int dashNb);
+void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject);
 
  int main()
- {
+  {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
@@ -61,7 +62,7 @@ void printLine(int dashNb);
 	woodCube.activateCubeMap = true;
 	woodCube.activateShadow = true;
 
-	Cube lightCube(woodCube.getVbo(), woodCube.getEbo());
+	Cube lightCube( woodCube.getVbo(), woodCube.getEbo(),36 );
 	CubeMap skyBox (skyBoxTextPaths);
 
 	woodCube.addTexture(skyBox.texture);
@@ -69,10 +70,11 @@ void printLine(int dashNb);
 	Terrain terrain(2,".\\rsc\\terrain\\heightMaps\\drole.png");
 	Icosahedron icosahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
 
+	std::array<Object, 2> lightCubesObject{};
+
 	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
 	Square quad(2.0, origin);
-
 
 	//quad for geometry Shader 
 	Points quadPoints(points);
@@ -85,8 +87,6 @@ void printLine(int dashNb);
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_CLAMP);
-
-	//glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 	//init Uniforms buffer 
 	genUbo0();
@@ -101,11 +101,12 @@ void printLine(int dashNb);
 	//set models
 	setLightCubes(lightSourcesShader, cubeEdge);
 	setWoodCube(objectShader);
+	//createAndSetLightCube(lightSourcesShader,lightCubesObject);
+
 	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
 	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" }, { diffuse,normal,displacement}), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
 	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
-
 
 	FrameBuffer fbo(true, true);
 
@@ -139,12 +140,23 @@ void printLine(int dashNb);
 			circle.draw();
 		};
 
-	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader]()
+	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject]()
 		{
 			//DrawScene
 			setLighting();
 			updateViewProject();
+
 			animateLightsCube(lightSourcesShader, lightCube);
+			/*
+			for (auto& lightCubeObj : lightCubesObject)
+			{
+				World::objects[lightCubeObj.worldObjId].enableTranslation = false;
+				World::objects[lightCubeObj.worldObjId].enableRotation = false;
+				World::objects[lightCubeObj.worldObjId].enableScale = false;
+
+				World::objects[lightCubeObj.worldObjId].animate(lightCube, lightSourcesShader,glm::vec3(0.0, 0.0, 0.0f),glm::vec3(0.0, 0.0, 0.0f), 0.0f,glm::vec3(0.0,0.0,0.0f) );
+			}
+			*/
 			animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
 
 			//DRAW IN LAST
@@ -346,13 +358,13 @@ void printLine(int dashNb);
 		newFrame();
 
 	/*--------------------*/
-		drawScene();
-		drawTerrain();
+		//drawScene();
+		//drawTerrain();
 	/*--------------------*/
 
 		//drawIcosphere();
 
-		//drawPointShadow();
+		drawPointShadow();
 	
 		swapBuffer();
 	}
@@ -376,5 +388,40 @@ void printLine(int dashNb)
 	for (int count{};count<= dashNb; ++count)
 	{
 		std::cout << '-';
+	}
+}
+
+void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject)
+{
+	//create and set lightCube Object
+
+	for (int lightCubeIndex{}; lightCubeIndex < 2; ++lightCubeIndex)
+	{
+
+		glm::vec3 color{};
+		if (lightCubeIndex == 0)
+			 color =  rgb(4, 217, 255) ;
+
+		if (lightCubeIndex == 1)
+			 color = rgb(242, 0, 0) ;
+
+		lightCubesObject[lightCubeIndex].setLightPoint(color,glm::vec3(0.05f, 0.05f, 0.05f),glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(1.0f, 1.0f, 1.0f),1.0f,0.0014f,0.000007f);
+		lightCubesObject[lightCubeIndex].isOrbiting = true;
+
+		lightCubesObject[lightCubeIndex].addToWorldObjects();
+	}
+
+	int index{};
+	for (auto& lightCube : lightCubesObject)
+	{
+		World::objects[lightCube.worldObjId].rotatePlane((index + 1) * 60); //first is 60° and second 120°
+
+		World::objects[lightCube.worldObjId].enableTranslation = false;
+		World::objects[lightCube.worldObjId].enableRotation = false;
+
+		World::objects[lightCube.worldObjId].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f) );
+
+
+		++index;
 	}
 }

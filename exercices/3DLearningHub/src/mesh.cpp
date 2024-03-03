@@ -120,7 +120,7 @@ void Mesh::draw(Shader& shader)
 {
 	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
 	std::fill_n(texturesCount.begin(), 6, 1);
-	
+
 	for (unsigned int index = 0; index < textures.size(); index++)
 	{
 		glActiveTexture(GL_TEXTURE0 + index);
@@ -131,43 +131,65 @@ void Mesh::draw(Shader& shader)
 		switch (type)
 		{
 		case diffuse:
-			name = "diffuse";
+			name = "texture_diffuse";
 			number = std::to_string(texturesCount[diffuse]++);
 			break;
 
 		case specular:
-			name = "specular";
+			name = "texture_specular";
 			number = std::to_string(texturesCount[specular]++);
 			break;
 
 		case emission:
-			name = "emission";
+			name = "texture_emission";
 			number = std::to_string(texturesCount[emission]++);
 			break;
 
 		case normal:
-			name = "normal";
+			name = "texture_normal";
 			number = std::to_string(texturesCount[normal]++);
 			break;
 
 		case roughness:
-			name = "roughness";
+			name = "texture_roughness";
 			number = std::to_string(texturesCount[roughness]++);
 			break;
 
 		case refraction:
-			name = "refraction";
+			name = "texture_refraction";
 			number = std::to_string(texturesCount[refraction]++);
 			break;
 		}
 
+		if (activateCubeMap && textures[index].type == cubeMap)
+		{
+			shader.setInt("skyBox", index); //hardcoded the name but pour l'instant 
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[index].ID);
+			continue;
+		}
+
+
+		if (activateShadow && textures[index].type == shadowMap)
+		{
+			shader.setInt("shadowMap", index);  //hardcoded the name but pour l'instant 
+			glBindTexture(GL_TEXTURE_2D, textures[index].ID);
+			continue;
+		}
+
+		if (activateShadow && textures[index].type == shadowCubeMap)
+		{
+			shader.setInt("cubeShadowMap", index);  //hardcoded the name but pour l'instant 
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[index].ID);
+			continue;
+		}
+
 		name = ("material." + name + number);
-		shader.setFloat(name.c_str(), index);
+		shader.setInt(name.c_str(), index);
 
 		glBindTexture(GL_TEXTURE_2D, textures[index].ID);
 	}
 
-	//glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);  //????
 
 	 // draw mesh
 	glBindVertexArray(VAO);
@@ -338,7 +360,7 @@ Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> t
 	auto assignValue = [this, &cubeVertices, &verticeIndex](int cubeVerticesIndex, int faceVertex, int faceNr)
 		{
 			//facePoint point on the face is : 0=topLeft; 1=bottomLeft; 2=bottomRight 3=topRight
-
+			Vertex vertex{};
 
 			// assign coord
 			if (verticeIndex == 0)
@@ -349,10 +371,22 @@ Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> t
 			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[1];
 			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[2];
 
+			if (verticeIndex == 0)
+				vertex.coord[0] = cubeVertices[cubeVerticesIndex].coord[0];
+			else
+				vertex.coord[0] = cubeVertices[cubeVerticesIndex].coord[0];
+
+			vertex.coord[1] = cubeVertices[cubeVerticesIndex].coord[1];
+			vertex.coord[2] = cubeVertices[cubeVerticesIndex].coord[2];
+
 			// assign coolors coord
 			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coolors[0];
 			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coolors[1];
 			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coolors[2];
+
+			vertex.coolors[0] = cubeVertices[cubeVerticesIndex].coolors[0]; 
+			vertex.coolors[1] = cubeVertices[cubeVerticesIndex].coolors[1]; 
+			vertex.coolors[2] = cubeVertices[cubeVerticesIndex].coolors[2];
 
 			//assign normal coord
 			switch (faceNr)
@@ -361,36 +395,62 @@ Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> t
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = -1.0f;
 				vertices[++verticeIndex] = 0.0f;
+
+
+				vertex.normal[0] = 0.0f;
+				vertex.normal[1] = -1.0f;
+				vertex.normal[2] = 0.0f;
 				break;
 
 			case 1: //topFace 
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 1.0f;
 				vertices[++verticeIndex] = 0.0f;
+
+				vertex.normal[0] = 0.0f;
+				vertex.normal[1] = 1.0f;
+				vertex.normal[2] = 0.0f;
 				break;
 
 			case 2: //frontface
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 1.0f;
+
+				vertex.normal[0] = 0.0f;
+				vertex.normal[1] = 0.0f;
+				vertex.normal[2] = 1.0f;
+				
 				break;
 
 			case 3: //backface
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = -1.0f;
+
+				vertex.normal[0] = 0.0f;
+				vertex.normal[1] = 0.0f;
+				vertex.normal[2] = -1.0f;
 				break;
 
 			case 4: //leftface
 				vertices[++verticeIndex] = -1.0f;
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 0.0f;
+
+				vertex.normal[0] = -1.0f;
+				vertex.normal[1] = 0.0f;
+				vertex.normal[2] = 0.0f;
 				break;
 
 			case 5: //rightface
 				vertices[++verticeIndex] = 1.0f;
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 0.0f;
+
+				vertex.normal[0] = 1.0f;
+				vertex.normal[1] = 0.0f;
+				vertex.normal[2] = 0.0f;
 				break;
 			}
 
@@ -400,28 +460,45 @@ Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> t
 			case 0:
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 1.0f;
+
+				vertex.textCoord[0] = 0.0f;
+				vertex.textCoord[1] = 1.0f;
+				
 				break;
 
 			case 1:
 				vertices[++verticeIndex] = 0.0f;
 				vertices[++verticeIndex] = 0.0f;
+
+				vertex.textCoord[0] = 0.0f;
+				vertex.textCoord[1] = 0.0f;
 				break;
 
 			case 2:
 				vertices[++verticeIndex] = 1.0f;
 				vertices[++verticeIndex] = 0.0f;
+
+				vertex.textCoord[0] = 1.0f;
+				vertex.textCoord[1] = 0.0f;
 				break;
 
 			case 3:
 				vertices[++verticeIndex] = 1.0f;
 				vertices[++verticeIndex] = 1.0f;
-				break;
 
+				vertex.textCoord[0] = 1.0f;
+				vertex.textCoord[1] = 1.0f;
+				break;
 			}
 
 
 			//assign cubeVertex number 
 			vertices[++verticeIndex] = cubeVerticesIndex;
+
+			vertex.vertexNb = cubeVerticesIndex;
+
+
+			Mesh::vertices.push_back(vertex);
 		};
 
 	for (int faceindex{}; faceindex < 6; ++faceindex)
@@ -479,16 +556,28 @@ Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> t
 		for (int count{}; count < 3; ++count) //first triangle indices
 		{
 			if (count == 2)
+			{
 				indices[indicesIndex] = (currentFace * 4) + count + 1;
+
+				Mesh::indices.push_back( (currentFace * 4) + count + 1);
+			}
+			
 			else
+			{
 				indices[indicesIndex] = (currentFace * 4) + count;
 
+				Mesh::indices.push_back( (currentFace * 4) + count);
+			}
+				
 			++indicesIndex;
 		}
 
 		for (int count{ (currentFace * 4) + 1 }; count <= currentFace * 4 + 3; ++count) //first triangle indices
 		{
 			indices[indicesIndex] = count;
+
+			Mesh::indices.push_back(count);
+
 			++indicesIndex;
 		}
 
@@ -508,7 +597,7 @@ Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> t
 	setupCube();
 }
 
-Cube::Cube(unsigned int vbo, unsigned int ebo)
+Cube::Cube(unsigned int vbo, unsigned int ebo, unsigned int indiceNb)
 {
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -524,87 +613,8 @@ Cube::Cube(unsigned int vbo, unsigned int ebo)
 	glVertexAttribPointer(1, 1, GL_INT, GL_FALSE, 12 * sizeof(float), (void*)(11 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	glBindVertexArray(0);
-}
+	Mesh::indices.resize(indiceNb);
 
-void Cube::draw(Shader& shader)
-{
-	std::array<unsigned int, 6> texturesCount{ }; //how many of each type texture there is, the count for each texture is in the same order they are defined in the 
-	std::fill_n(texturesCount.begin(), 6, 1);
-
-	for (unsigned int index = 0; index < textures.size(); index++)
-	{
-		glActiveTexture(GL_TEXTURE0 + index);
-		std::string number;
-		std::string name;
-		TextureMap type = textures[index].type;
-
-		switch (type)
-		{
-		case diffuse:
-			name = "texture_diffuse";
-			number = std::to_string(texturesCount[diffuse]++);
-			break;
-
-		case specular:
-			name = "texture_specular";
-			number = std::to_string(texturesCount[specular]++);
-			break;
-
-		case emission:
-			name = "texture_emission";
-			number = std::to_string(texturesCount[emission]++);
-			break;
-
-		case normal:
-			name = "texture_normal";
-			number = std::to_string(texturesCount[normal]++);
-			break;
-
-		case roughness:
-			name = "texture_roughness";
-			number = std::to_string(texturesCount[roughness]++);
-			break;
-
-		case refraction:
-			name = "texture_refraction";
-			number = std::to_string(texturesCount[refraction]++);
-			break;
-		}
-
-		if (activateCubeMap && textures[index].type == cubeMap)
-		{
-			shader.setInt("skyBox", index); //hardcoded the name but pour l'instant 
-			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[index].ID);
-			continue;
-		}
-
-
-		if (activateShadow && textures[index].type == shadowMap)
-		{
-			shader.setInt("shadowMap", index);  //hardcoded the name but pour l'instant 
-			glBindTexture(GL_TEXTURE_2D, textures[index].ID);
-			continue;
-		}
-
-		if (activateShadow && textures[index].type == shadowCubeMap)
-		{
-			shader.setInt("cubeShadowMap", index);  //hardcoded the name but pour l'instant 
-			glBindTexture(GL_TEXTURE_CUBE_MAP, textures[index].ID);
-			continue;
-		}
-
-		name = ("material." + name + number);
-		shader.setInt(name.c_str(), index);
-
-		glBindTexture(GL_TEXTURE_2D, textures[index].ID);
-	}
-
-	//glActiveTexture(GL_TEXTURE0);  //????
-
-	 // draw mesh
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
@@ -617,12 +627,12 @@ void Cube::setupCube()
 	//VBO
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, Mesh::vertices.size() * sizeof(Vertex), &Mesh::vertices[0], GL_STATIC_DRAW);
 
 	//EBO
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, Mesh::indices.size() * sizeof(unsigned int), &Mesh::indices[0], GL_STATIC_DRAW);
 
 	//coord attribute
 	glEnableVertexAttribArray(0);

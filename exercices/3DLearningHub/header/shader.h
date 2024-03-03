@@ -18,6 +18,7 @@ class Shader
 	Shader(const char* vertexPath, const char* fragmentPath);
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
 	Shader(const char* vertexPath, const char* fragmentPath, const char* tessellationControl, const char* tessellationEvaluation);
+	Shader(){}
 
 	// the program ID
 	unsigned int ID{};

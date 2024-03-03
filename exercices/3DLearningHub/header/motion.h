@@ -146,18 +146,87 @@ class Object
 		glm::mat4 model{ glm::mat4(1.0f) };
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
 		glm::vec3 pos{}; //in world unit
+		glm::vec3 basePos{}; //in world unit
+
 		Light::lightPoint *lightPointPtr { nullptr };
 		Light::SpotLight *spotLightPtr{ nullptr };
+		float materialShininess;
 
-		bool outLine{ false };
+
+		bool enableTranslation { true };
+		bool enableRotation { true };
+		bool enableScale { true };
+		bool isGlowing{ false };
+		bool isOutLined{ false };
+		bool isOrbiting{ false };
+
+		int worldObjId {-1}; //id of the element inside the World::Objects vector
+		int worldLighPointId {-1}; //id of the element inside the World::lightPoint vector
+		int worldSpotLightId {-1}; //id of the element inside the World::SpotLight vector
 
 		Object(){}
 		Object(glm::vec3 pos);
+		Object(glm::vec3 pos,float materialShininess);
 
 		void move(glm::vec3 vector);
 		void rotate(float rad,glm::vec3 rotateAxis);
 		void scale(glm::vec3 scaleVec);
+		void rotatePlane(float degree);
 		void updateLightPoint(glm::vec3 newValue,int memberIndex); //memberIndex : 0 for color ... 4 for specular 
+
+		void set(Shader& shader,glm::vec3 translationVec, glm::vec3 rotationAxis,float rotationDegree, glm::vec3 scaleVec);//call once, before the renderLoop
+
+		void animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec); //call every frame, inside the renderLoop
+
+		void setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse, glm::vec3 specular, float constant, float linearCoef, float squareCoef);
+
+		void setOuline(Shader& shaderOutline, glm::vec3 outlineColor,float outlineWeight)
+		{
+			Object::shaderOutline = shaderOutline;
+			Object::outlineColor = outlineColor;
+			Object::outlineWeight = outlineWeight;
+		}
+
+		void setGlow(glm::vec3 glowColor,float glowStrenghtMax, float glowDuration)
+		{
+			Object::glowColor = glowColor;
+			Object::glowStrenghtMax = glowStrenghtMax;
+			Object::glowDuration = glowDuration;
+		}	
+
+		void setOrbit(float distFromCenter,float orbitHorizontalAxis, float orbitVerticalAxis,float orbitDuration)
+		{
+			Object::distFromCenter = distFromCenter;
+			Object::orbitHorizontalAxis = orbitHorizontalAxis;
+			Object::orbitVerticalAxis = orbitVerticalAxis;
+			Object::orbitDuration = orbitDuration;
+		}
+
+		void addToWorldObjects();
+
+		Shader shaderOutline{};
+
+
+private :
+	//outline parameters
+	glm::vec3 outlineColor{};
+	float outlineWeight{};
+
+
+	//glow functions and variables
+	float glow();
+	glm::vec3 glowColor{};
+	float glowStrenghtMax{};
+	float glowDuration{}; //Duration to reach max value of glow before returning to 0 
+
+	//orbit animation
+	glm::mat4 orbite();
+	float distFromCenter{}; //distance from the center of objects to its vertices 
+	float orbitHorizontalAxis{};
+	float orbitVerticalAxis{};
+	float orbitDuration{};
+
+	
 };
 
 namespace Mouse
@@ -204,8 +273,6 @@ namespace World
 	extern std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights;
 
 	extern Object woodCube;
-	extern std::array<Light::lightPoint, POINT_LIGHTS_NB> lightCube;
-	extern std::array<Object, POINT_LIGHTS_NB> lightCubesObject;
 
 	extern int mapWidth;
 	extern int mapHeight;
@@ -231,7 +298,7 @@ namespace Light
 		glm::vec3 specular{};
 	};
 
-	struct lightPoint {
+	struct lightPoint { //manque un l majuscule 
 		glm::vec3 color{};
 		glm::vec3 pos{};
 

@@ -53,7 +53,7 @@ namespace World
 
 	Object woodCube ( glm::vec3(0.0f, 0.0f, 0.0f) );
 	std::array<Light::lightPoint, 2> lightCube {};
-	std::array<Object, POINT_LIGHTS_NB> lightCubesObject{};
+	std::array<Object, POINT_LIGHTS_NB> lightCubesObject{}; //t'es trop bete frr
 
 
 	int mapWidth{};
@@ -89,8 +89,10 @@ void Object::move(glm::vec3 vector)
 		spotLightPtr->pos = pos;
 }
 
-void Object::rotate(float rad, glm::vec3 rotateAxis)
+void Object::rotate(float degree, glm::vec3 rotateAxis)
 {
+	float rad{ glm::radians(degree) };
+
 	model = model * glm::rotate(model, rad, rotateAxis);
 	pos = glm::rotate(model, rad, rotateAxis) * glm::vec4(pos, 1.0f);
 
@@ -127,6 +129,20 @@ void Object::scale(glm::vec3 scaleVec)
 		spotLightPtr->pos = pos;
 }
 
+void Object::rotatePlane(float degree)
+{
+	float rad{ glm::radians(degree) };
+
+	glm::mat4 rot{
+		glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
+				  0.0f, cos(degree), sin(degree), 0.0f,
+				  0.0f, -sin(degree), cos(degree), 0.0f,
+				  0.0f, 0.0f, 0.0f, 1.0) };
+
+	
+	localOrigin = rot * localOrigin;
+}
+
 void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
 {
 	try
@@ -159,10 +175,178 @@ void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
 		}
 	}
 
-	catch (const std::exception&)
+	catch (int exeption)
 	{
 		std::cerr << "DEREFENCING NULL POINTER WITH animateLightsCube FUNCTION CALL" << std::endl;
 	}
+
+}
+
+void Object::set(Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
+{
+	if (enableTranslation)
+		move(translationVec);
+
+	if (enableRotation)
+		rotate(rotationDegree, rotationAxis);
+
+
+	if (enableScale)
+		scale(scaleVec);
+
+	shader.use();
+	shader.setMat4("model", model);
+	shader.setFloat("material.shininess", materialShininess);
+
+	if (isOrbiting)
+	{
+		shader.setFloat("cubeEdge", distFromCenter);
+	}
+}
+
+void Object::setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse, glm::vec3 specular, float constant, float linearCoef, float squareCoef)
+{
+	Light::lightPoint lightPoint{};
+
+	worldLighPointId = World::lightPoints.size();
+	World::lightPoints.push_back(lightPoint);
+	lightPointPtr = &World::lightPoints[World::lightPoints.size() - 1];
+	World::lightCubesObject[0].lightPointPtr = &World::lightPoints[0];
+
+
+	try
+	{
+		if (lightPointPtr == nullptr)
+			throw(-1);
+
+		lightPointPtr->color = color;
+
+		lightPointPtr->ambient = ambiant;
+		lightPointPtr->diffuse = diffuse;
+		lightPointPtr->specular = specular;
+
+		lightPointPtr->constant = constant;
+		lightPointPtr->linearCoef = linearCoef;
+		lightPointPtr->squareCoef = squareCoef;		
+	}
+
+	catch (int exeption)
+	{
+		std::cerr << "DEREFENCING NULL POINTER TO LIGHT OBJECT" << std::endl;
+
+	}
+}
+
+void Object::animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
+{
+	if (enableTranslation)
+		move(translationVec);
+
+	if (enableRotation)
+		rotate(rotationDegree, rotationAxis);
+
+
+	if (enableScale)
+		scale(scaleVec);
+
+	shader.use();
+	shader.setMat4("model", model);
+
+	if (isGlowing)
+	{
+		shader.setFloat("emmissionStrength", glow());
+		shader.set3Float("emmissionColor", glowColor);
+	}
+
+	if (isOrbiting)
+	{
+		glm::mat4 orbitMat{};
+		orbitMat = orbite();
+
+		//update light pos
+		pos = glm::vec3(orbitMat * glm::vec4(basePos, 1.0f));
+
+		updateLightPoint(pos, 1);
+
+		shader.set3Float("lightColor", lightPointPtr->color);
+		shader.setMat4("model", model);
+		shader.setMat4("orbit", orbitMat);
+	}
+
+	if (isOutLined)
+	{
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
+		//animateObject(mesh,shader,translationVec,rotationDegree,rotationAxis,scaleVec);
+
+		mesh.draw(shader);
+
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilMask(0x00);
+		glDepthFunc(GL_ALWAYS);
+
+
+		shaderOutline.use();
+		glm::vec3 outlineColor{ rgb(43, 117, 190) };
+		shaderOutline.set3Float("outLineColor", outlineColor);
+
+		float weight = 0.009f;
+		//float weight = 0.006f; is the best but need to find a way to extend the lines
+		shaderOutline.setFloat("outLineWeight", weight);
+
+		shaderOutline.setMat4("model", World::woodCube.model);
+		mesh.draw(shaderOutline);
+
+		glStencilMask(0xFF);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		glEnable(GL_DEPTH_TEST);
+
+		glDepthFunc(GL_LESS);
+
+		return;
+	}
+
+	mesh.draw(shader);
+}
+
+float Object::glow()
+{
+	float currentFrameGlow{ };
+
+	if (Time::deltaSum != 0)
+	{
+		currentFrameGlow = glowStrenghtMax * sin((M_2_PI / glowDuration) * Time::deltaSum);
+	}
+
+	if (currentFrameGlow < 0)
+		currentFrameGlow *= -1;
+
+	return currentFrameGlow;
+}
+
+glm::mat4 Object::orbite()
+{
+	glm::mat4 orbit{};
+	float xAxisValue{};
+	float zAxisValue{};
+
+	if (Time::deltaTime != 0)
+	{
+		xAxisValue = (orbitHorizontalAxis * cos(((2 * M_PI) / orbitDuration) * Time::deltaSum));
+		zAxisValue = (orbitVerticalAxis * sin(((2 * M_PI) / orbitDuration) * Time::deltaSum));
+	}
+
+	orbit = glm::translate(localOrigin, glm::vec3(xAxisValue, 0.0f, zAxisValue));
+
+	//object.move(glm::vec3(xAxisValue, 0.0f, zAxisValue) );
+
+	return  orbit;
+}
+
+void Object::addToWorldObjects()
+{
+	worldObjId = World::objects.size();
+	World::objects.push_back(*this);
 
 }
 
@@ -363,7 +547,6 @@ void rotatePlane(Object& object, double degree)
 				  0.0f, 0.0f, 0.0f, 1.0 )  };
 
 	object.localOrigin = rot * object.localOrigin;
-	//object.pos = glm::vec3(0.0f, 0.0f, 0.0f); //???
 }
 
 glm::mat4 orbit(Object& object, float horizontalAxis, float verticalAxis,float orbitDuration)
@@ -452,14 +635,16 @@ void setLightCubes(Shader& shader, float cubeEdge)
 		light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
 
-	lights[0].pos = World::lightCubesObject[0].pos;
-	lights[1].pos = World::lightCubesObject[1].pos;
+	lights[0].pos = World::lightCubesObject[0].basePos;
+	lights[1].pos = World::lightCubesObject[1].basePos;
+
 
 	lights[0].color = rgb(4, 217, 255);
 	lights[1].color = rgb(242, 0, 0);
 
 	World::lightPoints.push_back(lights[0]);
 	World::lightPoints.push_back(lights[1]);
+
 
 	World::lightCubesObject[0].lightPointPtr = &World::lightPoints[0];
 	World::lightCubesObject[1].lightPointPtr = &World::lightPoints[1];
@@ -468,7 +653,6 @@ void setLightCubes(Shader& shader, float cubeEdge)
 void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 {
 	glm::mat4 orbitMat{};
-	glm::vec3 newPos{};
 
 	shader.use();
 
@@ -477,20 +661,9 @@ void animateLightsCube(Shader& shader, Cube lightCubeMesh)
 		orbitMat = orbit(lightCube, 30.0f, 30.0f, 6);
 		
 		//update light pos
-		newPos = glm::vec3(orbitMat * glm::vec4(lightCube.pos, 1.0f));
+		lightCube.pos = glm::vec3(orbitMat * glm::vec4(lightCube.basePos, 1.0f));
 
-		try
-		{
-			if (lightCube.lightPointPtr == nullptr)
-				throw(-1);
-
-			lightCube.lightPointPtr->pos = newPos;
-		}
-
-		catch (const std::exception&)
-		{
-			std::cerr << "DEREFENCING NULL POINTER WITH animateLightsCube FUNCTION CALL" << std::endl;
-		}
+		lightCube.updateLightPoint(lightCube.pos, 1);
 
 		shader.set3Float("lightColor", lightCube.lightPointPtr->color);
 		shader.setMat4("model", lightCube.model);
