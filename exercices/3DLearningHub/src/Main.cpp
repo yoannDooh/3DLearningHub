@@ -20,6 +20,7 @@ std::vector<float>circleCenter{
 void printVec3(std::string_view objectName, glm::vec3 object);
 void printLine(int dashNb);
 void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject);
+void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCubeObj);
 
  int main()
   {
@@ -40,8 +41,6 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 	Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
 	Shader passThrough(".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
 	Shader sphere(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
-
-
 
 	//woodCube parameters
 	float cubeEdge{ 1.0f };
@@ -71,6 +70,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 	Icosahedron icosahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
 
 	std::array<Object, 2> lightCubesObject{};
+	Object woodCubeObj;
 
 	//square for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -98,10 +98,10 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 	glfwSetScrollCallback(window.windowPtr, scroll_callback);
 	glfwSetInputMode(window.windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	//set models
-	setLightCubes(lightSourcesShader, cubeEdge);
-	setWoodCube(objectShader);
-	//createAndSetLightCube(lightSourcesShader,lightCubesObject);
+	//set models	
+	createAndSetWoodCube(objectShader, outlineShader, woodCubeObj);
+
+	createAndSetLightCube(lightSourcesShader,lightCubesObject);
 
 	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
 	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" }, { diffuse,normal,displacement}), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
@@ -140,24 +140,27 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 			circle.draw();
 		};
 
-	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject]()
+	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject,&woodCubeObj]()
 		{
 			//DrawScene
 			setLighting();
 			updateViewProject();
-
-			animateLightsCube(lightSourcesShader, lightCube);
-			/*
+			
 			for (auto& lightCubeObj : lightCubesObject)
 			{
 				World::objects[lightCubeObj.worldObjId].enableTranslation = false;
 				World::objects[lightCubeObj.worldObjId].enableRotation = false;
 				World::objects[lightCubeObj.worldObjId].enableScale = false;
 
+
 				World::objects[lightCubeObj.worldObjId].animate(lightCube, lightSourcesShader,glm::vec3(0.0, 0.0, 0.0f),glm::vec3(0.0, 0.0, 0.0f), 0.0f,glm::vec3(0.0,0.0,0.0f) );
 			}
-			*/
-			animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
+			
+			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
+			woodCubeObj.enableScale = false;
+			woodCubeObj.enableRotation = false;
+			woodCubeObj.enableTranslation = false;
+			woodCubeObj.animate(woodCube, objectShader, glm::vec3(0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(0.0f));
 
 			//DRAW IN LAST
 			skyBox.draw(skyboxShader);
@@ -221,7 +224,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 	ShadowBuffer cubeDepthMap;
 	cubeDepthMap.genCubeMapBuff();
 
-	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain]()
+	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain,&woodCubeObj]()
 		{
 
 			//lightSpaceMat = toDirectionalLightSpaceMat(1000.0f,World::camera.pos, glm::vec3(0.0f) );
@@ -232,7 +235,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 
 			//pass uniforms to objectDirectShadowShader
 			objectDirectShadowShader.use();
-			objectDirectShadowShader.setMat4("model", World::woodCube.model);
+			objectDirectShadowShader.setMat4("model", woodCubeObj.model);
 			objectDirectShadowShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 			woodCube.draw(objectDirectShadowShader);
 			
@@ -264,7 +267,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 			drawTerrain();
 		};
 
-	auto drawPointShadow = [&cubeDepthMap,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader]()
+	auto drawPointShadow = [&cubeDepthMap,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader,&woodCubeObj]()
 		{
 
 			setLighting();
@@ -277,7 +280,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 
 			//pass uniforms to objectPointShadowShader
 			objectPointShadowShader.use();
-			objectPointShadowShader.setMat4("model", World::woodCube.model);
+			objectPointShadowShader.setMat4("model", woodCubeObj.model);
 			objectPointShadowShader.set3Float("lightPos", World::lightPoints[0].pos);
 			objectPointShadowShader.setFloat("farPlane",25.0f);
 
@@ -339,7 +342,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 		{
 			updateViewProject();
 			sphere.use();
-			//modele = modele * glm::rotate(glm::mat4(1.0f), glm::radians(-0.5f), glm::vec3(1.0, 0.0f, 0.0f));
+			modele = modele * glm::rotate(glm::mat4(1.0f), glm::radians(0.5f), glm::vec3(0.0, 1.0f, 0.0f));
 			sphere.setMat4("model", modele);
 			sphere.setFloat("radius", 1.0f);
 			icosahedron.draw();
@@ -406,7 +409,11 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 			 color = rgb(242, 0, 0) ;
 
 		lightCubesObject[lightCubeIndex].setLightPoint(color,glm::vec3(0.05f, 0.05f, 0.05f),glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(1.0f, 1.0f, 1.0f),1.0f,0.0014f,0.000007f);
+
+
+		lightCubesObject[lightCubeIndex].setOrbit(1.0, 30.0f, 30.0f, 6);
 		lightCubesObject[lightCubeIndex].isOrbiting = true;
+
 
 		lightCubesObject[lightCubeIndex].addToWorldObjects();
 	}
@@ -414,14 +421,25 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 	int index{};
 	for (auto& lightCube : lightCubesObject)
 	{
-		World::objects[lightCube.worldObjId].rotatePlane((index + 1) * 60); //first is 60° and second 120°
-
 		World::objects[lightCube.worldObjId].enableTranslation = false;
 		World::objects[lightCube.worldObjId].enableRotation = false;
 
-		World::objects[lightCube.worldObjId].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f) );
+		World::objects[lightCube.worldObjId].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
+
+		World::objects[lightCube.worldObjId].rotatePlane((index + 1) * 60); //first is 60° and second 120°
 
 
 		++index;
 	}
+}
+
+void createAndSetWoodCube(Shader& shader,Shader& outlineShader,Object& woodCubeObj)
+{
+	woodCubeObj.enableRotation = false;
+	woodCubeObj.isOutLined = true;
+	woodCubeObj.isGlowing = true;
+	woodCubeObj.materialShininess = 64.0f;
+	woodCubeObj.shaderOutline = outlineShader;
+	woodCubeObj.setGlow(glm::vec3{ rgb(255, 255, 0) }, 0.25, 0.9);
+	woodCubeObj.set(shader, glm::vec3(0.0f, meterToWorldUnit(0.1f), 0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(10.0f));
 }

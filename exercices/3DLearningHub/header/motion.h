@@ -148,8 +148,8 @@ class Object
 		glm::vec3 pos{}; //in world unit
 		glm::vec3 basePos{}; //in world unit
 
-		Light::lightPoint *lightPointPtr { nullptr };
-		Light::SpotLight *spotLightPtr{ nullptr };
+		//Light::lightPoint *lightPointPtr { nullptr };
+		//Light::SpotLight *spotLightPtr{ nullptr };
 		float materialShininess;
 
 
@@ -167,6 +167,9 @@ class Object
 		Object(){}
 		Object(glm::vec3 pos);
 		Object(glm::vec3 pos,float materialShininess);
+
+		bool isLightPointIdValid(int id);
+		bool isSpotLightIdValid(int id);
 
 		void move(glm::vec3 vector);
 		void rotate(float rad,glm::vec3 rotateAxis);
@@ -220,7 +223,7 @@ private :
 	float glowDuration{}; //Duration to reach max value of glow before returning to 0 
 
 	//orbit animation
-	glm::mat4 orbite();
+	glm::mat4 orbit();
 	float distFromCenter{}; //distance from the center of objects to its vertices 
 	float orbitHorizontalAxis{};
 	float orbitVerticalAxis{};
@@ -271,8 +274,6 @@ namespace World
 	extern std::vector<Light::lightPoint> lightPoints;
 	extern std::vector<Light::SpotLight> spotLights;
 	extern std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights;
-
-	extern Object woodCube;
 
 	extern int mapWidth;
 	extern int mapHeight;
@@ -350,17 +351,6 @@ void updateViewProject(); //update world::view and world::projection
 //emissionMap
 float frameGlow(); //return currentFrameGlowStrenght for emmision map
 
-//lightCube Object
-void setLightCubes(Shader& shader, float cubeEdge);
-void updateLightsCubePos();
-void animateLightsCube(Shader& shader, Cube lightCubeVao);
-
-//woodCube   
-void setWoodCube(Shader& shader);//just translate and scale then pass to shader 
-void animateWoodCube(Shader& shader,Cube woodCubeVao);
-
-/*POST PROCESSING EFFECT*/
-void animateWoodCubeAndOutline(Shader& woodBoxShader, Shader& outlineShader, Cube woodCubeVao);
 void setEffect(Shader& shader, Effects effect);
 
 //diverse useful function

@@ -48,6 +48,6 @@ vec4 bilinearInterpolation(float u, float v, vec4 data00, vec4 data10, vec4 data
 
 float heightCurve(float height)
 {
-	return (height-10);
-	//return ((height * 20) * (height * 20));
+	//return (height-10);
+	return (height * 10) - 5;
 }
