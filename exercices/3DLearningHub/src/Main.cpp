@@ -18,9 +18,11 @@ std::vector<float>circleCenter{
 };
 
 void printVec3(std::string_view objectName, glm::vec3 object);
+void printTimeInGame();
 void printLine(int dashNb);
 void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject);
 void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCubeObj);
+void printCurrentDayPhase();
 
  int main()
   {
@@ -39,8 +41,8 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
 	Shader terrainShader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
 	Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
-	Shader passThrough(".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
-	Shader sphere(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
+	Shader passThroughShader(".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
+	Shader sphereShader(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
 
 	//woodCube parameters
 	float cubeEdge{ 1.0f };
@@ -109,6 +111,8 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 
 	FrameBuffer fbo(true, true);
+
+	Time::timeAccelerator = 50.0f;
 
 	// render loop lambda functions
 	auto newFrame = [&window]()
@@ -314,9 +318,13 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 	auto debugInfo = []()
 		{
 			std::cout <<"seconds : " << Time::sec << "\tFrame number : " << Time::totalFrame << "\tFPS : " << Time::fps << "\n";
+			std::cout << "\n";
+
+			printTimeInGame();
+			printVec3("cameraPos", World::camera.pos);
 			printLine(50);
 			std::cout << "\n";
-			printVec3("cameraPos", World::camera.pos);
+
 		};
 
 	auto swapBuffer = [&window,&debugInfo]()
@@ -328,6 +336,7 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			if (glfwGetTime() >= Time::sec + 1)
 			{
 				++Time::sec;
+				updateTimeInGame();
 				Time::currentFrame = 1;
 				Time::fps = static_cast<float>(Time::totalFrame) / static_cast<float>(Time::sec);
 				debugInfo();
@@ -337,16 +346,22 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			++Time::totalFrame;
 		};
 
-	glm::mat4 modele{ glm::mat4(1.0f) };
-	auto drawIcosphere = [&skyboxShader, &modele, &passThrough, &icosahedron, &skyBox,&sphere]()
+	glm::mat4 modele{ glm::mat4(1.0f) }; 
+	modele = modele * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, meterToWorldUnit(40.0f), 0.0f));
+	modele = modele * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f) );
+	sphereShader.setMat4("model", modele);
+
+	auto drawIcosphere = [&skyboxShader, &modele, &passThroughShader, &icosahedron, &skyBox,&sphereShader]()
 		{
 			updateViewProject();
-			sphere.use();
+			sphereShader.use();
 			modele = modele * glm::rotate(glm::mat4(1.0f), glm::radians(0.5f), glm::vec3(0.0, 1.0f, 0.0f));
-			sphere.setMat4("model", modele);
-			sphere.setFloat("radius", 1.0f);
+			glm::mat4 sphereTranslation{ calSunPos() };
+			sphereShader.setMat4("sphereTranslation", sphereTranslation);
+			sphereShader.setMat4("model", modele);
+			sphereShader.setFloat("radius", 1.0f);
 			icosahedron.draw();
-			skyBox.draw(skyboxShader);
+			skyBox.draw(skyboxShader);		
 		}; 
 
 	//setEffect(postProcessShader, edgeDetection);
@@ -365,10 +380,11 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 		//drawTerrain();
 	/*--------------------*/
 
-		//drawIcosphere();
+		drawIcosphere();
+		calcDirectLightAttrib();
 
 		drawPointShadow();
-	
+
 		swapBuffer();
 	}
 
@@ -384,6 +400,57 @@ void printVec3(std::string_view objectName,glm::vec3 object)
 	std::cout << '\t' << "y VALUE : "<< object.y << "\t(in world space unit : " << object.y/10.0f << ')'<< '\n';
 	std::cout << '\t' << "z VALUE : "<< object.z << "\t(in world space unit : " << object.z/10.0f << ')'<< '\n';
 	std::cout << "\n\n";
+}
+
+void printColor(glm::vec3 color)
+{
+	std::cout << '\t' << "RED  : " << color.x << '\n';
+	std::cout << '\t' << "BLUE : " << color.y << '\n';
+	std::cout << '\t' << "GREEN : " << color.z << '\n';
+	std::cout << "\n\n";
+}
+
+void printTimeInGame()
+{
+	std::cout << "TIME IN GAME " << ":" << '\n';
+
+	std::cout << '\t' << "Day : " << Time::timeInGame.day << '\n';
+	std::cout << '\t' << "Hour : " << Time::timeInGame.hour << '\n';
+	std::cout << '\t' << "Min : " << Time::timeInGame.min << '\n';
+	std::cout << '\t' << "Sec : " << Time::timeInGame.sec << '\n';
+	std::cout << '\t' << "SunAzimuth : " << World::sunAzimuth << '\n';
+	std::cout << '\t' << "SunAltitude : " << World::sunAltitude << '\n';
+	printCurrentDayPhase();
+	std::cout << "\n\n";
+
+	std::cout << "\n" << "couleur sunlight" << '\n';
+	printColor(World::directLights[0].color);
+	std::cout << "\n\n";
+}	
+
+void printCurrentDayPhase()
+{
+	std::cout << '\t' << "Phase of the Day : ";
+	switch (Time::dayPhase)
+	{
+	case dawn:
+		std::cout  << "Dawn";
+		break;
+
+	case daytime:
+		std::cout << "daytime";
+		break;
+
+	case sunset:
+		std::cout << "sunset";
+		break;
+
+	case night:
+		std::cout << "night";
+		break;
+	
+	}
+	std::cout << '\n';
 }
 
 void printLine(int dashNb)
@@ -443,3 +510,4 @@ void createAndSetWoodCube(Shader& shader,Shader& outlineShader,Object& woodCubeO
 	woodCubeObj.setGlow(glm::vec3{ rgb(255, 255, 0) }, 0.25, 0.9);
 	woodCubeObj.set(shader, glm::vec3(0.0f, meterToWorldUnit(0.1f), 0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(10.0f));
 }
+

@@ -215,10 +215,10 @@ vec3 areaFragText(Area area, vec2 textCoord, vec3 normal, vec3 viewDir, vec3 fra
 
         vec3 lightning = calcDirLight(area, sunLight, normal, viewDir, diffuse, shadow);
 
-        
+        /*
         for (int index = 0; index < POINT_LIGHTS_NB; ++index)
             lightning += calcPointLight(area, pointLights[index], normal, viewDir, fragPos, diffuse, shadow);
-        
+        */
 
         return lightning;
     }

@@ -2,6 +2,7 @@
 
 #include "../header/motion.h"
 #include <iostream>
+#include <cmath>
 
 namespace Mouse
 {
@@ -22,7 +23,20 @@ namespace Time
 	int sec{}; //how many entire seconds has passed
 	int currentFrame{ 1 };
 	int totalFrame{ 1 };
-	float fps;
+	float fps{};
+	Time timeInGame{ 13,0 };
+	DayPhases dayPhase{ daytime };
+
+	std::map<DayPhases, std::array<Time, 2> > dayPhasesTime
+	{
+		 { dawn,{ Time::Time(6, 0), Time::Time(8, 30) } },
+		 { daytime,{ Time::Time(8, 30), Time::Time(17, 30) } },
+		 { sunset,{ Time::Time(17, 30), Time::Time(19, 30) } },
+		 { night,{ Time::Time(19, 30), Time::Time(6, 0) } },
+	};
+
+	int totalMinInGame{};
+	float timeAccelerator{1.0f};
 }
 
 namespace World
@@ -43,13 +57,25 @@ namespace World
 	std::vector<Light::SpotLight> spotLights{};
 	std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights{
 		{
-		rgb(226, 239, 245), //color
-		{ -0.545f, 0.629f, -0.552f },//direction
+		rgb(214, 132, 49), //color
+	//	{ -0.545f, 0.629f, -0.552f },//direction
+		{ 0.0, -1.0f, 0.0 },
 		{ 0.8f, 0.8f, 0.8f,	 },	//ambient
 		{ 0.8f, 0.8f, 0.8f,	 },	//diffuse
 		{ 1.0f,	 1.0f,  1.0f }, //specular 
 		}
 	};
+
+	 Object sunObj;
+	 float sunAzimuth{90};
+	 float sunAltitude{35};
+
+	 std::map<DayPhases, glm::vec3>sunLightColor{
+		 {dawn,rgb(254, 197, 185)},
+		 {daytime,rgb(252, 252, 253)},
+		 {sunset,rgb(111, 1, 0) },
+		 {night,rgb(9, 8, 28)}
+	 };
 
 	int mapWidth{};
 	int mapHeight{};
@@ -545,6 +571,118 @@ void setLighting()
 	//do the same for spotLights
 }
 
+void updateTimeInGame()
+{
+	Time::timeInGame.sec += 60 * Time::timeAccelerator;
+
+	//handle time values
+	while (Time::timeInGame.sec >= 60)
+	{
+		++Time::timeInGame.min;
+		++Time::totalMinInGame;
+
+		if (Time::timeInGame.sec < 61)
+			Time::timeInGame.sec = 0;
+
+		if (Time::timeInGame.sec > 61)
+		{
+			int currentSec{ abs (60 - static_cast<int>(Time::timeInGame.sec) ) };
+			Time::timeInGame.sec = currentSec;
+		}
+	}
+
+	while (Time::timeInGame.min >= 60)
+	{
+		++Time::timeInGame.hour;
+		Time::timeInGame.min=0;
+	}
+
+	while (Time::timeInGame.hour >= 24)
+	{
+		++Time::timeInGame.day;
+		Time::timeInGame.hour = 0;
+	}
+	
+
+	Time::dayPhase = night;
+
+	if (Time::timeInGame.hour >= 6 && Time::timeInGame.hour <= 8)
+	{
+		Time::dayPhase = dawn;
+
+		if (Time::timeInGame.hour == 8 && Time::timeInGame.min > 30)
+			Time::dayPhase = daytime;
+
+	}
+
+	if (Time::timeInGame.hour > 8 && Time::timeInGame.hour <= 17 )
+	{
+		Time::dayPhase = daytime;
+
+		if (Time::timeInGame.hour == 17 && Time::timeInGame.min > 30)
+			Time::dayPhase = sunset;
+	}
+
+	if (Time::timeInGame.hour > 17 && Time::timeInGame.hour <= 19)
+	{
+		Time::dayPhase = sunset;
+
+		if (Time::timeInGame.hour == 19 && Time::timeInGame.min > 30)
+			Time::dayPhase = night;
+	}
+}
+
+glm::mat4 calSunPos() 
+{
+	glm::mat4 sphereTranslation{};
+	float xAxisValue{};
+	float zAxisValue{};
+	float yAxisValue{};
+	//the radius of the spere is one 
+
+	static int previousMin{};
+	int minTimeSpan{};
+	float secSpan{ Time::deltaTime*216000*Time::timeAccelerator }; //1sec in real life is 60h inGame so 216 000sec inGame 
+
+	if (previousMin < Time::totalMinInGame)
+	{
+		minTimeSpan = Time::totalMinInGame - previousMin;
+		previousMin += Time::totalMinInGame - previousMin;
+	}
+
+	World::sunAzimuth += (0.25) * minTimeSpan;
+
+	if (World::sunAzimuth >= 360)
+	{
+		float degreeSpan{ World::sunAzimuth - 360.0f };
+		World::sunAzimuth = 0;
+		World::sunAzimuth += degreeSpan;
+	}
+
+	if (Time::timeInGame.hour > 1 && Time::timeInGame.hour <= 13)
+	{
+		World::sunAltitude += (41.0f / 360.0f) * static_cast<float>(minTimeSpan);
+	}
+
+	if (Time::timeInGame.hour > 13)
+	{
+		World::sunAltitude += -(41.0f / 360.0f) * static_cast<float>(minTimeSpan);
+	}
+
+	xAxisValue = 100*sin(World::sunAltitude) * cos(World::sunAzimuth);
+	zAxisValue = 100*sin(World::sunAltitude) * sin(World::sunAzimuth);
+	yAxisValue = 10*cos(World::sunAltitude); 
+
+	xAxisValue = 100 * sin( ( ((M_PI)/2) / 6) * Time::deltaSum) * cos( ( (2 * M_PI) / 6) * Time::deltaSum);
+	zAxisValue = 100 * sin((((M_PI) / 2) / 6) * Time::deltaSum) * sin(((2 * M_PI) / 6) * Time::deltaSum);
+	yAxisValue = 10 * cos((((M_PI) / 2) / 6) * Time::deltaSum);
+
+
+	sphereTranslation = glm::translate(World::sunObj.localOrigin,glm::vec3(xAxisValue, yAxisValue, zAxisValue));
+
+	return sphereTranslation;
+}
+
 //view & projection function
 void updateViewProject()
 {
@@ -572,14 +710,87 @@ float meterToWorldUnit(float meter)
 	return meter * 10;
 }
 
-template <typename T> //j'avais zappé y avait glm::radian faudra suppr ça sert à r 
-T degreeToRad(T degree)
+void calcDirectLightAttrib()
 {
-	if (degree > 360 || degree < 0)
+	glm::vec3 newColor{};
+
+	glm::vec3 currentDayPhaseColor { World::sunLightColor[Time::dayPhase] };
+
+	DayPhases nextDayPhase{ };
+	bool sameDay1{ true };
+	bool sameDay2{ true };
+
+	switch (Time::dayPhase)
 	{
-		std::cerr << "invalid degree value";
-		return -1;
+	case dawn:
+		nextDayPhase = daytime;
+		break;
+
+	case daytime:
+		nextDayPhase = sunset;
+		break;
+
+	case sunset:
+		nextDayPhase = night;
+		break;
+
+	case night:
+		nextDayPhase = dawn;
+		sameDay1 = false;
+		break;
 	}
 
-	return degree * (M_PI / 180);
+	glm::vec3 nextDayPhaseColor{ World::sunLightColor[nextDayPhase] };
+
+
+	if (Time::dayPhase == night && Time::timeInGame.hour <= 6)
+		sameDay2 = false;
+
+	//linear interpolation of color 
+	float currentPhaseNextPhaseDist{ timeToHour( timeDist(Time::dayPhasesTime[nextDayPhase][0],Time::dayPhasesTime[Time::dayPhase][0],sameDay1) ) };
+	float currentHourCurrentPhaseBaseHourDist { timeToHour( timeDist(Time::timeInGame,Time::dayPhasesTime[Time::dayPhase][0],sameDay2) ) };
+
+	float currentPhaseHour{ timeToHour(Time::dayPhasesTime[Time::dayPhase][0]) };
+	float currentHour { timeToHour(Time::timeInGame) };
+
+	newColor.r = currentDayPhaseColor.r + currentHourCurrentPhaseBaseHourDist * ((nextDayPhaseColor.r - currentDayPhaseColor.r) / currentPhaseNextPhaseDist);
+	newColor.g = currentDayPhaseColor.g + currentHourCurrentPhaseBaseHourDist * ((nextDayPhaseColor.g - currentDayPhaseColor.g) / currentPhaseNextPhaseDist);
+	newColor.b = currentDayPhaseColor.b + currentHourCurrentPhaseBaseHourDist * ((nextDayPhaseColor.b - currentDayPhaseColor.b) / currentPhaseNextPhaseDist);
+	
+	World::directLights[0].color = newColor;
+
+}
+
+Time::Time timeDist(Time::Time time1, Time::Time time2,bool sameDay)
+{
+	Time::Time result;
+	
+	result.sec =  abs ( time1.sec - time2.sec );
+	result.min =  abs ( time1.min - time2.min );
+
+	if (!sameDay)
+	{
+		result.hour = 24 - time2.hour;
+		result.hour += time1.hour;
+	}
+
+	else
+		result.hour = abs(time1.hour - time2.hour);
+
+
+	//result.day =  abs ( time1.day - time2.day );
+
+	return result;
+}
+
+float timeToHour(Time::Time time)
+{
+	float hour{};
+
+	//hour = time.day * 24;
+	hour += time.hour;
+	hour += static_cast<float>(time.min) * (1.0f / 60.0f);
+	hour += static_cast<float>(time.sec) * (1.0f / 3600.0f);
+
+	return hour;
 }

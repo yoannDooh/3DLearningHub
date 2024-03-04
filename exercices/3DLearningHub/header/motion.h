@@ -5,6 +5,7 @@
 
 #include <array>
 #include <vector>
+#include <map>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -32,6 +33,14 @@ enum Effects
 	//Kernel effects
 	blur,
 	edgeDetection,
+};
+
+enum DayPhases /* https ://www.suncalc.org/#/48.8769,2.3795,3/2024.03.04/07:01/1/3 */
+{
+	dawn,
+	daytime,
+	sunset,
+	night
 };
 
 class FrameBuffer
@@ -70,7 +79,6 @@ public:
 	void genCubeMapTex(int width, int height);
 	void genCubeMapLightSpaceMat(float lightRange, glm::vec3 lightPos);
 };
-
 
 /*CAMERA AND MOUSE*/
 class Camera
@@ -148,10 +156,7 @@ class Object
 		glm::vec3 pos{}; //in world unit
 		glm::vec3 basePos{}; //in world unit
 
-		//Light::lightPoint *lightPointPtr { nullptr };
-		//Light::SpotLight *spotLightPtr{ nullptr };
 		float materialShininess;
-
 
 		bool enableTranslation { true };
 		bool enableRotation { true };
@@ -159,6 +164,7 @@ class Object
 		bool isGlowing{ false };
 		bool isOutLined{ false };
 		bool isOrbiting{ false };
+		
 
 		int worldObjId {-1}; //id of the element inside the World::Objects vector
 		int worldLighPointId {-1}; //id of the element inside the World::lightPoint vector
@@ -216,7 +222,7 @@ private :
 	float outlineWeight{};
 
 
-	//glow functions and variables
+	//glow animation
 	float glow();
 	glm::vec3 glowColor{};
 	float glowStrenghtMax{};
@@ -244,6 +250,25 @@ namespace Mouse
 /*FrameRate*/
 namespace Time
 {
+	struct Time
+	{
+		float sec{};
+		int min{};
+		int hour{};
+		int day{};
+
+		
+		Time(int hour, int min)
+		{
+			Time::hour = hour;
+			Time::min = min;
+		}
+
+		Time()
+		{
+		}
+	};
+
 	extern float deltaTime; // Time between current frame and last frame in sec
 	extern float previousDelta; //Time of previous frame in sec
 	extern float deltaSum; //summ of the seconds passed since the beggening (by adding all deltaTime)
@@ -253,6 +278,12 @@ namespace Time
 	extern int currentFrame;
 	extern int totalFrame;
 	extern float fps;
+	extern Time timeInGame;
+	extern DayPhases dayPhase;
+	extern std::map<DayPhases, std::array<Time,2> > dayPhasesTime;
+	extern int totalMinInGame;
+	extern float timeAccelerator; //accelerate or slow time, change le nom
+
 }
 
 //GLOBAL VARIABLES
@@ -274,6 +305,12 @@ namespace World
 	extern std::vector<Light::lightPoint> lightPoints;
 	extern std::vector<Light::SpotLight> spotLights;
 	extern std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights;
+
+	extern std::map<DayPhases, glm::vec3>sunLightColor;
+
+	extern Object sunObj;
+	extern float sunAzimuth;   //in degree
+	extern float sunAltitude; //in degree
 
 	extern int mapWidth;
 	extern int mapHeight;
@@ -337,13 +374,11 @@ namespace Light
 //lighting 
 void setLighting();
 
+void updateTimeInGame(); 
+
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
 void setupShadowMap(ShadowBuffer depthMap);
-
-//motion 
-void rotatePlane(Object& object, double degree);
-glm::mat4 orbit(Object& object, float horizontalAxis, float verticalAxis, float orbitDuration);  //orbitDuration is the number of seconds it takes for x to reach the value 2Py (so to do a 360)
 
 //view & projection function
 void updateViewProject(); //update world::view and world::projection
@@ -353,9 +388,16 @@ float frameGlow(); //return currentFrameGlowStrenght for emmision map
 
 void setEffect(Shader& shader, Effects effect);
 
+
+//sun and time functions
+glm::mat4 calSunPos();
+void calcDirectLightAttrib();
+Time::Time timeDist(Time::Time time1, Time::Time time2, bool sameDay);
+float timeToHour(Time::Time time);
+
 //diverse useful function
 glm::vec3 rgb(float red, float blue, float green);
 
 float meterToWorldUnit(float meter); //1 meter equal 10 world unit
 
-template <typename T> T degreeToRad(T);
+

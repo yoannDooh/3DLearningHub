@@ -16,11 +16,19 @@ layout(std140, binding = 0) uniform camAndProject
 
 uniform mat4 model;
 uniform float radius;
+uniform mat4 sphereTranslation;
 
+
+mat4 newModel;
+vec3 elipseCenterCoord = vec3(0.0f, 0.0f, 0.0f);
+
+mat4 buildTranslation(vec3 delta); //from https://stackoverflow.com/questions/33807535/translation-in-glsl-shader
 vec4 barycentricInterpolation(float u, float v,float w, vec4 data001, vec4 data010, vec4 data100);
 vec4 extrude(vec4 pos);
 vec3 slerpNormal(vec3 pos);
 int[2] twoSmallestElemIndex(float[6] array);
+void setSphereTranslation(vec3 pos);
+
 
 void main()
 {
@@ -38,8 +46,10 @@ void main()
 
 	Normal = normalize(slerpNormal(pos.xyz));
 
-	gl_Position = projection*view*model * vec4(pos);
-	FragPos = vec3(model * vec4(pos.xyz, 1.0));
+	setSphereTranslation(pos.xyz);
+
+	gl_Position = projection*view* newModel * vec4(pos);
+	FragPos = vec3(newModel * vec4(pos.xyz, 1.0));
 
 	/*
 	if (activateNormalMap == 1)
@@ -125,4 +135,21 @@ int[2] twoSmallestElemIndex(float[6] array)
 
 	return result;
 }
+
+mat4 buildTranslation(vec3 delta)
+{
+	return mat4(
+		vec4(1.0, 0.0, 0.0, 0.0),
+		vec4(0.0, 1.0, 0.0, 0.0),
+		vec4(0.0, 0.0, 1.0, 0.0),
+		vec4(delta, 1.0));
+}
+
+void setSphereTranslation(vec3 pos)
+{
+	vec4 sphereCenter = sphereTranslation * vec4(elipseCenterCoord.xyz, 1.0);
+
+	newModel = model * buildTranslation(vec3(sphereCenter.xyz + pos));
+}
+
 

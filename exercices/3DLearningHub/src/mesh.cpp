@@ -656,7 +656,6 @@ void Cube::setupCube()
 /*--CUBE MAP CLASS*/
 CubeMap::CubeMap(std::vector<const char*>& texturesPath)
 {
-	//faudrait clean �a et cr�e un enum en mode choix des attribut voulus comme genre un menu, et apr�s on fait des if pour voir si faut inclure tel ou tel attributs
 	std::array<Vertex, 8> cubeVertices{};
 	const float cote{ 2 };
 	std::array<const float, 3> originCoord{ -1, -1, -1 };
