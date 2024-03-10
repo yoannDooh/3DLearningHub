@@ -37,7 +37,6 @@ struct Texture
 	std::string path{};
 	TextureMap type{};
 	unsigned int ID{};
-
 };
 
 struct Vertex
@@ -234,5 +233,6 @@ private:
 };
 
 //function declaration
+Texture loadTexture(const char* path, TextureMap type);
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
  

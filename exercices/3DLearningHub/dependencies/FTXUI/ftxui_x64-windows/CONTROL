@@ -1,0 +1,7 @@
+Package: ftxui
+Version: 5.0.0
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: b61b9390e3fa76a00a6305950140ccd0b805d5a3418d6d0fe1050f53077ef40b
+Description: C++ Functional Terminal User Interface

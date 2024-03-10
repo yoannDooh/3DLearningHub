@@ -179,6 +179,6 @@ mat3 tbnMat(float u, float v, Area area, vec3 normal, vec3 pos, mat3 model)
 
 float heightCurve(float height)
 {
-	//return ( (height* 20)*(height * 20));
-	return (height);
+	return ((height * 20) - 5);
+	//return (height);
 } 

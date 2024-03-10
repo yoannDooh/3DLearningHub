@@ -1,9 +1,14 @@
 #include <iostream>
+#include <thread>
+#include <windows.h>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
 #include "../header/stb_image.h"
 #include "../header/window.h"
 #include "../header/shader.h"
 #include "../header/motion.h"
 #include "../header/mesh.h"
+#include "../header/debug.h"
 
 
 std::vector<float>points  {
@@ -17,16 +22,13 @@ std::vector<float>circleCenter{
 	0.0f, 0.0f,0.0f, 
 };
 
-void printVec3(std::string_view objectName, glm::vec3 object);
-void printTimeInGame();
-void printLine(int dashNb);
 void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject);
 void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCubeObj);
-void printCurrentDayPhase();
 
- int main()
+ int main(int argc, TCHAR* argv[])
   {
-	glfwWindowHint(GLFW_SAMPLES, 4);
+
+	glfwWindowHint(GLFW_SAMPLES, 8);
 	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
 
 	//init shaders 
@@ -200,7 +202,7 @@ void printCurrentDayPhase();
 
 			terrainShader.use();
 			terrainShader.setMat4("model", model);
-			terrainShader.setFloat("maxDistLod", 3000);
+			terrainShader.setFloat("maxDistLod", 300);
 
 
 			terrainShader.setFloat("area1.shininess", 512.0f);
@@ -339,19 +341,24 @@ void printCurrentDayPhase();
 				updateTimeInGame();
 				Time::currentFrame = 1;
 				Time::fps = static_cast<float>(Time::totalFrame) / static_cast<float>(Time::sec);
-				debugInfo();
+				//debugInfo();
 			}
 			Time::deltaSum += Time::deltaTime;
 			++Time::currentFrame;
 			++Time::totalFrame;
 		};
 
+
+	/*DES TRUCS POUR LA SPHERE*/
 	glm::mat4 modele{ glm::mat4(1.0f) }; 
 	modele = modele * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, meterToWorldUnit(40.0f), 0.0f));
 	modele = modele * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f) );
 	sphereShader.setMat4("model", modele);
 
-	auto drawIcosphere = [&skyboxShader, &modele, &passThroughShader, &icosahedron, &skyBox,&sphereShader]()
+	Texture sphereDiffuse{ loadTexture(".\\rsc\\sun\\diffuseMap.png",TextureMap::diffuse) };
+	Texture sphereEmission{ loadTexture(".\\rsc\\sun\\emissionMap.png",TextureMap::emission) };
+
+	auto drawIcosphere = [&skyboxShader, &modele, &passThroughShader, &icosahedron, &skyBox,&sphereShader,&sphereDiffuse,&sphereEmission]()
 		{
 			updateViewProject();
 			sphereShader.use();
@@ -360,6 +367,17 @@ void printCurrentDayPhase();
 			sphereShader.setMat4("sphereTranslation", sphereTranslation);
 			sphereShader.setMat4("model", modele);
 			sphereShader.setFloat("radius", 1.0f);
+
+
+			glActiveTexture(GL_TEXTURE0);
+			sphereShader.setInt("material.texture_diffuse1", 0);
+			glBindTexture(GL_TEXTURE_2D, sphereDiffuse.ID);
+
+			glActiveTexture(GL_TEXTURE1);
+			sphereShader.setInt("material.texture_emission1", 1);
+			glBindTexture(GL_TEXTURE_2D, sphereEmission.ID);
+
+
 			icosahedron.draw();
 			skyBox.draw(skyboxShader);		
 		}; 
@@ -369,6 +387,9 @@ void printCurrentDayPhase();
 	//wireframe On
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+	//openDebugFile();
+
+	
 	// render loop
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
@@ -385,80 +406,12 @@ void printCurrentDayPhase();
 
 		drawPointShadow();
 
+	
 		swapBuffer();
 	}
 
 	glfwTerminate();
  	return 0;
-}
-
-void printVec3(std::string_view objectName,glm::vec3 object)
-{
-	std::cout << objectName << ":" << '\n';
-
-	std::cout << '\t' << "x VALUE : "<< object.x << "\t(in world space unit : " << object.x/10.0f << ')'<<'\n';
-	std::cout << '\t' << "y VALUE : "<< object.y << "\t(in world space unit : " << object.y/10.0f << ')'<< '\n';
-	std::cout << '\t' << "z VALUE : "<< object.z << "\t(in world space unit : " << object.z/10.0f << ')'<< '\n';
-	std::cout << "\n\n";
-}
-
-void printColor(glm::vec3 color)
-{
-	std::cout << '\t' << "RED  : " << color.x << '\n';
-	std::cout << '\t' << "BLUE : " << color.y << '\n';
-	std::cout << '\t' << "GREEN : " << color.z << '\n';
-	std::cout << "\n\n";
-}
-
-void printTimeInGame()
-{
-	std::cout << "TIME IN GAME " << ":" << '\n';
-
-	std::cout << '\t' << "Day : " << Time::timeInGame.day << '\n';
-	std::cout << '\t' << "Hour : " << Time::timeInGame.hour << '\n';
-	std::cout << '\t' << "Min : " << Time::timeInGame.min << '\n';
-	std::cout << '\t' << "Sec : " << Time::timeInGame.sec << '\n';
-	std::cout << '\t' << "SunAzimuth : " << World::sunAzimuth << '\n';
-	std::cout << '\t' << "SunAltitude : " << World::sunAltitude << '\n';
-	printCurrentDayPhase();
-	std::cout << "\n\n";
-
-	std::cout << "\n" << "couleur sunlight" << '\n';
-	printColor(World::directLights[0].color);
-	std::cout << "\n\n";
-}	
-
-void printCurrentDayPhase()
-{
-	std::cout << '\t' << "Phase of the Day : ";
-	switch (Time::dayPhase)
-	{
-	case dawn:
-		std::cout  << "Dawn";
-		break;
-
-	case daytime:
-		std::cout << "daytime";
-		break;
-
-	case sunset:
-		std::cout << "sunset";
-		break;
-
-	case night:
-		std::cout << "night";
-		break;
-	
-	}
-	std::cout << '\n';
-}
-
-void printLine(int dashNb)
-{
-	for (int count{};count<= dashNb; ++count)
-	{
-		std::cout << '-';
-	}
 }
 
 void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject)

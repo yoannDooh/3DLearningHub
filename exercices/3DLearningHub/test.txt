@@ -1,0 +1,1 @@
+merde ; notepad.exe test.txt

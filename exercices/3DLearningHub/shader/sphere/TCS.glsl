@@ -51,17 +51,18 @@ void main()
 
     if (gl_InvocationID == 0)
     {
-        gl_TessLevelOuter[0] = 64;
-        gl_TessLevelOuter[1] = 64;
-        gl_TessLevelOuter[2] = 64;
-        gl_TessLevelOuter[3] = 64;
+        gl_TessLevelOuter[0] = 3;
+        gl_TessLevelOuter[1] = 3;
+        gl_TessLevelOuter[2] = 3;
+        gl_TessLevelOuter[3] = 3;
                                
-        gl_TessLevelInner[0] = 64;
-        gl_TessLevelInner[1] = 64;
+        gl_TessLevelInner[0] = 3;
+        gl_TessLevelInner[1] = 3;
     }
 
-    //LOD ALGORITHM REALLY WORKS BADLY NEED TO BE FIXED
     /*
+    //LOD ALGORITHM REALLY WORKS BADLY NEED TO BE FIXED
+    
     //handle LOD
     //get edge distance (get distance from camera of a vertex and the other vertex on the edge and averange both, repeate for the 4 outer)
 
@@ -77,22 +78,22 @@ void main()
     //set TessLevel for outerEdge and change size accordingly
     for (int lodIndex = 1; lodIndex <= 8; ++lodIndex)
     {
-        CameraToEdgeVec = outer0Pos.xyz - viewPos;
-            if ((length(CameraToEdgeVec) < (maxDistLod * lodIndex / 8.0)) && gl_TessLevelOuter[0] == 1) //if tess level is not equal to 1 it means it already has been set to the right value
-                gl_TessLevelOuter[0] = tesMax / lodIndex;
+        CameraToEdgeVec = outer0Pos.xyz - viewPosition.xyz;
+        if ((length(CameraToEdgeVec) < (maxDistLod * lodIndex / 8.0)) && gl_TessLevelOuter[0] == 1) //if tess level is not equal to 1 it means it already has been set to the right value
+            gl_TessLevelOuter[0] = tesMax / lodIndex;
 
 
-        CameraToEdgeVec = viewPos - outer1Pos.xyz;
+        CameraToEdgeVec = viewPosition.xyz - outer1Pos.xyz;
         if ((length(CameraToEdgeVec) < (maxDistLod * lodIndex / 8.0)) && gl_TessLevelOuter[1] == 1)
             gl_TessLevelOuter[1] = tesMax / lodIndex;
 
 
-        CameraToEdgeVec = viewPos - outer2Pos.xyz;
+        CameraToEdgeVec = viewPosition.xyz - outer2Pos.xyz;
         if ((length(CameraToEdgeVec) < (maxDistLod * lodIndex / 8.0)) && gl_TessLevelOuter[2] == 1)
             gl_TessLevelOuter[2] = tesMax / lodIndex;
 
 
-        CameraToEdgeVec = viewPos - outer3Pos.xyz;
+        CameraToEdgeVec = viewPosition.xyz - outer3Pos.xyz;
         if ((length(CameraToEdgeVec) < (maxDistLod * lodIndex / 8.0)) && gl_TessLevelOuter[3] == 1)
             gl_TessLevelOuter[3] = tesMax / lodIndex;
     }
@@ -101,8 +102,8 @@ void main()
     float outerAverage = (gl_TessLevelOuter[0] + gl_TessLevelOuter[1] + gl_TessLevelOuter[2] + gl_TessLevelOuter[3]) / 4;
     gl_TessLevelInner[0] = outerAverage;
     gl_TessLevelInner[1] = outerAverage;
-
     */
+   
 }
 
 vec4 scale(vec4 data, float scaleFactor)

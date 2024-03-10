@@ -2,7 +2,7 @@
 
 in vec3 Normal;
 in vec3 FragPos;
-
+in vec2 UV;
 
 out vec4 FragColor;
 
@@ -53,6 +53,14 @@ struct SpotLight
     vec3 specular;
 };
 
+struct Material {
+    sampler2D  texture_diffuse1;
+    sampler2D texture_specular1;
+    sampler2D texture_emission1;
+    float shininess;
+};
+
+
 layout(std140, binding = 0) uniform camAndProject
 {
     mat4 view;
@@ -70,6 +78,8 @@ layout(std140, binding = 2) uniform directLightBuff
     DirectLight sunLight;
 };
 
+uniform Material material;
+
 
 void main()
 {
@@ -81,6 +91,15 @@ void main()
     //FragColor = vec4(1.0,0.0, 0.0,1.0);
 
     vec3 normalRgb = Normal * 0.5 + 0.5;
-    FragColor = vec4(normalRgb, 1.0);
+    //FragColor = vec4(normalRgb, 1.0);
 
+
+    vec3 textColor = texture(material.texture_diffuse1, UV).rgb * 1.;
+
+
+    vec3 emission = texture(material.texture_emission1, UV).rgb * vec3(255, 158, 16) * 0.003;
+
+    FragColor = vec4(textColor + emission, 1.0);
+
+   // FragColor = vec4(UV.x,0.0,0.0, 1.0);
 }

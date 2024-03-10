@@ -669,13 +669,13 @@ glm::mat4 calSunPos()
 		World::sunAltitude += -(41.0f / 360.0f) * static_cast<float>(minTimeSpan);
 	}
 
-	xAxisValue = 100*sin(World::sunAltitude) * cos(World::sunAzimuth);
-	zAxisValue = 100*sin(World::sunAltitude) * sin(World::sunAzimuth);
-	yAxisValue = 10*cos(World::sunAltitude); 
+	//xAxisValue = 100*sin(World::sunAltitude) * cos(World::sunAzimuth);
+	//zAxisValue = 100*sin(World::sunAltitude) * sin(World::sunAzimuth);
+	//yAxisValue = 10*cos(World::sunAltitude); 
 
-	xAxisValue = 100 * sin( ( ((M_PI)/2) / 6) * Time::deltaSum) * cos( ( (2 * M_PI) / 6) * Time::deltaSum);
-	zAxisValue = 100 * sin((((M_PI) / 2) / 6) * Time::deltaSum) * sin(((2 * M_PI) / 6) * Time::deltaSum);
-	yAxisValue = 10 * cos((((M_PI) / 2) / 6) * Time::deltaSum);
+	xAxisValue = 100 * sin( ( ((M_PI)/2) / 300) * Time::deltaSum) * cos( ( (2 * M_PI) / 300) * Time::deltaSum);
+	zAxisValue = 100 * sin((((M_PI) / 2) / 300) * Time::deltaSum) * sin(((2 * M_PI) / 300) * Time::deltaSum);
+	yAxisValue = 10 * cos((((M_PI) / 2) / 300) * Time::deltaSum);
 
 
 	sphereTranslation = glm::translate(World::sunObj.localOrigin,glm::vec3(xAxisValue, yAxisValue, zAxisValue));
