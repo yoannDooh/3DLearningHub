@@ -11,8 +11,7 @@ namespace File
 }
 
 //debugInfoFIle function
-void openDebugFile();
-
+void displayTuiWindow();
 
 //print functions
 void printVec3(std::string_view objectName, glm::vec3 object);

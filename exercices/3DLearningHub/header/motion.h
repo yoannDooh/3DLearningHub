@@ -371,6 +371,32 @@ namespace Light
 	};	
 }
 
+namespace usrParameters
+{
+	enum EffectOption
+	{
+		inverse, //inverse color
+		greyscale,// B&W color
+
+		//Kernel effects
+		blur,
+		edgeDetection,
+		wireFrame
+	};
+
+	enum InfoOption
+	{
+		position, 
+		eyeDirection,	
+		time,
+		fps	
+	};
+
+	extern std::map<EffectOption, bool> effectOption;
+	extern std::map<InfoOption, bool> infoOptions;
+
+}
+
 //lighting 
 void setLighting();
 

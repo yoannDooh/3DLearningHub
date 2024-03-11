@@ -81,6 +81,12 @@ namespace World
 	int mapHeight{};
 }
 
+namespace usrParameters
+{
+	std::map<EffectOption, bool> effectOption {};
+	std::map<InfoOption, bool> infoOptions {};
+}
+
 //OBJECT CLASS
 Object::Object(glm::vec3 pos)
 {

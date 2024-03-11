@@ -8,7 +8,7 @@
 #include "../header/shader.h"
 #include "../header/motion.h"
 #include "../header/mesh.h"
-#include "../header/debug.h"
+#include "../header/tuiWindow.h"
 
 
 std::vector<float>points  {
@@ -24,6 +24,7 @@ std::vector<float>circleCenter{
 
 void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject);
 void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCubeObj);
+
 
  int main(int argc, TCHAR* argv[])
   {
@@ -390,8 +391,12 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 	//openDebugFile();
 
 	
-	// render loop
+	//CLI renderloop
+	std::thread cliThread (displayTuiWindow);
+
+	
 	glfwSetTime(0);
+	// 3D rendering render loop
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{	
 		newFrame();
