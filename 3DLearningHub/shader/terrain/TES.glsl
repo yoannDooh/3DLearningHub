@@ -84,7 +84,7 @@ vec2 bilinearInterpolation(float u, float v, vec2 data00, vec2 data10, vec2 data
 {																															//	lefData	|   | rightData
 	vec2 leftData = data00 + v * (data01 - data00);																			//			+---+																					
 	vec2 rightData = data10 + v * (data11 - data10);																		//		   0,0   1,0
-	return  vec2(leftData + u * (rightData - leftData));																	//			0    1
+	return  vec2(leftData + u * (rightData - leftDaDta));																	//			0    1
 
 }
 
