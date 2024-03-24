@@ -20,7 +20,7 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(windowW, windowH, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowW, windowH,windowTitle, NULL, NULL);
     windowPtr = window;
 
     if (window == NULL)
@@ -40,6 +40,40 @@ Window::Window(const unsigned int windowW, const unsigned int windowH, const cha
         didWindowFailed = -1;
     }
 }
+
+Window::Window(int widthRatio, int heightRatio, const char* windowTitle)
+{
+    // glfw: initialize and configure
+     // ------------------------------
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // glfw window creation
+    // --------------------
+    setWindowRatioToFullSceen(widthRatio, heightRatio);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT,windowTitle, NULL, NULL);
+    windowPtr = window;
+
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        didWindowFailed = -1;
+    }
+    glfwMakeContextCurrent(windowPtr);
+    glfwSetFramebufferSizeCallback(windowPtr, framebuffer_size_callback);
+
+    // glad: load all OpenGL function pointers
+    // ---------------------------------------
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        didWindowFailed = -1;
+    }
+}
+
 
 /*INPUT LISTENER FUNCTIONS*/
 void processInput(GLFWwindow* window)
@@ -117,6 +151,36 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 		Mouse::fov = 45.0f;
 }
 
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+	glfwGetWindowSize(window, &width, &height);
+	SCR_WIDTH = width;
+	SCR_HEIGHT = height;
+
+}
+
+void setWindowRatioToFullSceen(unsigned int widthRatio, unsigned int heightRatio)
+{
+    try 
+    {
+        if (widthRatio <=0 || heightRatio<=0 )
+            throw(-1);
+   
+	    const GLFWvidmode* screen = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+	    SCR_WIDTH = static_cast<float>(screen->width)/static_cast<float>(widthRatio);
+	    SCR_HEIGHT = static_cast<float>(screen->height) / static_cast<float>(heightRatio);
+    }
+
+    catch (int exeption)
+    {
+        std::cerr << "INCORECT VALUE FOR WINDOW SIZE" << std::endl;
+    }
+}
+
+
+
+
 /*WINDOW SETTINGS*/
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+unsigned int SCR_WIDTH = 800;
+unsigned int SCR_HEIGHT = 600;

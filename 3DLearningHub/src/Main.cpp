@@ -29,7 +29,7 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
  {
 
 	glfwWindowHint(GLFW_SAMPLES, 8);
-	Window window(SCR_WIDTH, SCR_HEIGHT, "learnOpengl");
+	Window window(2,2,"3DLearningHub");
 
 	//init shaders 
     Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
@@ -109,6 +109,8 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 	glfwSetCursorPosCallback(window.windowPtr, mouse_callback);
 	glfwSetScrollCallback(window.windowPtr, scroll_callback);
 	glfwSetInputMode(window.windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetWindowSizeCallback(window.windowPtr, window_size_callback);
+
 
 	//set models	
 	createAndSetWoodCube(objectShader, outlineShader, woodCubeObj);

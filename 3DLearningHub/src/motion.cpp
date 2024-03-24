@@ -48,7 +48,7 @@ namespace World
 	float CameraSpeed{ 40.5 };
 	Camera camera{ glm::vec3(-26.2968f, 46.3522f, -40.89f),  glm::vec3(26.2968f, -46.3522f, 40.89f), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
-	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar)  };
+	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT),projectionNear, projectionFar)  };
 
 	float projectionWidth { 800.0f };
 	float projectionHeight{ 600.0f };
