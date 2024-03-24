@@ -1,5 +1,5 @@
 # Présentation du projet
-Ce projet a pour vocation à me sevir de terrain de jeu dans mon apprentissage du rendu 3D en temps réel avec Opengl sur le long-terme. J'ai souhaité lui crée une structure logique et qui permettra une mise à echelle simple dans le temps. Il est encore très loin de ce que je désirais, des fonctionnalités sont mal implémentés comme le calcul de la postion du soleil, et donc de la lumière directionelle principal et unique du rendu, par exemple. A l'avenir j'ai pour ambition, qu'il puisse génerer procédurallement des "biomes" avecs des environnements différents, qu'il construira selon certains patternes. 
+Ce projet a pour vocation d'être un terrain de jeu dans mon apprentissage du rendu 3D en temps réel avec Opengl sur le long-terme. Je souhaite lui donner une structure logique et qui permettra une mise à echelle simple dans le temps. Il est encore très loin de ce que je désirais, des fonctionnalités sont mal implémentés comme le calcul de la postion du soleil, et donc de la lumière directionelle principal et unique du rendu, par exemple. A l'avenir j'ai pour ambition, qu'il puisse génerer procédurallement des "biomes" avecs des environnements différents, qu'il construira selon certains patternes. 
 
 # Structure du projet
 ## Dépendences
