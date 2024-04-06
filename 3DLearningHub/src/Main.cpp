@@ -1,6 +1,5 @@
 #include <iostream>
 #include <thread>
-#include <windows.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include "../header/stb_image.h"
@@ -9,27 +8,43 @@
 #include "../header/motion.h"
 #include "../header/mesh.h"
 #include "../header/tuiWindow.h"
+#include "../header/renderLoop.h"
 
 
 std::vector<float>points  {
--0.5f, 0.5f,0.0f, // top-left
-0.5f, 0.5f,0.0f, // top-right
-0.5f, -0.5f,0.0f, // bottom-right
--0.5f, -0.5f, 0.0f,// bottom-left
+	-0.5f, 0.5f,0.0f, // top-left
+	0.5f, 0.5f,0.0f, // top-right
+	0.5f, -0.5f,0.0f, // bottom-right
+	-0.5f, -0.5f, 0.0f,// bottom-left
 };
 
 std::vector<float>circleCenter{
 	0.0f, 0.0f,0.0f, 
 };
 
-void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject);
-void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCubeObj);
-
- int main()
- {
-
+int main()
+{
 	glfwWindowHint(GLFW_SAMPLES, 8);
 	Window window(2,2,"3DLearningHub");
+
+	//rendering parameters
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_CLAMP);
+
+	//callback functions/ window inputMode
+	glfwSetCursorPosCallback(window.windowPtr, mouse_callback);
+	glfwSetScrollCallback(window.windowPtr, scroll_callback);
+	glfwSetInputMode(window.windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetWindowSizeCallback(window.windowPtr, window_size_callback);
+
+	//init Uniforms buffer 
+	genUbo0();
+	genUbo1();
+	genUbo2();
 
 	//init shaders 
     Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
@@ -48,11 +63,25 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 	Shader hemisphereShader(".\\shader\\hemisphere\\vertex.glsl", ".\\shader\\hemisphere\\fragment.glsl", ".\\shader\\hemisphere\\TCS.glsl", ".\\shader\\hemisphere\\TES.glsl");
 	Shader cloudShader(".\\shader\\clouds\\vertex.glsl", ".\\shader\\clouds\\fragment.glsl");
 
-	//woodCube parameters
-	float cubeEdge{ 1.0f };
-	std::array<float, 3> cubeOriginCoord{ -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), -(cubeEdge / 2.0f) }; //bottomFace topLeft 
+	//init Framebuffers
+	FrameBuffer fbo(true, true);
+	FrameBuffer skyFbo(true, true);
 
-	//skybox textures pathes
+	//frameBuffer for shadowMap
+	ShadowBuffer depthMap;
+	depthMap.genDepthMapBuff();
+	//depthMap.genDepthMapLightSpaceMat(1000.0f, glm::vec3(-2532.0f, 7877.0f, -2065.0f), glm::vec3(0.0f));
+
+	//frameBuffer for cubeShadowMap
+	ShadowBuffer cubeDepthMap;
+	cubeDepthMap.genCubeMapBuff();
+
+	//set Time Speed 
+	Time::timeAccelerator = 50.0f;
+
+	/*MESHES INIT*/
+
+	//CubeMap mesh for skybox [DEPRECATED]
 	std::vector<const char*> skyBoxTextPaths{
 			".\\rsc\\skybox\\right.jpg",
 			".\\rsc\\skybox\\left.jpg",
@@ -62,71 +91,93 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			".\\rsc\\skybox\\back.jpg"
 	};
 
-	//init models
+	CubeMap skyBox(skyBoxTextPaths);
+
+	//Cube mesh for wood textured cube
+	float cubeEdge{ 1.0f };
+	std::array<float, 3> cubeOriginCoord{ -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), -(cubeEdge / 2.0f) }; //bottomFace topLeft 
+
 	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}) );
 	woodCube.activateCubeMap = true;
 	woodCube.activateShadow = true;
-
-	Cube lightCube( woodCube.getVbo(), woodCube.getEbo(),36 );
-	CubeMap skyBox (skyBoxTextPaths);
-
 	woodCube.addTexture(skyBox.texture);
+	
+	//Cube mesh for light moving Cubes
+	Cube lightCube( woodCube.getVbo(), woodCube.getEbo(),36 );
 
+	//Terrain mesh
 	Terrain terrain(2,".\\rsc\\terrain\\heightMaps\\drole.png");
+	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" }, { diffuse,normal,displacement }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
+	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
+	
+	//icoSphere mesh
 	Icosahedron icosahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
-
-	std::array<Object, 2> lightCubesObject{};
-	Object woodCubeObj;
-
-	//square of screenSize for postProcess
-	std::array<float, 2> origin{ 1.0f,1.0f };
-	Square quad(2.0, origin);
-
-	//square for cloud texture
-	Square cloudQuad(2.0, origin, loadTexture(".\\rsc\\skydome\\cloud2.png", diffuse));
-
-
-	CubeForHemisphere hemisphere;
 
 	//quad for geometry Shader 
 	Points quadPoints(points);
 	Points circle(circleCenter);
 
-	//rendering parameters
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_STENCIL_TEST);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glEnable(GL_MULTISAMPLE);
-	glEnable(GL_BLEND);
-	glEnable(GL_DEPTH_CLAMP);
+	//square mesh for postProcess
+	std::array<float, 2> origin{ 1.0f,1.0f };
+	Square quad(2.0, origin);
 
-	//init Uniforms buffer 
-	genUbo0();
-	genUbo1();
-	genUbo2();
+	//square mesh for clouds [DEPRECATED]
+	Square cloudQuad(2.0, origin, loadTexture(".\\rsc\\skydome\\cloud2.png", diffuse));
 
-	//callback functions/ window inputMode
-	glfwSetCursorPosCallback(window.windowPtr, mouse_callback);
-	glfwSetScrollCallback(window.windowPtr, scroll_callback);
-	glfwSetInputMode(window.windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetWindowSizeCallback(window.windowPtr, window_size_callback);
+	//hemisphere mesh
+	CubeForHemisphere hemisphere;
 
+	
+	/*OBJECTS INIT*/
+	std::array<Object, 2> lightCubesObject{};
+	Object woodCubeObj;
 
 	//set models	
 	createAndSetWoodCube(objectShader, outlineShader, woodCubeObj);
 	createAndSetLightCube(lightSourcesShader,lightCubesObject);
 
-	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" }, { diffuse,normal,displacement}), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
-	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
-	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
+	/*TEXTURES*/
 
-	FrameBuffer fbo(true, true);
-	FrameBuffer skyFbo(true, true);
+	//shadowMap
+	Texture shadowMap;
+	shadowMap.type = TextureMap::shadowMap;
+	
+	//cubeShadowMap
+	Texture cubeShadowMap;
+	cubeShadowMap.type = TextureMap::shadowCubeMap;
 
-	Time::timeAccelerator = 50.0f;
+	Texture sphereDiffuse{ loadTexture(".\\rsc\\skyDome\\sky.jpg",TextureMap::diffuse) };
 
-	// render loop lambda functions
+	Texture cloudDiffuse{ loadTexture(".\\rsc\\skyDome\\cloud2.png",TextureMap::diffuse) };
+
+	//Texture skybox { loadTexture(".\\rsc\\skyDome\\diffuseMap.jpg",TextureMap::diffuse) };
+	//Texture sphereEmission{ loadTexture(".\\rsc\\sun\\emissionMap.png",TextureMap::emission) };
+
+	/*VARIABLES FOR LAMBDA FUNCTIONS*/
+
+	//drawTerrain variables
+	glm::mat4 idMat{ glm::mat4(1.0f) }; //identity matrix
+
+	//drawIcosphere variables and set icosphereModel
+	glm::mat4 sphereModel{ glm::mat4(1.0f) };
+	//sphereModel = sphereModel * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, meterToWorldUnit(40.0f), 0.0f));
+	//sphereModel = sphereModel * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f) );
+	sphereShader.setMat4("model", sphereModel);
+
+	//drawCloud variables
+	glm::mat4 cloudModel{ glm::mat4(1.0f) };
+	//cloudModel = cloudModel * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.5f));
+	cloudModel = cloudModel * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+
+	//set hemisphere 
+	glm::mat4 hemisphereModel{ glm::mat4(1.0f) };
+	hemisphereModel = hemisphereModel * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, -0.6f, 0.0f));
+	hemisphereShader.use();
+	hemisphereShader.setMat4("model", hemisphereModel);
+
+	/*LAMBDA FUNCTIONS FOR RENDER LOOP*/
 	auto newFrame = [&window]()
 		{
 			processInput(window.windowPtr);
@@ -140,7 +191,7 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			Time::previousDelta = Time::deltaTime;
 			Time::deltaTime = Time::currentFrameTime - Time::lastFrameTime;
 			Time::lastFrameTime = Time::currentFrameTime;
-		};
+		};  
 	 
 	auto drawHouse = [&geometryShader, &quadPoints]()
 		{
@@ -204,14 +255,13 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 
 		};
 
-	glm::mat4 model{ glm::mat4(1.0f) };
-	auto drawTerrain = [&terrainShader,&terrain,&skyBox,&skyboxShader,&model]()
+	auto drawTerrain = [&terrainShader,&terrain,&skyBox,&skyboxShader,&idMat]()
 		{
 			float a{ 1.0f / static_cast<float>(terrain.width) };
 			float b{ 1.0f / static_cast<float>(terrain.height) };
 
 			terrainShader.use();
-			terrainShader.setMat4("model", model);
+			terrainShader.setMat4("model", idMat);
 			terrainShader.setFloat("maxDistLod", 300);
 
 
@@ -227,24 +277,8 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 
 		};
 
-	Texture shadowMap;
-	shadowMap.type = TextureMap::shadowMap;
-
-	Texture cubeShadowMap;
-	cubeShadowMap.type = TextureMap::shadowCubeMap;
-
-	ShadowBuffer depthMap;
-	depthMap.genDepthMapBuff();
-	//depthMap.genDepthMapLightSpaceMat(1000.0f, glm::vec3(-2532.0f, 7877.0f, -2065.0f), glm::vec3(0.0f));
-
-	ShadowBuffer cubeDepthMap;
-	cubeDepthMap.genCubeMapBuff();
-
-	auto drawShadow = [&model,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain,&woodCubeObj]()
+	auto drawShadow = [&idMat,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain,&woodCubeObj]()
 		{
-
-			//lightSpaceMat = toDirectionalLightSpaceMat(1000.0f,World::camera.pos, glm::vec3(0.0f) );
-			
 
 			depthMap.genDepthMapLightSpaceMat(1000.0f,glm::vec3(500*World::sunPos.x, 500*World::sunPos.y, 500*World::sunPos.z), glm::vec3(0.0f));
 
@@ -262,7 +296,7 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			//pass uniforms to terrainDirectShadowShader
 			
 			terrainDirectShadowShader.use();
-			terrainDirectShadowShader.setMat4("model", model);
+			terrainDirectShadowShader.setMat4("model", idMat);
 			terrainDirectShadowShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 			terrain.drawChunk(0, terrainDirectShadowShader);
 			
@@ -330,19 +364,7 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			drawTerrain();
 		};
 
-	auto debugInfo = []()
-		{
-			std::cout <<"seconds : " << Time::sec << "\tFrame number : " << Time::totalFrame << "\tFPS : " << Time::fps << "\n";
-			std::cout << "\n";
-
-			printTimeInGame();
-			printVec3("cameraPos", World::camera.pos);
-			printLine(50);
-			std::cout << "\n";
-
-		};
-
-	auto swapBuffer = [&window,&debugInfo]()
+	auto swapBuffer = [&window]()
 		{
 			glfwSwapBuffers(window.windowPtr);
 			glfwPollEvents();
@@ -354,34 +376,21 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 				updateTimeInGame();
 				Time::currentFrame = 1;
 				Time::fps = static_cast<float>(Time::totalFrame) / static_cast<float>(Time::sec);
-				debugInfo();
+				//debugInfo();
 			}
 			Time::deltaSum += Time::deltaTime;
 			++Time::currentFrame;
 			++Time::totalFrame;
 		};
 
-
-	/*DES TRUCS POUR LA SPHERE*/
-	glm::mat4 modele{ glm::mat4(1.0f) }; 
-	//modele = modele * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, meterToWorldUnit(40.0f), 0.0f));
-	//modele = modele * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f) );
-	sphereShader.setMat4("model", modele);
-
-	Texture sphereDiffuse{ loadTexture(".\\rsc\\skyDome\\sky.jpg",TextureMap::diffuse) };
-	Texture cloudDiffuse{ loadTexture(".\\rsc\\skyDome\\cloud2.png",TextureMap::diffuse) };
-
-	//Texture sphereEmission{ loadTexture(".\\rsc\\sun\\emissionMap.png",TextureMap::emission) };
-
-	
-	auto drawIcosphere = [&skyboxShader, &modele, &passThroughShader, &icosahedron, &skyBox,&sphereShader,&sphereDiffuse/*&sphereEmission*/]()
+	auto drawIcosphere = [&skyboxShader, &sphereModel, &passThroughShader, &icosahedron, &skyBox,&sphereShader,&sphereDiffuse/*&sphereEmission*/]()
 		{
 			updateViewProject();
 			sphereShader.use();
 
 			glm::mat4 sphereTranslation{ glm::translate(World::sunObj.localOrigin,glm::vec3(60 * World::sunPos.x,60 * World::sunPos.y, 60 * World::sunPos.z)) };
 			sphereShader.setMat4("sphereTranslation", sphereTranslation);
-			sphereShader.setMat4("model", modele);
+			sphereShader.setMat4("model", sphereModel);
 			sphereShader.setFloat("radius", 1.0f);
 
 
@@ -398,13 +407,6 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			//skyBox.draw(skyboxShader);		
 		}; 
 
-	/*DES TRUCS POUR LE DOME*/
-
-	glm::mat4 modelee{ glm::mat4(1.0f) };
-	modelee = modelee * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, -0.6f, 0.0f));
-
-	hemisphereShader.use();
-	hemisphereShader.setMat4("model", modelee);
 	auto drawSkyDome = [&skyFbo,&hemisphereShader,&sphereDiffuse,&hemisphere,&cloudDiffuse]()
 		{
 			hemisphereShader.use();
@@ -425,11 +427,6 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			hemisphere.draw(hemisphereShader);
 		};
 
-	/*DES TRUCS POUR LE NUAGE*/
-	glm::mat4 cloudModel{ glm::mat4(1.0f) };
-	//cloudModel = cloudModel * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.5f));
-	cloudModel = cloudModel * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-
 	auto drawCloud = [&cloudModel,&cloudQuad,&cloudShader,&skyFbo]()
 		{
 
@@ -449,6 +446,9 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 			glDepthFunc(GL_LESS);
 		};
 
+
+	/*RENDER PARAMETERS / EFFECTS*/
+
 	//setEffect(postProcessShader, edgeDetection);
 
 	//wireframe On
@@ -456,18 +456,10 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 
 	//openDebugFile();
 
-	
 	//TUI renderloop
-	//std::thread cliThread (displayTuiWindow);
-
-
+	std::thread cliThread (displayTuiWindow);
 	
 	glfwSetTime(0);
-	// 3D rendering render loop
-	
-
-	//Texture skybox { loadTexture(".\\rsc\\skyDome\\diffuseMap.jpg",TextureMap::diffuse) };
-
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{	
 		newFrame();
@@ -490,54 +482,4 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
  	return 0;
 }
 
-void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject)
-{
-	//create and set lightCube Object
-
-	for (int lightCubeIndex{}; lightCubeIndex < 2; ++lightCubeIndex)
-	{
-
-		glm::vec3 color{};
-		if (lightCubeIndex == 0)
-			 color =  rgb(4, 217, 255) ;
-
-		if (lightCubeIndex == 1)
-			 color = rgb(242, 0, 0) ;
-
-		lightCubesObject[lightCubeIndex].setLightPoint(color,glm::vec3(0.05f, 0.05f, 0.05f),glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(1.0f, 1.0f, 1.0f),1.0f,0.0014f,0.000007f);
-
-
-		lightCubesObject[lightCubeIndex].setOrbit(1.0, 30.0f, 30.0f, 6);
-		lightCubesObject[lightCubeIndex].isOrbiting = true;
-
-
-		lightCubesObject[lightCubeIndex].addToWorldObjects();
-	}
-
-	int index{};
-	for (auto& lightCube : lightCubesObject)
-	{
-		World::objects[lightCube.worldObjId].enableTranslation = false;
-		World::objects[lightCube.worldObjId].enableRotation = false;
-
-		World::objects[lightCube.worldObjId].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
-
-		World::objects[lightCube.worldObjId].rotatePlane((index + 1) * 60); //first is 60° and second 120°
-
-
-		++index;
-	}
-}
-
-void createAndSetWoodCube(Shader& shader,Shader& outlineShader,Object& woodCubeObj)
-{
-	woodCubeObj.addToWorldObjects();
-	woodCubeObj.enableRotation = false;
-	woodCubeObj.isOutLined = true;
-	woodCubeObj.isGlowing = true;
-	woodCubeObj.materialShininess = 64.0f;
-	woodCubeObj.shaderOutline = outlineShader;
-	woodCubeObj.setGlow(glm::vec3{ rgb(255, 255, 0) }, 0.25, 0.9);
-	woodCubeObj.set(shader, glm::vec3(0.0f, meterToWorldUnit(0.1f), 0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(10.0f));
-}
 

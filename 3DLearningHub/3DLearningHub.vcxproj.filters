@@ -9,6 +9,7 @@
     <ClCompile Include="src\mesh.cpp" />
     <ClCompile Include="src\tuiWindow.cpp" />
     <ClCompile Include="..\..\..\..\..\..\Downloads\glad (1)\src\glad.c" />
+    <ClCompile Include="src\renderLoop.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\GLAD\include\glad\glad.h" />
@@ -21,6 +22,7 @@
     <ClInclude Include="header\mesh.h" />
     <ClInclude Include="header\window.h" />
     <ClInclude Include="header\tuiWindow.h" />
+    <ClInclude Include="header\renderLoop.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\object\fragment.glsl" />

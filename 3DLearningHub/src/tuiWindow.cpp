@@ -20,11 +20,6 @@ namespace File
 
 using namespace ftxui;
  
-void caca()
-{
-	std::cout << "caca" ; 
-}
-
 // Display a component nicely with a title on the left.
 Component frameLayout(std::string name, Component component,int caracNb) // xShrink=true 
 {
@@ -72,7 +67,6 @@ Component toggleLayout(std::vector<std::string>toggle_Entries, std::vector<std::
 		}
 	);
 }
-
 
 int stringMaxLength(std::vector<std::string>strings)
 {
@@ -206,20 +200,6 @@ void displayTuiWindow()
 //	std::cout << tab_2_1_selected;
 }
 
-void openDebugFile()
-{
-	/*
-	File::debugInfo.open("test.txt", std::ofstream::out | std::ofstream::app);
-	
-
-	system("echo merde > test.txt; notepad.exe test.txt");
-	*/
-
-	std::string ntm{};
-	std::cin >> ntm;
-
-	std::cout << ntm;
-}
 
 void printVec3(std::string_view objectName, glm::vec3 object)
 {
