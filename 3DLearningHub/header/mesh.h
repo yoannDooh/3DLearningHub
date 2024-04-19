@@ -3,7 +3,11 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 #include "../header/shader.h"
+
 
 enum TextureMap
 {
@@ -42,7 +46,7 @@ struct Texture
 struct Vertex
 {
 	std::array<float, 3> coord{};     //vertices coord, in order : xyz
-	std::array<float, 3> coolors{};   //rgb cube model 
+	std::array<float, 3> coolors{};   //color of the vertex
 	std::array<float, 3> normal{};    //normal vector to the plane of the vertice 
 	std::array<float, 2> textCoord{};
 	float vertexNb{}; // vertex 1 2 3 4 5 6 7 or 8 on a cube 
@@ -92,11 +96,33 @@ private:
 	void setupMesh();
 };
 
+class AssimpModel //MAJORITY OF THE CODE OF THIS CLASS COME FROM LEARNOPENGL
+{
+public : 
+	std::vector<Mesh> meshes;
+	std::string path;
+	std::string directoryName;
+	
+	AssimpModel(std::string path);
+
+	void draw(Shader& shader);
+
+private :
+	void loadModel();
+	void processNode(aiNode* node,const aiScene* scene);
+	void processMesh(aiMesh* mesh, const aiScene* scene);
+	void loadMaterialTextures(std::vector<Texture>& textures,aiMaterial* mat, aiTextureType type,TextureMap textureType);
+	bool isTextureAlreadyLoad(const char* path,int length);
+	std::string direname(std::string& path); //cree un header file ou tu mets des fonctions "diverses et utiles" comme elle 
+};
+
+
+
 class Cube : public Mesh
 {
 public:
-	std::array<float,288> vertices;
-	std::array<unsigned int,36> indices;
+	std::array<float,288> vertices; //a suprr a la place fait une alloc du vector herite par mesh
+	std::array<unsigned int,36> indices; //a suppr, meme chose à faire ici 
 
 	Cube() {}
 	Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures);

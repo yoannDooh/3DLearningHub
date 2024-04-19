@@ -1,6 +1,7 @@
 #include "../header/renderLoop.h"
 #include "../header/tuiWindow.h"
 #include <iostream>
+
 void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject)
 {
 	//create and set lightCube Object
@@ -28,12 +29,12 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 	int index{};
 	for (auto& lightCube : lightCubesObject)
 	{
-		World::objects[lightCube.worldObjId].enableTranslation = false;
-		World::objects[lightCube.worldObjId].enableRotation = false;
+		World::objects[lightCube.worldObjIndex].enableTranslation = false;
+		World::objects[lightCube.worldObjIndex].enableRotation = false;
 
-		World::objects[lightCube.worldObjId].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
+		World::objects[lightCube.worldObjIndex].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
 
-		World::objects[lightCube.worldObjId].rotatePlane((index + 1) * 60); //first is 60° and second 120°
+		World::objects[lightCube.worldObjIndex].rotatePlane((index + 1) * 60); //first is 60ï¿½ and second 120ï¿½
 
 
 		++index;
@@ -61,4 +62,16 @@ void debugInfo()
 	printVec3("cameraPos", World::camera.pos);
 	printLine(50);
 	std::cout << "\n";
+}
+
+void checkUsrRenderParameter(Shader& postProcessShader)
+{
+	//effect ? 
+	setEffect(postProcessShader, UsrParameters::currentEffect);
+
+	//wireframe ? 
+	if (UsrParameters::activateWireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }

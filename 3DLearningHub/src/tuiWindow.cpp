@@ -1,5 +1,6 @@
 #include "../header/tuiWindow.h"
 #include <iostream>
+#include <algorithm>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 
@@ -9,12 +10,25 @@
 #include "ftxui/component/screen_interactive.hpp"  // for ScreenInteractive
 #include "ftxui/dom/elements.hpp"  // for Element, separator, operator|, vbox, border
 
+#include <Windows.h>
+#include <mmsystem.h>
+
+#pragma comment(lib, "winmm.lib")
+
 
 
 namespace File
 {
 	std::ofstream debugInfo{};
 }
+
+namespace TuiSelectors
+{
+	int effects_Selector{ 4 };
+	int wireframe_Selector{ 1 };
+	std::array<int, 7> infoToPrint_Selector{};
+}
+
 
 //https://arthursonzogni.github.io/FTXUI/examples_2component_2gallery_8cpp-example.html
 
@@ -28,7 +42,7 @@ Component frameLayout(std::string name, Component component,int caracNb) // xShr
     return hbox
 	( {
 	
-        text(name) | size(WIDTH, EQUAL, caracNb),
+        text(name) | size(WIDTH, EQUAL, caracNb) | center  ,
         separator(),
         component->Render() | xflex,
 	} ) 
@@ -38,37 +52,41 @@ Component frameLayout(std::string name, Component component,int caracNb) // xShr
 	);
 }
 
-Component toggleLayout(std::vector<std::string>toggle_Entries, std::vector<std::string> entriesOption,std::vector<Component> togglesComponent,std::vector<int> togglesSelectors, ftxui::Elements togglesElem, ftxui::Element toggleElem) // xShrink=true 
+Component verticalFrameLayout(std::string name, Component component, int caracNb) // xShrink=true 
 {
-	size_t toggleNbr{ togglesSelectors.size() / sizeof(int) };
-
-	togglesElem.resize(sizeof(Element) * 4);
-	
-
-	//create all togglesComponent
-	for (int toggleIndex{}; toggleIndex < toggleNbr; ++toggleIndex)
-	{
-		togglesComponent[toggleIndex] = Toggle(&entriesOption, &togglesSelectors[toggleIndex]);
-	}
-
-	//create all toggleElem layout 
-	for (int toggleIndex{}; toggleIndex < toggleNbr; ++toggleIndex)
-	{
-		toggleElem = hbox(text(toggle_Entries[toggleIndex]), togglesComponent[toggleIndex]->Render());
-		togglesElem[toggleIndex] = toggleElem;
-	}
-
-	return Renderer([togglesElem]
+	return Renderer(component, [name, component, caracNb]
 		{
 			return vbox
 			({
-				togglesElem
-			});
+
+				text(name) | size(WIDTH, EQUAL, caracNb) | center,
+				separator(),
+				component->Render() | xflex | center,
+				})
+				| xflex | border;
+
 		}
 	);
 }
 
 int stringMaxLength(std::vector<std::string>strings)
+{
+	int max{};
+	int currentLength{};
+
+	for (const auto& str : strings)
+	{
+		currentLength = str.length();
+
+		if (currentLength > max)
+			max = currentLength;
+	}
+
+	return max;
+}
+
+template<int size>
+int stringMaxLength(std::array<std::string,size> strings)
 {
 	int max{};
 	int currentLength{};
@@ -92,17 +110,10 @@ void displayTuiWindow()
 	std::vector<std::string> tab_values{
 	  "Presentation",
 	  "Menu",
-	  "tab_3",    
+	  "Render Information",    
 	};
 
-	std::vector<std::string> tab_1_entries{
-	"Forest",
-	"Water",
-	"I don't know",
-	};
-
-	std::vector<std::string> tab_2_Toggle_option
-	{
+	std::vector<std::string> on_off_toggleOption{
 		"on",
 		"off"
 	};
@@ -112,8 +123,7 @@ void displayTuiWindow()
 		"greyscale",
 		"blur",
 		"edgeDetection",
-		"wireFrameMode",
-		"Rien changer",
+		"none"
 	};
 
 	std::vector<std::string> tab2_Toggle2_Name{
@@ -121,61 +131,72 @@ void displayTuiWindow()
 		"Direction du regard",
 		"Heure + moment journee",
 		"fps",
-		"Rien changer",
-	};
-
-	std::vector<std::string> tab_3_entries{
-	"Table",
-	"Nothing",
-	"Is",
-	"Empty",
 	};
 
 	//selectors
 	int selectedTab = 0;
-	int tab_1_selected = 0;
-	int tab2_Toogle1_selected = 0;
-	int tab2_Toogle2_selected = 0;
-	int tab_3_selected = 0;
-	
-	//button and tab toogle
-	Component button = Button({
-  .label = "Click to quit",
-  .on_click = screen.ExitLoopClosure(), });
+	std::fill_n(TuiSelectors::infoToPrint_Selector.begin(), 7, 1);
 
+	//tab togle
 	auto tab_toggle = ftxui::Toggle(&tab_values, &selectedTab);
 
-	//auto test = toggleLayout("r", ftxui::Toggle(&tab2_Toggle1_Name,&tab2_Toogle1_selected), 20);
-	//TAB 2 LAYOUT
-	int tab_2_Max_Carac{ stringMaxLength({"EFFETS RENDU","Print information tab3"})};
+	
+	//button
+	std::function<void()> buttonPressed_Callback = &buttonPressed;
+	Component button{ Button("Click to validate",buttonPressed_Callback) };
 
 
-	std::vector<std::string>toggle_Entries{ "inverse","greyscale","blur","edgeDection" };
-	std::vector<std::string> entriesOption{ "on" , "off" };
+	//TAB 1 LAYOUT
+	Component textRenderer = Renderer([] {
+		return text("HOLA BONJOUR TEXTE DE PRESENTATION ON VA ALLER LE CHERCHER DANS UN AUTRE FICHIER APRES MAIS VOILA EN ATTENDANT J'AI RIEN A DIRE");
+		});
 
-	std::vector<Component> togglesComponent;
-	togglesComponent.resize(sizeof(Component) * toggle_Entries.size() );
-
-	std::vector<int> togglesSelectors;
-	togglesSelectors.resize(sizeof(int) * toggle_Entries.size() );
-
-	ftxui::Elements togglesElem;
-	ftxui::Element toggleElem;
-
-	auto layoutTab2 = Container::Vertical(
+	Component layoutTab1 = Container::Vertical(
 		{
-		frameLayout("EFFETS RENDU3",ftxui::Radiobox(&tab_2_Toggle_option, &tab2_Toogle2_selected),tab_2_Max_Carac),
-		frameLayout("Print information tab3",ftxui::Radiobox(&tab_2_Toggle_option, &tab2_Toogle2_selected),tab_2_Max_Carac),
-		toggleLayout(toggle_Entries,entriesOption,togglesComponent,togglesSelectors,togglesElem,toggleElem),
-		button | center,
+			textRenderer
+		});
+
+	//TAB 2 LAYOUT
+	Components tab2_infoToPrint_Toggles;
+	Components tab2_infoToPrint_Toggles_ToBeRender; //je suis vraiment fatigue pardon les noms de variables 
+
+	for (int EffectsToggleIndex{}; EffectsToggleIndex < tab2_Toggle2_Name.size(); ++EffectsToggleIndex)
+	{
+		tab2_infoToPrint_Toggles.push_back(ftxui::Toggle(&on_off_toggleOption, &TuiSelectors::infoToPrint_Selector[EffectsToggleIndex]));
+		tab2_infoToPrint_Toggles_ToBeRender.push_back(verticalFrameLayout(tab2_Toggle2_Name[EffectsToggleIndex], tab2_infoToPrint_Toggles[EffectsToggleIndex], tab2_Toggle2_Name[EffectsToggleIndex].length()));
+	}
+	Component informationToPrintToggle = Container::Horizontal(tab2_infoToPrint_Toggles_ToBeRender);
+	informationToPrintToggle = frameLayout("Information to print", informationToPrintToggle, 21);
+
+
+
+	Component effectToggle = frameLayout("Effects", Toggle(&tab2_Toggle1_Name, &TuiSelectors::effects_Selector), stringMaxLength(tab2_Toggle1_Name));
+	Component wireFrameToggle = frameLayout("Wireframe", Toggle(&on_off_toggleOption, &TuiSelectors::wireframe_Selector),10);
+
+	Component layoutTab2 = Container::Vertical(
+		{
+			effectToggle,
+			wireFrameToggle,
+			informationToPrintToggle,
+			button | center,
 		} );
+
+	//TAB 3 LAYOUT
+	Component textRendererTab3 = Renderer([] {
+		return text("ici ca va print des infos a balles ");
+		});
+
+	Component layoutTab3 = Container::Vertical(
+		{
+			textRendererTab3
+		});
 
 	//TABS CONTAINER
 	auto tab_container = ftxui::Container::Tab(
 		{
-			ftxui::Radiobox(&tab_1_entries, &tab_1_selected),
+			layoutTab1,			
 			layoutTab2,
-			ftxui::Radiobox(&tab_3_entries, &tab_3_selected),
+			layoutTab3,
 		},
 		&selectedTab) ;
 
@@ -197,9 +218,27 @@ void displayTuiWindow()
 
 	screen.Loop(renderer);
 
-//	std::cout << tab_2_1_selected;
 }
 
+void buttonPressed()
+{
+	//effect
+	UsrParameters::currentEffect = static_cast<Effects>(TuiSelectors::effects_Selector);
+
+	//wireframe
+	UsrParameters::activateWireframe = !static_cast<bool>(TuiSelectors::wireframe_Selector);
+
+	//info to print
+	for (int count{}; count < USR_PARAMETERS_INFO_TO_PRINT_NB; ++count)
+	{
+		if (TuiSelectors::infoToPrint_Selector[count] == 0)
+			UsrParameters::infoOptions[static_cast<UsrParameters::InfoOption>(count)] = false;
+		else
+			UsrParameters::infoOptions[static_cast<UsrParameters::InfoOption>(count)] = true;
+	}
+
+	PlaySound(TEXT("sound"), NULL, SND_FILENAME);
+}
 
 void printVec3(std::string_view objectName, glm::vec3 object)
 {

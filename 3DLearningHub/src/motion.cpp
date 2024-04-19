@@ -85,15 +85,22 @@ namespace World
 	int mapHeight{};
 }
 
-namespace usrParameters
+namespace UsrParameters 
 {
-	std::map<EffectOption, bool> effectOption {};
-	std::map<InfoOption, bool> infoOptions {};
+	Effects currentEffect{none};
+	bool activateWireframe{false};
+	std::map<InfoOption, bool> infoOptions {
+				{position,false},
+				{eyeDirection,false},
+				{time,false},
+				{fps,false},
+	};
 }
 
 //OBJECT CLASS
-Object::Object(glm::vec3 pos)
+Object::Object(Mesh* mesh,glm::vec3 pos)
 {
+	this->mesh = mesh;
 	model = glm::translate(localOrigin, pos);
 	pos = pos;
 }
@@ -124,18 +131,18 @@ void Object::move(glm::vec3 vector)
 	//should add a parameter to decide how the light position is influenced by the object it's associated with position 
 	//by default the light has the same position as the object 
 	//update lightPoint pos
-	if (!isLightPointIdValid(worldLighPointId))
+	if (!isLightPointIdValid(worldLighPointIndex))
 		return;
 
 	else
-		World::lightPoints[worldLighPointId].pos = pos;
+		World::lightPoints[worldLighPointIndex].pos = pos;
 
 	//update spotlight pos
-	if (!isSpotLightIdValid(worldSpotLightId))
+	if (!isSpotLightIdValid(worldSpotLightIndex))
 		return;
 
 	else
-		World::spotLights[worldSpotLightId].pos = pos;
+		World::spotLights[worldSpotLightIndex].pos = pos;
 }
 
 void Object::rotate(float degree, glm::vec3 rotateAxis)
@@ -145,18 +152,18 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 	model = model * glm::rotate(model, rad, rotateAxis);
 	pos = glm::rotate(model, rad, rotateAxis) * glm::vec4(pos, 1.0f);
 
-	if (!isLightPointIdValid(worldLighPointId))
+	if (!isLightPointIdValid(worldLighPointIndex))
 		return;
 
 	else
-		World::lightPoints[worldLighPointId].pos = pos;
+		World::lightPoints[worldLighPointIndex].pos = pos;
 
 	//update spotlight pos
-	if (!isSpotLightIdValid(worldSpotLightId))
+	if (!isSpotLightIdValid(worldSpotLightIndex))
 		return;
 
 	else
-		World::spotLights[worldSpotLightId].pos = pos;
+		World::spotLights[worldSpotLightIndex].pos = pos;
 }
 
 void Object::scale(glm::vec3 scaleVec)
@@ -164,18 +171,18 @@ void Object::scale(glm::vec3 scaleVec)
 	model = model * glm::scale(localOrigin, scaleVec);
 	pos = glm::scale(localOrigin, scaleVec) * glm::vec4(pos, 1.0f);
 
-	if (!isLightPointIdValid(worldLighPointId))
+	if (!isLightPointIdValid(worldLighPointIndex))
 		return;
 
 	else
-		World::lightPoints[worldLighPointId].pos = pos;
+		World::lightPoints[worldLighPointIndex].pos = pos;
 
 	//update spotlight pos
-	if (!isSpotLightIdValid(worldSpotLightId))
+	if (!isSpotLightIdValid(worldSpotLightIndex))
 		return;
 
 	else
-		World::spotLights[worldSpotLightId].pos = pos;
+		World::spotLights[worldSpotLightIndex].pos = pos;
 }
 
 void Object::rotatePlane(float degree)
@@ -195,29 +202,29 @@ void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
 {
 	try
 	{
-		if( !isLightPointIdValid(worldLighPointId) )
+		if( !isLightPointIdValid(worldLighPointIndex) )
 			throw(-1);
 
 		switch (memberIndex)
 		{
 		case 0:
-			World::lightPoints[worldLighPointId].color = newValue;
+			World::lightPoints[worldLighPointIndex].color = newValue;
 			break;
 
 		case 1:
-			World::lightPoints[worldLighPointId].pos = newValue;
+			World::lightPoints[worldLighPointIndex].pos = newValue;
 			break;
 
 		case 2:
-			World::lightPoints[worldLighPointId].ambient = newValue;
+			World::lightPoints[worldLighPointIndex].ambient = newValue;
 			break;
 
 		case 3:
-			World::lightPoints[worldLighPointId].diffuse = newValue;
+			World::lightPoints[worldLighPointIndex].diffuse = newValue;
 			break;
 
 		case 4:
-			World::lightPoints[worldLighPointId].specular = newValue;
+			World::lightPoints[worldLighPointIndex].specular = newValue;
 			break;
 
 		}
@@ -255,24 +262,24 @@ void Object::setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse
 {
 	Light::lightPoint lightPoint{};
 
-	worldLighPointId = World::lightPoints.size();
+	worldLighPointIndex = World::lightPoints.size();
 	World::lightPoints.push_back(lightPoint);
 
 	try
 	{
-		if (!isLightPointIdValid(worldLighPointId))
+		if (!isLightPointIdValid(worldLighPointIndex))
 			throw(-1);
 
-		World::lightPoints[worldLighPointId].color = color;
+		World::lightPoints[worldLighPointIndex].color = color;
 
 
-		World::lightPoints[worldLighPointId].ambient = ambiant;
-		World::lightPoints[worldLighPointId].diffuse = diffuse;
-		World::lightPoints[worldLighPointId].specular = specular;
+		World::lightPoints[worldLighPointIndex].ambient = ambiant;
+		World::lightPoints[worldLighPointIndex].diffuse = diffuse;
+		World::lightPoints[worldLighPointIndex].specular = specular;
 
-		World::lightPoints[worldLighPointId].constant = constant;
-		World::lightPoints[worldLighPointId].linearCoef = linearCoef;
-		World::lightPoints[worldLighPointId].squareCoef = squareCoef;
+		World::lightPoints[worldLighPointIndex].constant = constant;
+		World::lightPoints[worldLighPointIndex].linearCoef = linearCoef;
+		World::lightPoints[worldLighPointIndex].squareCoef = squareCoef;
 	}
 
 	catch (int exeption)
@@ -282,7 +289,7 @@ void Object::setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse
 	}
 }
 
-void Object::animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
+void Object::animate(Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
 {
 	if (enableTranslation)
 		move(translationVec);
@@ -313,7 +320,7 @@ void Object::animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::v
 
 		updateLightPoint(pos, 1);
 
-		shader.set3Float("lightColor", World::lightPoints[worldLighPointId].color);
+		shader.set3Float("lightColor", World::lightPoints[worldLighPointIndex].color);
 		shader.setMat4("model", model);
 		shader.setMat4("orbit", orbitMat);
 	}
@@ -324,7 +331,7 @@ void Object::animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::v
 		glStencilMask(0xFF);
 		//animateObject(mesh,shader,translationVec,rotationDegree,rotationAxis,scaleVec);
 
-		mesh.draw(shader);
+		mesh->draw(shader);
 
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 		glStencilMask(0x00);
@@ -340,7 +347,7 @@ void Object::animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::v
 		shaderOutline.setFloat("outLineWeight", weight);
 
 		shaderOutline.setMat4("model", model);
-		mesh.draw(shaderOutline);
+		mesh->draw(shaderOutline);
 
 		glStencilMask(0xFF);
 		glStencilFunc(GL_ALWAYS, 0, 0xFF);
@@ -351,7 +358,7 @@ void Object::animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::v
 		return;
 	}
 
-	mesh.draw(shader);
+	mesh->draw(shader);	
 }
 
 float Object::glow()
@@ -390,7 +397,7 @@ glm::mat4 Object::orbit()
 
 void Object::addToWorldObjects()
 {
-	worldObjId = World::objects.size();
+	worldObjIndex = World::objects.size();
 	World::objects.push_back(*this);
 
 }
@@ -655,6 +662,10 @@ void updateViewProject()
 void setEffect(Shader& shader, Effects effect)
 {
 	shader.use();
+
+	if (effect == none)
+		return;
+
 	shader.setInt("effectIndex", effect);
 }
 

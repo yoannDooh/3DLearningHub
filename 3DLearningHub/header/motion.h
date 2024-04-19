@@ -2,6 +2,8 @@
 
 #define POINT_LIGHTS_NB 2
 #define DIRECT_LIGHTS_NB 1
+#define USR_PARAMETERS_INFO_TO_PRINT_NB 4
+
 
 #include <array>
 #include <vector>
@@ -33,9 +35,10 @@ enum Effects
 	//Kernel effects
 	blur,
 	edgeDetection,
+	none,
 };
 
-enum DayPhases /* https ://www.suncalc.org/#/48.8769,2.3795,3/2024.03.04/07:01/1/3 */
+enum DayPhases
 {
 	dawn,
 	daytime,
@@ -151,12 +154,14 @@ public:
 class Object
 {
 	public:
+		Mesh* mesh{};
+		Shader shaderOutline{};
 		glm::mat4 model{ glm::mat4(1.0f) };
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
 		glm::vec3 pos{}; //in world unit
 		glm::vec3 basePos{}; //in world unit
 
-		float materialShininess;
+		float materialShininess{};
 
 		bool enableTranslation { true };
 		bool enableRotation { true };
@@ -165,14 +170,18 @@ class Object
 		bool isOutLined{ false };
 		bool isOrbiting{ false };
 		
+		
+		int id{-1};
+		int lighPointIndex{ -1 };
+		int	spotLightIndex{ -1 };
 
-		int worldObjId {-1}; //id of the element inside the World::Objects vector
-		int worldLighPointId {-1}; //id of the element inside the World::lightPoint vector
-		int worldSpotLightId {-1}; //id of the element inside the World::SpotLight vector
+		int worldObjIndex {-1}; //index of the element inside the World::Objects vector
+		int worldLighPointIndex {-1}; //index of the element inside the World::lightPoint vector
+		int worldSpotLightIndex {-1}; //index of the element inside the World::SpotLight vector
 
 		Object(){}
-		Object(glm::vec3 pos);
-		Object(glm::vec3 pos,float materialShininess);
+		Object(Mesh* mesh) { this->mesh = mesh; }
+		Object(Mesh* mesh,glm::vec3 pos);
 
 		bool isLightPointIdValid(int id);
 		bool isSpotLightIdValid(int id);
@@ -185,7 +194,7 @@ class Object
 
 		void set(Shader& shader,glm::vec3 translationVec, glm::vec3 rotationAxis,float rotationDegree, glm::vec3 scaleVec);//call once, before the renderLoop
 
-		void animate(Mesh mesh, Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec); //call every frame, inside the renderLoop
+		void animate(Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec); //call every frame, inside the renderLoop
 
 		void setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse, glm::vec3 specular, float constant, float linearCoef, float squareCoef);
 
@@ -213,9 +222,6 @@ class Object
 
 		void addToWorldObjects();
 
-		Shader shaderOutline{};
-
-
 private :
 	//outline parameters
 	glm::vec3 outlineColor{};
@@ -234,8 +240,6 @@ private :
 	float orbitHorizontalAxis{};
 	float orbitVerticalAxis{};
 	float orbitDuration{};
-
-	
 };
 
 namespace Mouse
@@ -374,19 +378,8 @@ namespace Light
 	};	
 }
 
-namespace usrParameters
+namespace UsrParameters //nom à changer 
 {
-	enum EffectOption
-	{
-		inverse, //inverse color
-		greyscale,// B&W color
-
-		//Kernel effects
-		blur,
-		edgeDetection,
-		wireFrame
-	};
-
 	enum InfoOption
 	{
 		position, 
@@ -395,7 +388,8 @@ namespace usrParameters
 		fps	
 	};
 
-	extern std::map<EffectOption, bool> effectOption;
+	extern Effects currentEffect;
+	extern bool activateWireframe;
 	extern std::map<InfoOption, bool> infoOptions;
 
 }

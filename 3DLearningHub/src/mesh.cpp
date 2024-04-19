@@ -3,6 +3,7 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+
 #include <cstddef>
 #include <iostream>
 #include <math.h> 
@@ -107,6 +108,8 @@ Texture loadTexture(const char* path, TextureMap type)
 
 	return texture;
 }
+
+
 
 /*--MESH CLASS--*/
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
@@ -299,6 +302,184 @@ void Mesh::setVbo(unsigned int vbo)
 void Mesh::setEbo(unsigned int ebo)
 {
 	EBO = ebo;
+}
+
+/*--MODEL CLASS--*/ 
+AssimpModel::AssimpModel(std::string path)
+{
+	AssimpModel::path = path;
+	directoryName = direname(path);
+
+
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+	loadModel();
+}
+
+void AssimpModel::draw(Shader& shader)
+{
+	for (Mesh& mesh : meshes)
+	{
+		mesh.draw(shader);
+	}
+}
+
+void AssimpModel::loadModel()
+{
+	Assimp::Importer import;
+	const aiScene * scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		std::cerr << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
+		return;
+	}
+
+	processNode(scene->mRootNode, scene);
+}
+
+void AssimpModel::processNode(aiNode* node, const aiScene* scene)
+{
+	for (unsigned int index = 0; index < node->mNumMeshes; ++index)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[index]];
+		processMesh(mesh, scene);
+	}
+
+	for (unsigned int index = 0; index < node->mNumChildren; ++index)
+	{
+		processNode(node->mChildren[index], scene);
+	}
+}
+
+void AssimpModel::processMesh(aiMesh* mesh, const aiScene* scene)
+{
+	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
+	std::vector<Texture> textures;
+
+
+	//vertices
+	for (unsigned int index = 0; index < mesh->mNumVertices; ++index)
+	{
+		Vertex vertex;
+
+		//coords
+		vertex.coord[0] = mesh->mVertices[index].x;
+		vertex.coord[1] = mesh->mVertices[index].y;
+		vertex.coord[2] = mesh->mVertices[index].z;
+
+		//normals
+		if (mesh->mNormals)
+		{
+			vertex.normal[0] = mesh->mNormals[index].x;
+			vertex.normal[1] = mesh->mNormals[index].y;
+			vertex.normal[2] = mesh->mNormals[index].z;
+		}
+		else
+			vertex.normal = { 0.0,0.0,0.0 };
+
+		//uv
+		if (mesh->mTextureCoords[0])
+		{
+			vertex.textCoord[0] = mesh->mTextureCoords[0][index].x;
+			vertex.textCoord[1] = mesh->mTextureCoords[0][index].y;
+		}
+		else
+			vertex.textCoord = { 0.0f,0.0f };
+		
+		
+		vertices.push_back(vertex);
+	}
+
+
+	//indices
+	for (unsigned int faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex)
+	{
+		aiFace face = mesh->mFaces[faceIndex];
+
+		for (unsigned int indiceIndex = 0; indiceIndex < face.mNumIndices; ++indiceIndex)
+			indices.push_back(face.mIndices[indiceIndex]);
+	}
+
+	// textures
+	if (mesh->mMaterialIndex >= 0)
+	{
+		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+		loadMaterialTextures(textures, material, aiTextureType_DIFFUSE, diffuse);
+		loadMaterialTextures(textures, material, aiTextureType_SPECULAR, specular);
+		loadMaterialTextures(textures, material, aiTextureType_EMISSIVE, emission);
+		loadMaterialTextures(textures, material, aiTextureType_NORMALS, normal);
+		loadMaterialTextures(textures, material, aiTextureType_DISPLACEMENT, displacement);
+		loadMaterialTextures(textures, material, aiTextureType_HEIGHT, heightmap);
+	}
+
+	meshes.push_back( Mesh(vertices, indices, textures) );
+}
+
+void AssimpModel::loadMaterialTextures(std::vector<Texture>& textures,aiMaterial* material, aiTextureType type, TextureMap textureType)
+{
+
+	for (unsigned int index = 0; index < material->GetTextureCount(type); ++index)
+	{
+		aiString str;
+		const char* c_str {str.C_Str()};
+		material->GetTexture(type, index, &str);	
+
+		std::string path{ directoryName + '\\' + c_str };
+
+		if (isTextureAlreadyLoad(c_str,str.length) )
+			continue;
+
+
+		Texture texture(loadTexture(path.c_str(), textureType));
+		textures.push_back(texture);
+	}
+
+}
+
+bool AssimpModel::isTextureAlreadyLoad(const char* path,int length)
+{
+	if (meshes.size() == 0)
+		return false;
+
+	for (const Mesh& mesh: meshes)
+	{
+		for (const Texture& meshTexts : mesh.textures)
+		{
+			if (length != meshTexts.path.size())
+				return true;
+
+			for (int caracIndex{}; caracIndex<length; ++caracIndex)
+			{
+				if (path[caracIndex] != meshTexts.path[caracIndex])
+					return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+std::string AssimpModel::direname(std::string& path)
+{
+	std::string directory;
+	int direNameEndIndex{ static_cast<int>(path.length()) - 1};
+
+	while (path[direNameEndIndex]!='\\') //faudrait check si l'os c'est pas autre chose que windows
+	{
+		--direNameEndIndex;
+	}
+
+	directory.reserve(direNameEndIndex+1);
+
+	for (int caracIndex{}; caracIndex<direNameEndIndex;++caracIndex)
+	{
+		directory.push_back(path[caracIndex]);
+	}
+
+	return directory;
 }
 
 /*--CUBE CLASS--*/
@@ -1079,9 +1260,11 @@ void Square::draw(Shader& shader, std::string textureName)
 void Square::draw(Shader& shader, std::string textureName, unsigned int textureId)
 {
 	shader.use();
+
 	shader.setInt(textureName, 0);
 	glBindVertexArray(VAO);
 
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureId);
 
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

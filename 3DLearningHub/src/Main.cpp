@@ -10,23 +10,12 @@
 #include "../header/tuiWindow.h"
 #include "../header/renderLoop.h"
 
-
-std::vector<float>points  {
-	-0.5f, 0.5f,0.0f, // top-left
-	0.5f, 0.5f,0.0f, // top-right
-	0.5f, -0.5f,0.0f, // bottom-right
-	-0.5f, -0.5f, 0.0f,// bottom-left
-};
-
-std::vector<float>circleCenter{
-	0.0f, 0.0f,0.0f, 
-};
-
 int main()
 {
+
 	glfwWindowHint(GLFW_SAMPLES, 8);
 	Window window(2,2,"3DLearningHub");
-
+	
 	//rendering parameters
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
@@ -79,6 +68,10 @@ int main()
 	//set Time Speed 
 	Time::timeAccelerator = 50.0f;
 
+
+	/*MODELS INIT*/
+	AssimpModel backPackModel(".\\rsc\\models\\backpack\\backpack.obj");
+
 	/*MESHES INIT*/
 
 	//CubeMap mesh for skybox [DEPRECATED]
@@ -116,8 +109,14 @@ int main()
 	Icosahedron icosahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
 
 	//quad for geometry Shader 
-	Points quadPoints(points);
-	Points circle(circleCenter);
+	Points quadPoints({
+	-0.5f, 0.5f,0.0f, // top-left
+	0.5f, 0.5f,0.0f, // top-right
+	0.5f, -0.5f,0.0f, // bottom-right
+	-0.5f, -0.5f, 0.0f,// bottom-left
+	});
+
+	Points circle({0.0f, 0.0f,0.0f,});
 
 	//square mesh for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -131,8 +130,8 @@ int main()
 
 	
 	/*OBJECTS INIT*/
-	std::array<Object, 2> lightCubesObject{};
-	Object woodCubeObj;
+	std::array<Object, 2> lightCubesObject{&lightCube,&lightCube};
+	Object woodCubeObj(&woodCube);
 
 	//set models	
 	createAndSetWoodCube(objectShader, outlineShader, woodCubeObj);
@@ -178,9 +177,10 @@ int main()
 	hemisphereShader.setMat4("model", hemisphereModel);
 
 	/*LAMBDA FUNCTIONS FOR RENDER LOOP*/
-	auto newFrame = [&window]()
+	auto newFrame = [&window,&postProcessShader]()
 		{
 			processInput(window.windowPtr);
+
 
 			glm::vec3 clearColor{ rgb(29, 16, 10) };
 			glClearColor(clearColor.x, clearColor.y, clearColor.z, 0.0f);
@@ -191,7 +191,32 @@ int main()
 			Time::previousDelta = Time::deltaTime;
 			Time::deltaTime = Time::currentFrameTime - Time::lastFrameTime;
 			Time::lastFrameTime = Time::currentFrameTime;
-		};  
+
+			//update UBOs//SSOs
+			setLighting();
+			updateViewProject();
+			calcDirectLightAttrib();
+			checkUsrRenderParameter(postProcessShader);
+		}; 
+
+	auto swapBuffer = [&window]()
+		{
+			glfwSwapBuffers(window.windowPtr);
+			glfwPollEvents();
+
+			//increment time variables and debugInfo
+			if (glfwGetTime() >= Time::sec + 1)
+			{
+				++Time::sec;
+				updateTimeInGame();
+				Time::currentFrame = 1;
+				Time::fps = static_cast<float>(Time::totalFrame) / static_cast<float>(Time::sec);
+				//debugInfo();
+			}
+			Time::deltaSum += Time::deltaTime;
+			++Time::currentFrame;
+			++Time::totalFrame;
+		};
 	 
 	auto drawHouse = [&geometryShader, &quadPoints]()
 		{
@@ -207,55 +232,27 @@ int main()
 			circle.draw();
 		};
 
-	auto drawScene = [&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject,&woodCubeObj]()
+	auto drawSkyDome = [&hemisphereShader, &sphereDiffuse, &hemisphere, &cloudDiffuse]()
 		{
-			//DrawScene
-			setLighting();
-			updateViewProject();
-			
-			for (auto& lightCubeObj : lightCubesObject)
-			{
-				World::objects[lightCubeObj.worldObjId].enableTranslation = false;
-				World::objects[lightCubeObj.worldObjId].enableRotation = false;
-				World::objects[lightCubeObj.worldObjId].enableScale = false;
+			hemisphereShader.use();
 
+			hemisphereShader.setFloat("elaspedTime", Time::totalMinInGame);
+			hemisphereShader.setInt("currentPhase", Time::dayPhase);
+			hemisphereShader.setFloat("currentPhaseNextPhaseDist", Time::currentPhaseNextPhaseDist);
+			hemisphereShader.setFloat("currentHourCurrentPhaseBaseHourDist", Time::currentHourCurrentPhaseBaseHourDist);
 
-				World::objects[lightCubeObj.worldObjId].animate(lightCube, lightSourcesShader,glm::vec3(0.0, 0.0, 0.0f),glm::vec3(0.0, 0.0, 0.0f), 0.0f,glm::vec3(0.0,0.0,0.0f) );
-			}
-			
-			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
-			woodCubeObj.enableScale = false;
-			woodCubeObj.enableRotation = false;
-			woodCubeObj.enableTranslation = false;
-			woodCubeObj.animate(woodCube, objectShader, glm::vec3(0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(0.0f));
+			glActiveTexture(GL_TEXTURE0);
+			hemisphereShader.setInt("skybox", 0);
+			glBindTexture(GL_TEXTURE_2D, sphereDiffuse.ID);
 
-			//DRAW IN LAST
-			//skyBox.draw(skyboxShader);
+			glActiveTexture(GL_TEXTURE1);
+			hemisphereShader.setInt("cloud", 1);
+			glBindTexture(GL_TEXTURE_2D, cloudDiffuse.ID);
 
+			hemisphere.draw(hemisphereShader);
 		};
 
-	auto drawSceneWithEffect = [&drawScene,&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &quad, &postProcessShader, &newFrame]()
-		{
-			//BindFbo
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
-			glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
-			newFrame();
-
-			//DrawScene
-			drawScene();
-
-			//DRAW IN LAST
-			skyBox.draw(skyboxShader);
-
-			//drawTexture Fbo
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-			quad.draw(postProcessShader, "screenTexture", fbo.texId);
-
-		};
-
-	auto drawTerrain = [&terrainShader,&terrain,&skyBox,&skyboxShader,&idMat]()
+	auto drawTerrain = [&terrainShader, &terrain, &skyBox, &skyboxShader, &idMat]()
 		{
 			float a{ 1.0f / static_cast<float>(terrain.width) };
 			float b{ 1.0f / static_cast<float>(terrain.height) };
@@ -268,13 +265,49 @@ int main()
 			terrainShader.setFloat("area1.shininess", 512.0f);
 			terrainShader.setFloat("area1.specularIntensity", 0.0f);
 
-
-			setLighting();
 			terrain.draw(terrainShader);
+		};
 
-			//DRAW IN LAST
-			//skyBox.draw(skyboxShader);
+	auto drawScene = [&lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject,&woodCubeObj,&drawTerrain,&drawSkyDome]()
+		{	
+			
+			for (auto& lightCubeObj : lightCubesObject)
+			{
+				World::objects[lightCubeObj.worldObjIndex].enableTranslation = false;
+				World::objects[lightCubeObj.worldObjIndex].enableRotation = false;
+				World::objects[lightCubeObj.worldObjIndex].enableScale = false;
 
+
+				World::objects[lightCubeObj.worldObjIndex].animate(lightSourcesShader,glm::vec3(0.0, 0.0, 0.0f),glm::vec3(0.0, 0.0, 0.0f), 0.0f,glm::vec3(0.0,0.0,0.0f) );
+			}
+			
+			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
+			woodCubeObj.enableScale = false;
+			woodCubeObj.enableRotation = false;
+			woodCubeObj.enableTranslation = false;
+			woodCubeObj.animate(objectShader, glm::vec3(0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(0.0f));
+
+			drawTerrain();
+			
+			//DRAW IN Last
+			drawSkyDome();
+		};
+
+	auto drawSceneWithEffect = [&drawScene,&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &quad, &postProcessShader, &newFrame]()
+		{
+			//BindFbo
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+			glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+
+			//and draw scene as normal
+			newFrame();
+			drawScene();
+
+			//drawTexture Fbo
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+			quad.draw(postProcessShader, "screenTexture", fbo.texId);
+			glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 		};
 
 	auto drawShadow = [&idMat,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain,&woodCubeObj]()
@@ -320,11 +353,8 @@ int main()
 			drawTerrain();
 		};
 
-	auto drawPointShadow = [&cubeDepthMap,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader,&woodCubeObj]()
+	auto drawPointShadow = [&cubeDepthMap,&drawSceneWithEffect,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader,&woodCubeObj,&fbo,&newFrame,&quad,&postProcessShader]()
 		{
-
-			setLighting();
-
 			cubeDepthMap.genCubeMapLightSpaceMat(25.0f, World::lightPoints[0].pos);
 
 			//setup viewPort size dans fbo
@@ -356,31 +386,33 @@ int main()
 
 			terrainShader.use();
 			terrainShader.setFloat("pointLightFarPlane", 25.0f);
-		
+			
 			//render scene as usual
+			glCullFace(GL_BACK);
 			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			drawScene();
-			drawTerrain();
-		};
 
-	auto swapBuffer = [&window]()
-		{
-			glfwSwapBuffers(window.windowPtr);
-			glfwPollEvents();
-
-			//increment time variables and debugInfo
-			if (glfwGetTime() >= Time::sec + 1)
+			if (UsrParameters::currentEffect==none)
 			{
-				++Time::sec;
-				updateTimeInGame();
-				Time::currentFrame = 1;
-				Time::fps = static_cast<float>(Time::totalFrame) / static_cast<float>(Time::sec);
-				//debugInfo();
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				newFrame();
+				drawScene();
 			}
-			Time::deltaSum += Time::deltaTime;
-			++Time::currentFrame;
-			++Time::totalFrame;
+
+			else
+			{
+				//BindFbo
+				glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+				glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+
+				//and draw scene as normal
+				newFrame();
+				drawScene();
+
+				//drawTexture Fbo
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+				quad.draw(postProcessShader, "screenTexture", fbo.texId);
+			}
 		};
 
 	auto drawIcosphere = [&skyboxShader, &sphereModel, &passThroughShader, &icosahedron, &skyBox,&sphereShader,&sphereDiffuse/*&sphereEmission*/]()
@@ -407,26 +439,6 @@ int main()
 			//skyBox.draw(skyboxShader);		
 		}; 
 
-	auto drawSkyDome = [&skyFbo,&hemisphereShader,&sphereDiffuse,&hemisphere,&cloudDiffuse]()
-		{
-			hemisphereShader.use();
-
-			glActiveTexture(GL_TEXTURE0);
-			hemisphereShader.setInt("skybox", 0);
-			glBindTexture(GL_TEXTURE_2D, sphereDiffuse.ID);
-
-			glActiveTexture(GL_TEXTURE1);
-			hemisphereShader.setInt("cloud", 1);
-			glBindTexture(GL_TEXTURE_2D, cloudDiffuse.ID);
-
-			hemisphereShader.setFloat("elaspedTime", Time::totalMinInGame);
-			hemisphereShader.setInt("currentPhase", Time::dayPhase);
-			hemisphereShader.setFloat("currentPhaseNextPhaseDist", Time::currentPhaseNextPhaseDist);
-			hemisphereShader.setFloat("currentHourCurrentPhaseBaseHourDist", Time::currentHourCurrentPhaseBaseHourDist);
-
-			hemisphere.draw(hemisphereShader);
-		};
-
 	auto drawCloud = [&cloudModel,&cloudQuad,&cloudShader,&skyFbo]()
 		{
 
@@ -446,34 +458,26 @@ int main()
 			glDepthFunc(GL_LESS);
 		};
 
-
-	/*RENDER PARAMETERS / EFFECTS*/
-
-	//setEffect(postProcessShader, edgeDetection);
-
-	//wireframe On
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 	//openDebugFile();
-
+	
 	//TUI renderloop
 	std::thread cliThread (displayTuiWindow);
-	
+	setEffect(postProcessShader, greyscale);
+	glm::mat4 idendity{ (1.0f) };
+	idendity = idendity * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 20.0f, 0.0f));
+	idendity = idendity * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f,2.0f));
+
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{	
 		newFrame();
-		updateViewProject();
-		calcDirectLightAttrib();
+		//drawPointShadow();
 
+		objectShader.use();
+		objectShader.setMat4("model", idendity);
+		backPackModel.draw(objectShader);
 		drawTerrain();
-
-		drawIcosphere();
-
-		drawPointShadow();
-
 		drawSkyDome();
-
 
 		swapBuffer();
 	}
