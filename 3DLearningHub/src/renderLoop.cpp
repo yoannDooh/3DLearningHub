@@ -8,6 +8,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 
 	for (int lightCubeIndex{}; lightCubeIndex < 2; ++lightCubeIndex)
 	{
+		lightCubesObject[lightCubeIndex].enableCollisionShape = false;
 
 		glm::vec3 color{};
 		if (lightCubeIndex == 0)
@@ -17,7 +18,6 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 			color = rgb(242, 0, 0);
 
 		lightCubesObject[lightCubeIndex].setLightPoint(color, glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.0014f, 0.000007f);
-
 
 		lightCubesObject[lightCubeIndex].setOrbit(1.0, 30.0f, 30.0f, 6);
 		lightCubesObject[lightCubeIndex].isOrbiting = true;
@@ -45,7 +45,7 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 {
 	woodCubeObj.addToWorldObjects();
 	woodCubeObj.enableRotation = false;
-	woodCubeObj.isOutLined = true;
+	woodCubeObj.enableOutLine = true;
 	woodCubeObj.isGlowing = true;
 	woodCubeObj.materialShininess = 64.0f;
 	woodCubeObj.shaderOutline = outlineShader;

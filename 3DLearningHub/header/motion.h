@@ -46,9 +46,10 @@ enum DayPhases
 	night
 };
 
-enum collisionShape
+enum CollisionShape
 {
-	cube,
+	aabb,
+	obb,
 	sphere
 };
 
@@ -159,7 +160,8 @@ public:
 class Object
 {
 	public:
-		Mesh* mesh{};
+		AssimpModel* assimpModel{ nullptr };
+		Mesh* mesh{ nullptr };
 		Shader shaderOutline{};
 		glm::mat4 model{ glm::mat4(1.0f) };
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
@@ -167,13 +169,15 @@ class Object
 		glm::vec3 basePos{}; //in world unit
 		glm::vec3 orientation{}; //in degree
 
+
 		float materialShininess{};
 
 		bool enableTranslation { true };
 		bool enableRotation { true };
 		bool enableScale { true };
+		bool enableCollisionShape{ true };
+		bool enableOutLine{ false };
 		bool isGlowing{ false };
-		bool isOutLined{ false };
 		bool isOrbiting{ false };
 		
 		
@@ -181,11 +185,15 @@ class Object
 		//int	lighPointId{ -1 };
 		//int	spotLightId{ -1 };
 
+		CollisionShape exteriorCollisionShape{ aabb  };
+
 		int worldObjIndex {-1}; //index of the element inside the World::Objects vector
 		int worldLighPointIndex {-1}; //index of the element inside the World::lightPoint vector
 		int worldSpotLightIndex {-1}; //index of the element inside the World::SpotLight vector
 
 		Object() {genId();}
+		Object(AssimpModel* model3d) { genId(); this->assimpModel = model3d; }
+		Object(AssimpModel* model3d, glm::vec3 pos);
 		Object(Mesh* mesh) { genId(); this->mesh = mesh; }
 		Object(Mesh* mesh,glm::vec3 pos);
 		Object(const Object& object);
@@ -202,9 +210,9 @@ class Object
 		void rotatePlane(float degree);
 		void updateLightPoint(glm::vec3 newValue,int memberIndex); //memberIndex : 0 for color ... 4 for specular 
 
-		void set(Shader& shader,glm::vec3 translationVec, glm::vec3 rotationAxis,float rotationDegree, glm::vec3 scaleVec);//call once, before the renderLoop
+		void set(Shader& shader, glm::vec3 translationVec = glm::vec3(0.0f,0.0f,0.0f), glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 0.0f), float rotationDegree = 0.0f, glm::vec3 scaleVec = glm::vec3(0.0f, 0.0f, 0.0f) );//call once, before the renderLoop
 
-		void animate(Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec); //call every frame, inside the renderLoop
+		void animate(Shader& shader,Shader*collionShape=nullptr,glm::vec3 translationVec = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 0.0f), float rotationDegree = 0.0f, glm::vec3 scaleVec = glm::vec3(0.0f, 0.0f, 0.0f)); //call every frame, inside the renderLoop
 
 		void setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse, glm::vec3 specular, float constant, float linearCoef, float squareCoef);
 

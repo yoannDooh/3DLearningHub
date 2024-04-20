@@ -125,13 +125,13 @@ public:
 	std::array<unsigned int,36> indices; //a suppr, meme chose à faire ici 
 
 	Cube() {}
-	Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures);
+	Cube(float cote, std::array<float, 3> originCoord, std::vector<Texture> textures);
 	//generate VAO,VBO and EBO from the provided cote and originCoor
 	//there is 5 attribute, in order : coord(3 floats) -> coolors coord (https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/RGB_color_solid_cube.png/220px-RGB_color_solid_cube.png) (3 floats)
 	//->normal vector (3 float) -> texture coord (2 float) -> the vertex number within the 8 vertices of the cube (1 float) 
 	//originCoord is bottomFace topLeft vertex 
 
-	Cube(float cote, std::array<float, 3>& originCoord);
+	Cube(float cote, std::array<float, 3> originCoord);
 	Cube(unsigned int vbo, unsigned int ebo,unsigned int indiceNb); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
 	
 protected:

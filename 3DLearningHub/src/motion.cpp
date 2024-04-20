@@ -113,6 +113,16 @@ Object::Object(Mesh* mesh,glm::vec3 pos)
 	pos = basePos;
 }
 
+Object::Object(AssimpModel* model3d, glm::vec3 pos)
+{
+	genId();
+
+	this->assimpModel = model3d;
+	this->model = glm::translate(localOrigin, pos);
+	basePos = pos;
+	pos = basePos;
+}
+
 Object::Object(const Object& object)
 {
 	id = -1;
@@ -128,8 +138,9 @@ Object::Object(const Object& object)
 	enableTranslation = object.enableTranslation;
 	enableRotation = object.enableRotation;
 	enableScale = object.enableScale;
+	enableCollisionShape = object.enableCollisionShape;
 	isGlowing = object.isGlowing;
-	isOutLined = object.isOutLined;
+	enableOutLine = object.enableOutLine;
 	isOrbiting = object.isOrbiting;
 	worldObjIndex = object.worldObjIndex; 
 	worldLighPointIndex = object.worldLighPointIndex; 
@@ -159,8 +170,9 @@ Object& Object::operator=(const Object& object)
 	enableTranslation = object.enableTranslation;
 	enableRotation = object.enableRotation;
 	enableScale = object.enableScale;
+	enableCollisionShape = object.enableCollisionShape;
 	isGlowing = object.isGlowing;
-	isOutLined = object.isOutLined;
+	enableOutLine = object.enableOutLine;
 	isOrbiting = object.isOrbiting;
 	worldObjIndex = object.worldObjIndex;
 	worldLighPointIndex = object.worldLighPointIndex;
@@ -407,7 +419,7 @@ void Object::setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse
 	}
 }
 
-void Object::animate(Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
+void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
 {
 	if (enableTranslation)
 		move(translationVec);
@@ -443,7 +455,16 @@ void Object::animate(Shader& shader, glm::vec3 translationVec, glm::vec3 rotatio
 		shader.setMat4("orbit", orbitMat);
 	}
 
-	if (isOutLined)
+	if (enableCollisionShape && collionShapeShader!=nullptr)
+	{
+		//exteriorCollisionShape
+		Cube collisionCube(2.0f, { -1.0f,-1.0f,-1.0f });
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		collisionCube.draw(*collionShapeShader);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	if (enableOutLine)
 	{
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 		glStencilMask(0xFF);
@@ -476,7 +497,19 @@ void Object::animate(Shader& shader, glm::vec3 translationVec, glm::vec3 rotatio
 		return;
 	}
 
-	mesh->draw(shader);	
+	if (assimpModel != nullptr)
+	{
+		assimpModel->draw(shader);
+		return;
+	}
+
+	if (mesh!=nullptr)
+	{
+		mesh->draw(shader);
+		return;
+	}
+
+	std::cerr << "no mesh/model binded";
 }
 
 float Object::glow()

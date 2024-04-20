@@ -179,6 +179,8 @@
     <None Include="shader\circle\vertex.glsl" />
     <None Include="shader\clouds\fragment.glsl" />
     <None Include="shader\clouds\vertex.glsl" />
+    <None Include="shader\cubeCollisionShape\fragment.glsl" />
+    <None Include="shader\cubeCollisionShape\vertex.glsl" />
     <None Include="shader\colorVertexNormal\fragment.glsl" />
     <None Include="shader\colorVertexNormal\geometry.glsl" />
     <None Include="shader\colorVertexNormal\vertex.glsl" />

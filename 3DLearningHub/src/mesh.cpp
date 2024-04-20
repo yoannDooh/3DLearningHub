@@ -483,7 +483,7 @@ std::string AssimpModel::direname(std::string& path)
 }
 
 /*--CUBE CLASS--*/
-Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> textures)
+Cube::Cube(float cote, std::array<float, 3> originCoord, std::vector<Texture> textures)
 {
 	//vertice and face order :
 	//topLeft -> bottomLeft -> bottomRight -> topRight
@@ -817,6 +817,11 @@ Cube::Cube(float cote, std::array<float, 3>& originCoord, std::vector<Texture> t
 
 	//create VAO,EBO,VBO
 	setupCube();
+}
+
+Cube::Cube(float cote, std::array<float, 3> originCoord)
+{
+	*this = Cube(cote, originCoord, {});
 }
 
 Cube::Cube(unsigned int vbo, unsigned int ebo, unsigned int indiceNb)

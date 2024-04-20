@@ -51,6 +51,8 @@ int main()
 	Shader sphereShader(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
 	Shader hemisphereShader(".\\shader\\hemisphere\\vertex.glsl", ".\\shader\\hemisphere\\fragment.glsl", ".\\shader\\hemisphere\\TCS.glsl", ".\\shader\\hemisphere\\TES.glsl");
 	Shader cloudShader(".\\shader\\clouds\\vertex.glsl", ".\\shader\\clouds\\fragment.glsl");
+	Shader cubeCollisionShader(".\\shader\\cubeCollisionShape\\vertex.glsl", ".\\shader\\cubeCollisionShape\\fragment.glsl");
+
 
 	//init Framebuffers
 	FrameBuffer fbo(true, true);
@@ -87,10 +89,10 @@ int main()
 	CubeMap skyBox(skyBoxTextPaths);
 
 	//Cube mesh for wood textured cube
-	float cubeEdge{ 1.0f };
+	float cubeEdge{ 2.0f };
 	std::array<float, 3> cubeOriginCoord{ -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), -(cubeEdge / 2.0f) }; //bottomFace topLeft 
 
-	Cube woodCube (cubeEdge, cubeOriginCoord, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, {diffuse,specular,emission}) );
+	Cube woodCube (2.0f, {-1.0f,-1.0f,-1.0f}, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png"}, {diffuse,specular,emission}));
 	woodCube.activateCubeMap = true;
 	woodCube.activateShadow = true;
 	woodCube.addTexture(skyBox.texture);
@@ -132,6 +134,8 @@ int main()
 	/*OBJECTS INIT*/
  	std::array<Object, 2> lightCubesObject{&lightCube,&lightCube};
 	Object woodCubeObj(&woodCube);
+	Object woodBackObj(&backPackModel);
+	woodBackObj.set(objectShader);
 
 	//set models	
 	createAndSetWoodCube(objectShader, outlineShader, woodCubeObj);
@@ -268,7 +272,7 @@ int main()
 			terrain.draw(terrainShader);
 		};
 
-	auto drawScene = [&lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject,&woodCubeObj,&drawTerrain,&drawSkyDome]()
+	auto drawScene = [&lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject,&woodCubeObj,&drawTerrain,&drawSkyDome,&woodBackObj,&cubeCollisionShader]()
 		{	
 			
 			for (auto& lightCubeObj : lightCubesObject)
@@ -278,14 +282,17 @@ int main()
 				World::objectsRendered[lightCubeObj.worldObjIndex].enableScale = false;
 
 
-				World::objectsRendered[lightCubeObj.worldObjIndex].animate(lightSourcesShader,glm::vec3(0.0, 0.0, 0.0f),glm::vec3(0.0, 0.0, 0.0f), 0.0f,glm::vec3(0.0,0.0,0.0f) );
+				World::objectsRendered[lightCubeObj.worldObjIndex].animate(lightSourcesShader);
 			}
 			
 			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
 			woodCubeObj.enableScale = false;
 			woodCubeObj.enableRotation = false;
 			woodCubeObj.enableTranslation = false;
-			woodCubeObj.animate(objectShader, glm::vec3(0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(0.0f));
+			woodCubeObj.enableOutLine = false;
+			woodCubeObj.animate(objectShader,&cubeCollisionShader);
+
+			woodBackObj.animate(objectShader,&cubeCollisionShader);
 
 			drawTerrain();
 			
@@ -473,8 +480,6 @@ int main()
 	
 	//TUI renderloop
 	std::thread cliThread (displayTuiWindow);
-	setEffect(postProcessShader, greyscale);
-	
 
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
@@ -483,6 +488,7 @@ int main()
 		swapBuffer();
 	}
 
+	cliThread.~thread();
 	glfwTerminate();
  	return 0;
 }
