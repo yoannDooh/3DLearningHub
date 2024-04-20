@@ -130,7 +130,7 @@ int main()
 
 	
 	/*OBJECTS INIT*/
-	std::array<Object, 2> lightCubesObject{&lightCube,&lightCube};
+ 	std::array<Object, 2> lightCubesObject{&lightCube,&lightCube};
 	Object woodCubeObj(&woodCube);
 
 	//set models	
@@ -273,12 +273,12 @@ int main()
 			
 			for (auto& lightCubeObj : lightCubesObject)
 			{
-				World::objects[lightCubeObj.worldObjIndex].enableTranslation = false;
-				World::objects[lightCubeObj.worldObjIndex].enableRotation = false;
-				World::objects[lightCubeObj.worldObjIndex].enableScale = false;
+				World::objectsRendered[lightCubeObj.worldObjIndex].enableTranslation = false;
+				World::objectsRendered[lightCubeObj.worldObjIndex].enableRotation = false;
+				World::objectsRendered[lightCubeObj.worldObjIndex].enableScale = false;
 
 
-				World::objects[lightCubeObj.worldObjIndex].animate(lightSourcesShader,glm::vec3(0.0, 0.0, 0.0f),glm::vec3(0.0, 0.0, 0.0f), 0.0f,glm::vec3(0.0,0.0,0.0f) );
+				World::objectsRendered[lightCubeObj.worldObjIndex].animate(lightSourcesShader,glm::vec3(0.0, 0.0, 0.0f),glm::vec3(0.0, 0.0, 0.0f), 0.0f,glm::vec3(0.0,0.0,0.0f) );
 			}
 			
 			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
@@ -458,27 +458,28 @@ int main()
 			glDepthFunc(GL_LESS);
 		};
 
+	auto drawBackPack = [&objectShader,&backPackModel]()
+		{
+			glm::mat4 idendity{ (1.0f) };
+			idendity = idendity * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 20.0f, 0.0f));
+			idendity = idendity * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
+
+			objectShader.use();
+			objectShader.setMat4("model", idendity);
+			backPackModel.draw(objectShader);
+		};
+
 	//openDebugFile();
 	
 	//TUI renderloop
 	std::thread cliThread (displayTuiWindow);
 	setEffect(postProcessShader, greyscale);
-	glm::mat4 idendity{ (1.0f) };
-	idendity = idendity * glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 20.0f, 0.0f));
-	idendity = idendity * glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f,2.0f));
+	
 
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
 	{	
-		newFrame();
-		//drawPointShadow();
-
-		objectShader.use();
-		objectShader.setMat4("model", idendity);
-		backPackModel.draw(objectShader);
-		drawTerrain();
-		drawSkyDome();
-
+		drawPointShadow();
 		swapBuffer();
 	}
 

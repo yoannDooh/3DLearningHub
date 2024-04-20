@@ -45,6 +45,10 @@ namespace Time
 
 namespace World
 {
+	int objectIdCount{};
+	std::vector<unsigned int> freeIDs{};
+
+
 	float CameraSpeed{ 40.5 };
 	Camera camera{ glm::vec3(-26.2968f, 46.3522f, -40.89f),  glm::vec3(26.2968f, -46.3522f, 40.89f), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
 	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
@@ -56,7 +60,8 @@ namespace World
 	float projectionFar{ 1000.0f };
 
 
-	std::vector<Object> objects{};
+	std::map<int, Object*> objects{};
+	std::vector<Object> objectsRendered{};
 	std::vector<Light::lightPoint> lightPoints{};
 	std::vector<Light::SpotLight> spotLights{};
 	std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights{
@@ -100,23 +105,135 @@ namespace UsrParameters
 //OBJECT CLASS
 Object::Object(Mesh* mesh,glm::vec3 pos)
 {
+	genId();
+
 	this->mesh = mesh;
 	model = glm::translate(localOrigin, pos);
-	pos = pos;
+	basePos = pos;
+	pos = basePos;
 }
 
-bool Object::isLightPointIdValid(int id)
+Object::Object(const Object& object)
 {
-	if (id == -1 || World::lightPoints.size() <= id)
+	id = -1;
+
+	mesh = object.mesh;
+	shaderOutline = object.shaderOutline;
+	model = object.model;
+	localOrigin = object.localOrigin;
+	pos = object.pos;
+	basePos = object.basePos;
+	orientation = object.orientation;
+	materialShininess = object.materialShininess;
+	enableTranslation = object.enableTranslation;
+	enableRotation = object.enableRotation;
+	enableScale = object.enableScale;
+	isGlowing = object.isGlowing;
+	isOutLined = object.isOutLined;
+	isOrbiting = object.isOrbiting;
+	worldObjIndex = object.worldObjIndex; 
+	worldLighPointIndex = object.worldLighPointIndex; 
+	worldSpotLightIndex = object.worldSpotLightIndex;
+	outlineColor = object.outlineColor;
+	outlineWeight = object.outlineWeight;
+	glowColor = object.glowColor;
+	glowStrenghtMax = object.glowStrenghtMax;
+	glowDuration = object.glowDuration;
+	distFromCenter = object.distFromCenter;
+	orbitHorizontalAxis = object.orbitHorizontalAxis;
+	orbitVerticalAxis = object.orbitVerticalAxis;
+	orbitDuration = object.orbitDuration;
+}
+
+Object& Object::operator=(const Object& object)
+{
+	//same as default exept the object keep it's id
+	mesh = object.mesh;
+	shaderOutline = object.shaderOutline;
+	model = object.model;
+	localOrigin = object.localOrigin;
+	pos = object.pos;
+	basePos = object.basePos;
+	orientation = object.orientation;
+	materialShininess = object.materialShininess;
+	enableTranslation = object.enableTranslation;
+	enableRotation = object.enableRotation;
+	enableScale = object.enableScale;
+	isGlowing = object.isGlowing;
+	isOutLined = object.isOutLined;
+	isOrbiting = object.isOrbiting;
+	worldObjIndex = object.worldObjIndex;
+	worldLighPointIndex = object.worldLighPointIndex;
+	worldSpotLightIndex = object.worldSpotLightIndex;
+	outlineColor = object.outlineColor;
+	outlineWeight = object.outlineWeight;
+	glowColor = object.glowColor;
+	glowStrenghtMax = object.glowStrenghtMax;
+	glowDuration = object.glowDuration;
+	distFromCenter = object.distFromCenter;
+	orbitHorizontalAxis = object.orbitHorizontalAxis;
+	orbitVerticalAxis = object.orbitVerticalAxis;
+	orbitDuration = object.orbitDuration;
+
+	return *this;
+}
+
+Object::~Object()
+{
+	if (id == -1) //invalid id
+		return;
+
+	World::freeIDs.push_back(id);
+
+	World::objects.erase(id);
+	
+	if (isObjIndexValid(worldObjIndex))
+		World::objectsRendered.erase(World::objectsRendered.begin() + worldObjIndex);
+
+
+	if (isLightPointIndexValid(worldLighPointIndex) )
+		World::lightPoints.erase(World::lightPoints.begin() + worldLighPointIndex);
+	
+
+	if (isSpotLightIndexValid(worldSpotLightIndex) )
+		World::spotLights.erase(World::spotLights.begin() + worldSpotLightIndex);
+}
+
+void Object::genId()
+{
+	if (World::freeIDs.size() == 0)
+		id = World::objectIdCount++;
+
+	else
+	{
+		id = World::freeIDs[0];
+		World::freeIDs.erase(World::freeIDs.begin());
+	}
+
+	World::objects.insert({ id,this });
+}
+
+bool Object::isObjIndexValid(int index)
+{
+	if (index == -1 || World::objects.size() <= index)
 		return false;
 
 	else
 		return true;
 }
 
-bool Object::isSpotLightIdValid(int id)
+bool Object::isLightPointIndexValid(int index)
 {
-	if (id == -1 || World::lightPoints.size() >= id)
+	if (index == -1 || World::lightPoints.size() <= index)
+		return false;
+
+	else
+		return true;
+}
+
+bool Object::isSpotLightIndexValid(int index)
+{
+	if (index == -1 || World::lightPoints.size() >= index)
 		return false;
 
 	else
@@ -131,14 +248,14 @@ void Object::move(glm::vec3 vector)
 	//should add a parameter to decide how the light position is influenced by the object it's associated with position 
 	//by default the light has the same position as the object 
 	//update lightPoint pos
-	if (!isLightPointIdValid(worldLighPointIndex))
+	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
 
 	else
 		World::lightPoints[worldLighPointIndex].pos = pos;
 
 	//update spotlight pos
-	if (!isSpotLightIdValid(worldSpotLightIndex))
+	if (!isSpotLightIndexValid(worldSpotLightIndex))
 		return;
 
 	else
@@ -147,19 +264,19 @@ void Object::move(glm::vec3 vector)
 
 void Object::rotate(float degree, glm::vec3 rotateAxis)
 {
+	orientation = orientation + rotateAxis * degree;
 	float rad{ glm::radians(degree) };
-
 	model = model * glm::rotate(model, rad, rotateAxis);
 	pos = glm::rotate(model, rad, rotateAxis) * glm::vec4(pos, 1.0f);
 
-	if (!isLightPointIdValid(worldLighPointIndex))
+	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
 
 	else
 		World::lightPoints[worldLighPointIndex].pos = pos;
 
 	//update spotlight pos
-	if (!isSpotLightIdValid(worldSpotLightIndex))
+	if (!isSpotLightIndexValid(worldSpotLightIndex))
 		return;
 
 	else
@@ -171,14 +288,14 @@ void Object::scale(glm::vec3 scaleVec)
 	model = model * glm::scale(localOrigin, scaleVec);
 	pos = glm::scale(localOrigin, scaleVec) * glm::vec4(pos, 1.0f);
 
-	if (!isLightPointIdValid(worldLighPointIndex))
+	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
 
 	else
 		World::lightPoints[worldLighPointIndex].pos = pos;
 
 	//update spotlight pos
-	if (!isSpotLightIdValid(worldSpotLightIndex))
+	if (!isSpotLightIndexValid(worldSpotLightIndex))
 		return;
 
 	else
@@ -202,7 +319,7 @@ void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
 {
 	try
 	{
-		if( !isLightPointIdValid(worldLighPointIndex) )
+		if( !isLightPointIndexValid(worldLighPointIndex) )
 			throw(-1);
 
 		switch (memberIndex)
@@ -232,7 +349,8 @@ void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
 
 	catch (int exeption)
 	{
-		std::cerr << "DEREFENCING NULL POINTER WITH animateLightsCube FUNCTION CALL" << std::endl;
+		std::cerr << "DEREFENCING NULL POINTER WITH updateLightPoint FUNCTION CALL" << std::endl;
+		//abort();
 	}
 
 }
@@ -267,7 +385,7 @@ void Object::setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse
 
 	try
 	{
-		if (!isLightPointIdValid(worldLighPointIndex))
+		if (!isLightPointIndexValid(worldLighPointIndex))
 			throw(-1);
 
 		World::lightPoints[worldLighPointIndex].color = color;
@@ -397,8 +515,8 @@ glm::mat4 Object::orbit()
 
 void Object::addToWorldObjects()
 {
-	worldObjIndex = World::objects.size();
-	World::objects.push_back(*this);
+	worldObjIndex = World::objectsRendered.size();
+	World::objectsRendered.push_back(*this);
 
 }
 

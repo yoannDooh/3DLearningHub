@@ -29,12 +29,12 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 	int index{};
 	for (auto& lightCube : lightCubesObject)
 	{
-		World::objects[lightCube.worldObjIndex].enableTranslation = false;
-		World::objects[lightCube.worldObjIndex].enableRotation = false;
+		World::objectsRendered[lightCube.worldObjIndex].enableTranslation = false;
+		World::objectsRendered[lightCube.worldObjIndex].enableRotation = false;
 
-		World::objects[lightCube.worldObjIndex].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
+		World::objectsRendered[lightCube.worldObjIndex].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
 
-		World::objects[lightCube.worldObjIndex].rotatePlane((index + 1) * 60); //first is 60� and second 120�
+		World::objectsRendered[lightCube.worldObjIndex].rotatePlane((index + 1) * 60); //first is 60� and second 120�
 
 
 		++index;

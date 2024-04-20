@@ -46,6 +46,12 @@ enum DayPhases
 	night
 };
 
+enum collisionShape
+{
+	cube,
+	sphere
+};
+
 class FrameBuffer
 {
 public:
@@ -65,7 +71,6 @@ class ShadowBuffer : public FrameBuffer
 {
 public:
 	ShadowBuffer() {}
-	unsigned int texId{};
 
 	glm::mat4 depthMapLightSpaceMat{};
 	std::array<glm::mat4,6> cubeMapLightSpaceMat{}; // in order : +x,-x,+y,-y,+z,-z
@@ -160,6 +165,7 @@ class Object
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
 		glm::vec3 pos{}; //in world unit
 		glm::vec3 basePos{}; //in world unit
+		glm::vec3 orientation{}; //in degree
 
 		float materialShininess{};
 
@@ -171,23 +177,27 @@ class Object
 		bool isOrbiting{ false };
 		
 		
-		int id{-1};
-		int lighPointIndex{ -1 };
-		int	spotLightIndex{ -1 };
+		int id;
+		//int	lighPointId{ -1 };
+		//int	spotLightId{ -1 };
 
 		int worldObjIndex {-1}; //index of the element inside the World::Objects vector
 		int worldLighPointIndex {-1}; //index of the element inside the World::lightPoint vector
 		int worldSpotLightIndex {-1}; //index of the element inside the World::SpotLight vector
 
-		Object(){}
-		Object(Mesh* mesh) { this->mesh = mesh; }
+		Object() {genId();}
+		Object(Mesh* mesh) { genId(); this->mesh = mesh; }
 		Object(Mesh* mesh,glm::vec3 pos);
+		Object(const Object& object);
+		Object& operator=(const Object& object);
+		~Object();
 
-		bool isLightPointIdValid(int id);
-		bool isSpotLightIdValid(int id);
+		bool isObjIndexValid(int index);
+		bool isLightPointIndexValid(int index);
+		bool isSpotLightIndexValid(int index);
 
 		void move(glm::vec3 vector);
-		void rotate(float rad,glm::vec3 rotateAxis);
+		void rotate(float degree,glm::vec3 rotateAxis); //in degree
 		void scale(glm::vec3 scaleVec);
 		void rotatePlane(float degree);
 		void updateLightPoint(glm::vec3 newValue,int memberIndex); //memberIndex : 0 for color ... 4 for specular 
@@ -223,6 +233,9 @@ class Object
 		void addToWorldObjects();
 
 private :
+
+	void genId();
+
 	//outline parameters
 	glm::vec3 outlineColor{};
 	float outlineWeight{};
@@ -295,6 +308,9 @@ namespace Time
 //GLOBAL VARIABLES
 namespace World
 {
+	extern int objectIdCount;
+	extern std::vector<unsigned int> freeIDs;
+
 	extern Camera camera;
 
 	extern glm::mat4 view;
@@ -306,8 +322,8 @@ namespace World
 	extern float projectionFar;
 
 
-
-	extern std::vector<Object> objects;
+	extern std::map<int, Object*> objects;
+	extern std::vector<Object> objectsRendered; //objects currently rendered 
 	extern std::vector<Light::lightPoint> lightPoints;
 	extern std::vector<Light::SpotLight> spotLights;
 	extern std::array<Light::DirectLight, DIRECT_LIGHTS_NB> directLights;
