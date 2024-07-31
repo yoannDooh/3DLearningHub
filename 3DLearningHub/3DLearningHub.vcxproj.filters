@@ -8,8 +8,8 @@
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\mesh.cpp" />
     <ClCompile Include="src\tuiWindow.cpp" />
-    <ClCompile Include="..\..\..\..\..\..\Downloads\glad (1)\src\glad.c" />
     <ClCompile Include="src\renderLoop.cpp" />
+    <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\GLAD\include\glad\glad.h" />

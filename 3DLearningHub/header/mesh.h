@@ -116,41 +116,40 @@ private :
 	std::string direname(std::string& path); //cree un header file ou tu mets des fonctions "diverses et utiles" comme elle 
 };
 
-
-
 class Cube : public Mesh
 {
 public:
-	std::array<float,288> vertices; //a suprr a la place fait une alloc du vector herite par mesh
-	std::array<unsigned int,36> indices; //a suppr, meme chose à faire ici 
+	//std::array<float,288> vertices; //a suprr a la place fait une alloc du vector herite par mesh
+	//std::array<unsigned int,36> indices; //a suppr, meme chose à faire ici 
 
 	Cube() {}
-	Cube(float cote, std::array<float, 3> originCoord, std::vector<Texture> textures);
+	Cube(float cote, std::array<float, 3>);
+	Cube(std::vector<Texture> textures, float cote = 2.0f, std::array<float, 3> centerCoord = { 0.0f,0.0f,0.0f });
 	//generate VAO,VBO and EBO from the provided cote and originCoor
 	//there is 5 attribute, in order : coord(3 floats) -> coolors coord (https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/RGB_color_solid_cube.png/220px-RGB_color_solid_cube.png) (3 floats)
 	//->normal vector (3 float) -> texture coord (2 float) -> the vertex number within the 8 vertices of the cube (1 float) 
 	//originCoord is bottomFace topLeft vertex 
 
-	Cube(float cote, std::array<float, 3> originCoord);
-	Cube(unsigned int vbo, unsigned int ebo,unsigned int indiceNb); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
-	
+	Cube(unsigned int vbo, unsigned int ebo, unsigned int indiceNb); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
+
 protected:
 	void setupCube();
+
 };
 
-class CubeMap : public Cube
+class CubeMap :Cube
 {
-	public:
-		Texture texture{"",cubeMap};
-		std::array<float, 72> vertices;
+public:
+	Texture texture{ "",cubeMap };
 
-		CubeMap(std::vector<const char*>& texturesPath);
-		
-		void draw(Shader& shader);
+	CubeMap() {}
+	CubeMap(std::vector<const char*>& texturesPath);
 
-	private:
-		void loadTexture(std::vector<const char*>& paths);
-		void setupCubeMap();
+	void draw(Shader& shader);
+
+protected:
+	void loadTexture(std::vector<const char*>& paths);
+	void setupCubeMap();
 };
 
 class Square : public Mesh

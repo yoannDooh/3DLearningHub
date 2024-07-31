@@ -109,8 +109,6 @@ Texture loadTexture(const char* path, TextureMap type)
 	return texture;
 }
 
-
-
 /*--MESH CLASS--*/
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
 {
@@ -482,346 +480,239 @@ std::string AssimpModel::direname(std::string& path)
 	return directory;
 }
 
-/*--CUBE CLASS--*/
-Cube::Cube(float cote, std::array<float, 3> originCoord, std::vector<Texture> textures)
+/*--Cube CLASS--*/
+Cube::Cube(float cote, std::array<float, 3> originCoord)
 {
-	//vertice and face order :
+	vertices.reserve(sizeof(Vertex) * 6 * 4);//6 square face made of 4 vertices
+	indices.reserve(sizeof(unsigned int) * 6 * 2 * 3);//6 square face, made of 2 triangle made of 3 vertices
+
+	//face order :
+	//topFace -> bottomFace -> frontFace -> backFace -> Rightface -> leftFace  
+
+	//vertice order :
 	//topLeft -> bottomLeft -> bottomRight -> topRight
-	//bottomFace ->  topFace ->frontFace -> backFace -> leftFace -> Rightface 
-	std::array<Vertex, 8> cubeVertices{};
 
-	int axisIndex{};
-	for (float axisValue : originCoord)
+	float halCote{ cote / 2.0f };
+
+	//vertices
+
+	//topFace
+	for (int vertexIndex{}; vertexIndex < 4; ++vertexIndex)
 	{
-		cubeVertices[0].coord[axisIndex] = axisValue;
-		++axisIndex;
+		Vertex vertex;
+
+		vertex.normal[0] = 0.0f;
+		vertex.normal[1] = 1.0f;
+		vertex.normal[2] = 0.0f;
+
+		vertex.coord[1] = originCoord[1] + halCote;
+
+		switch (vertexIndex)
+		{
+		case 0: //topLeft
+			vertex.coord[0] = originCoord[0] - halCote;
+			vertex.coord[2] = originCoord[2] - halCote;
+
+			vertex.textCoord[0] = 0.0f;
+			vertex.textCoord[1] = 1.0f;
+
+			vertex.vertexNb = 0;
+			break;
+
+		case 1: //bottomLeft
+			vertex.coord[0] = originCoord[0] - halCote;
+			vertex.coord[2] = originCoord[2] + halCote;
+
+			vertex.textCoord[0] = 0.0f;
+			vertex.textCoord[1] = 0.0f;
+
+			vertex.vertexNb = 1;
+			break;
+
+		case 2: //bottomRight
+			vertex.coord[0] = originCoord[0] + halCote;
+			vertex.coord[2] = originCoord[2] + halCote;
+
+			vertex.textCoord[0] = 1.0f;
+			vertex.textCoord[1] = 0.0f;
+
+			vertex.vertexNb = 2;
+			break;
+
+
+		case 3: //topRight
+			vertex.coord[0] = originCoord[0] + halCote;
+			vertex.coord[2] = originCoord[2] - halCote;
+
+			vertex.textCoord[0] = 1.0f;
+			vertex.textCoord[1] = 1.0f;
+
+			vertex.vertexNb = 3;
+			break;
+		}
+		vertices.push_back(vertex);
 	}
 
-	for (int faceIndex{ 1 }; faceIndex <= 2; ++faceIndex)
+	//bottomFace
+	for (int vertexIndex{}; vertexIndex < 4; ++vertexIndex)
 	{
-		if (faceIndex == 1)
-		{
-			for (int cubeVerticesIndex{ 1 }; cubeVerticesIndex <= 4; ++cubeVerticesIndex)
-			{
-				switch (cubeVerticesIndex)
-				{
-				case 1: //bottomLeft
-					cubeVertices[1].coord[0] = cubeVertices[cubeVerticesIndex - 1].coord[0];
-					cubeVertices[1].coord[1] = cubeVertices[cubeVerticesIndex - 1].coord[1];
-					cubeVertices[1].coord[2] = cote + cubeVertices[cubeVerticesIndex - 1].coord[2];
-					break;
+		Vertex vertex;
+		vertex = vertices[vertexIndex];
 
-				case 2: //bottomRight
-					cubeVertices[2].coord[0] = cote + cubeVertices[cubeVerticesIndex - 1].coord[0];
-					cubeVertices[2].coord[1] = cubeVertices[cubeVerticesIndex - 1].coord[1];
-					cubeVertices[2].coord[2] = cubeVertices[cubeVerticesIndex - 1].coord[2];
-					break;
+		vertex.normal[1] = -1.0f;
+		vertex.coord[1] = originCoord[1] - halCote;
 
-				case 3: //topRight
-					cubeVertices[3].coord[0] = cubeVertices[cubeVerticesIndex - 1].coord[0];
-					cubeVertices[3].coord[1] = cubeVertices[cubeVerticesIndex - 1].coord[1];
-					cubeVertices[3].coord[2] = cubeVertices[cubeVerticesIndex - 1].coord[2] - cote;
-					break;
-				}
-			}
-			continue;
-		}
+		vertex.vertexNb = 4 + vertexIndex;
 
-		for (int cubeVerticesIndex{ 0 }; cubeVerticesIndex < 4; ++cubeVerticesIndex)
-		{
-			switch (cubeVerticesIndex)
-			{
-
-			case 0: //topLeft
-				cubeVertices[4].coord[0] = cubeVertices[0].coord[0];
-				cubeVertices[4].coord[1] = cote + cubeVertices[0].coord[1];
-				cubeVertices[4].coord[2] = cubeVertices[0].coord[2];
-				break;
-
-			case 1: //bottomLeft
-				cubeVertices[5].coord[0] = cubeVertices[1].coord[0];
-				cubeVertices[5].coord[1] = cote + cubeVertices[1].coord[1];
-				cubeVertices[5].coord[2] = cubeVertices[1].coord[2];
-				break;
-
-			case 2: //bottomRight
-				cubeVertices[6].coord[0] = cubeVertices[2].coord[0];
-				cubeVertices[6].coord[1] = cote + cubeVertices[2].coord[1];
-				cubeVertices[6].coord[2] = cubeVertices[2].coord[2];
-				break;
-
-			case 3: //topRight
-				cubeVertices[7].coord[0] = cubeVertices[3].coord[0];
-				cubeVertices[7].coord[1] = cote + cubeVertices[3].coord[1];
-				cubeVertices[7].coord[2] = cubeVertices[3].coord[2];
-				break;
-			}
-		}
+		vertices.push_back(vertex);
 	}
 
-	int cubeVerticesIndex{ 0 };
-	for (Vertex& vertex : cubeVertices)
+	//frontFace
+	for (int vertexIndex{}; vertexIndex < 4; ++vertexIndex)
 	{
-		int coolorIndex{};
-		for (int coordIndex{ 2 }; coordIndex >= 0; --coordIndex)
+		Vertex vertex;
+
+		vertex.normal[0] = 0.0f;
+		vertex.normal[1] = 0.0f;
+		vertex.normal[2] = 1.0f;
+
+		switch (vertexIndex)
 		{
-			if (vertex.coord[coordIndex] == cubeVertices[0].coord[coordIndex])
-				vertex.coolors[coolorIndex] = 0.0f;
+		case 0: //topLeft
+			vertex.vertexNb = 1;
+			vertex.coord = vertices[1].coord;
 
-			else
-				vertex.coolors[coolorIndex] = 1.0f;
 
-			++coolorIndex;
+			vertex.textCoord[0] = 0.0f;
+			vertex.textCoord[1] = 1.0f;
+			break;
+
+		case 1: //bottomLeft
+			vertex.vertexNb = 5;
+			vertex.coord = vertices[5].coord;
+
+			vertex.textCoord[0] = 0.0f;
+			vertex.textCoord[1] = 0.0f;
+			break;
+
+		case 2: //bottomRight
+			vertex.vertexNb = 6;
+			vertex.coord = vertices[6].coord;
+
+			vertex.textCoord[0] = 1.0f;
+			vertex.textCoord[1] = 0.0f;
+			break;
+
+
+		case 3: //topRight
+			vertex.vertexNb = 2;
+			vertex.coord = vertices[2].coord;
+
+			vertex.textCoord[0] = 1.0f;
+			vertex.textCoord[1] = 1.0f;
+			break;
 		}
-		++cubeVerticesIndex;
+		vertices.push_back(vertex);
 	}
 
-	cubeVerticesIndex = 0;
-
-	int verticeIndex{};
-	auto assignValue = [this, &cubeVertices, &verticeIndex](int cubeVerticesIndex, int faceVertex, int faceNr)
-		{
-			//facePoint point on the face is : 0=topLeft; 1=bottomLeft; 2=bottomRight 3=topRight
-			Vertex vertex{};
-
-			// assign coord
-			if (verticeIndex == 0)
-				vertices[verticeIndex] = cubeVertices[cubeVerticesIndex].coord[0];
-			else
-				vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[0];
-
-			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[1];
-			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[2];
-
-			if (verticeIndex == 0)
-				vertex.coord[0] = cubeVertices[cubeVerticesIndex].coord[0];
-			else
-				vertex.coord[0] = cubeVertices[cubeVerticesIndex].coord[0];
-
-			vertex.coord[1] = cubeVertices[cubeVerticesIndex].coord[1];
-			vertex.coord[2] = cubeVertices[cubeVerticesIndex].coord[2];
-
-			// assign coolors coord
-			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coolors[0];
-			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coolors[1];
-			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coolors[2];
-
-			vertex.coolors[0] = cubeVertices[cubeVerticesIndex].coolors[0]; 
-			vertex.coolors[1] = cubeVertices[cubeVerticesIndex].coolors[1]; 
-			vertex.coolors[2] = cubeVertices[cubeVerticesIndex].coolors[2];
-
-			//assign normal coord
-			switch (faceNr)
-			{
-			case 0: //bottomFace
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = -1.0f;
-				vertices[++verticeIndex] = 0.0f;
-
-
-				vertex.normal[0] = 0.0f;
-				vertex.normal[1] = -1.0f;
-				vertex.normal[2] = 0.0f;
-				break;
-
-			case 1: //topFace 
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 1.0f;
-				vertices[++verticeIndex] = 0.0f;
-
-				vertex.normal[0] = 0.0f;
-				vertex.normal[1] = 1.0f;
-				vertex.normal[2] = 0.0f;
-				break;
-
-			case 2: //frontface
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 1.0f;
-
-				vertex.normal[0] = 0.0f;
-				vertex.normal[1] = 0.0f;
-				vertex.normal[2] = 1.0f;
-				
-				break;
-
-			case 3: //backface
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = -1.0f;
-
-				vertex.normal[0] = 0.0f;
-				vertex.normal[1] = 0.0f;
-				vertex.normal[2] = -1.0f;
-				break;
-
-			case 4: //leftface
-				vertices[++verticeIndex] = -1.0f;
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 0.0f;
-
-				vertex.normal[0] = -1.0f;
-				vertex.normal[1] = 0.0f;
-				vertex.normal[2] = 0.0f;
-				break;
-
-			case 5: //rightface
-				vertices[++verticeIndex] = 1.0f;
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 0.0f;
-
-				vertex.normal[0] = 1.0f;
-				vertex.normal[1] = 0.0f;
-				vertex.normal[2] = 0.0f;
-				break;
-			}
-
-			//assign texture coord
-			switch (faceVertex)
-			{
-			case 0:
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 1.0f;
-
-				vertex.textCoord[0] = 0.0f;
-				vertex.textCoord[1] = 1.0f;
-				
-				break;
-
-			case 1:
-				vertices[++verticeIndex] = 0.0f;
-				vertices[++verticeIndex] = 0.0f;
-
-				vertex.textCoord[0] = 0.0f;
-				vertex.textCoord[1] = 0.0f;
-				break;
-
-			case 2:
-				vertices[++verticeIndex] = 1.0f;
-				vertices[++verticeIndex] = 0.0f;
-
-				vertex.textCoord[0] = 1.0f;
-				vertex.textCoord[1] = 0.0f;
-				break;
-
-			case 3:
-				vertices[++verticeIndex] = 1.0f;
-				vertices[++verticeIndex] = 1.0f;
-
-				vertex.textCoord[0] = 1.0f;
-				vertex.textCoord[1] = 1.0f;
-				break;
-			}
-
-
-			//assign cubeVertex number 
-			vertices[++verticeIndex] = cubeVerticesIndex;
-
-			vertex.vertexNb = cubeVerticesIndex;
-
-
-			Mesh::vertices.push_back(vertex);
-		};
-
-	for (int faceindex{}; faceindex < 6; ++faceindex)
+	//backFace
+	for (int vertexIndex{}; vertexIndex < 4; ++vertexIndex)
 	{
-		switch (faceindex)
-		{
-		case 0: //bottomFace
-			for (int pointIndex{}; pointIndex < 4; ++pointIndex)
-			{
-				assignValue(pointIndex, pointIndex, 0);
-			}
-			break;
-	
-		case 1: //topFace
-			for (int pointIndex{ 4 }; pointIndex < 8; ++pointIndex)
-			{
-				assignValue(pointIndex, pointIndex - 4, 1);
-			}
-			break;
-	
-		case 2: //frontFace
-			assignValue(5, 0, 2); //topFace bottomLeft
-			assignValue(1, 1, 2); //bottomFace bottomLeft
-			assignValue(2, 2, 2); //bottomFace bottomRight
-			assignValue(6, 3, 2); //topFace bottomRight
-			break;
-	
-		case 3: //backFace
-			assignValue(4, 0, 3); //topFace topLeft
-			assignValue(0, 1, 3); //bottomFace topLeft
-			assignValue(3, 2, 3); //bottomFace topRight
-			assignValue(7, 3, 3); //topFace topRight
-			break;
-	
-		case 4: //leftFace
-			assignValue(4, 0, 4); //topFace topLeft
-			assignValue(0, 1, 4); //bottomFace topLeft
-			assignValue(1, 2, 4); //bottomFace bottomLeft
-			assignValue(5, 3, 4); //topFace bottomLeft
-			break;
-	
-		case 5: //rightFace
-			assignValue(7, 0, 5); //topFace topRight
-			assignValue(3, 1, 5); //bottomFace topRight
-			assignValue(2, 2, 5); //bottomFace bottomRight
-			assignValue(6, 3, 5); //topFace bottomRight
-			break;
-		}
+		Vertex vertex;
+		vertex = vertices[vertexIndex + 8];
+
+		vertex.normal[2] = -1.0f;
+		vertex.coord[2] = originCoord[2] - halCote;
+
+
+
+		vertices.push_back(vertex);
 	}
 
-	int indicesIndex{};
-	int currentFace{ 0 };
-	while (indicesIndex < 36)
+	//Rightface
+	for (int vertexIndex{}; vertexIndex < 4; ++vertexIndex)
 	{
-		for (int count{}; count < 3; ++count) //first triangle indices
+		Vertex vertex;
+		vertex = vertices[vertexIndex];
+
+		vertex.normal[0] = 1.0f;
+		vertex.normal[1] = 0.0f;
+		vertex.normal[2] = 0.0f;
+
+		switch (vertexIndex)
 		{
-			if (count == 2)
-			{
-				indices[indicesIndex] = (currentFace * 4) + count + 1;
+		case 0: //topLeft
+			vertex.coord = vertices[2].coord;
 
-				Mesh::indices.push_back( (currentFace * 4) + count + 1);
-			}
-			
-			else
-			{
-				indices[indicesIndex] = (currentFace * 4) + count;
+			vertex.textCoord[0] = 0.0f;
+			vertex.textCoord[1] = 1.0f;
+			break;
 
-				Mesh::indices.push_back( (currentFace * 4) + count);
-			}
-				
-			++indicesIndex;
+		case 1: //bottomLeft
+			vertex.coord = vertices[6].coord;
+
+			vertex.textCoord[0] = 0.0f;
+			vertex.textCoord[1] = 0.0f;
+			break;
+
+		case 2: //bottomRight
+			vertex.coord = vertices[7].coord;
+
+			vertex.textCoord[0] = 1.0f;
+			vertex.textCoord[1] = 0.0f;
+			break;
+
+
+		case 3: //topRight
+			vertex.coord = vertices[3].coord;
+
+			vertex.textCoord[0] = 1.0f;
+			vertex.textCoord[1] = 1.0f;
+			break;
 		}
-
-		for (int count{ (currentFace * 4) + 1 }; count <= currentFace * 4 + 3; ++count) //first triangle indices
-		{
-			indices[indicesIndex] = count;
-
-			Mesh::indices.push_back(count);
-
-			++indicesIndex;
-		}
-
-		if (indicesIndex % 6 == 0)
-		{
-			++currentFace;
-		}
+		vertices.push_back(vertex);
 	}
 
-	//Assign texturesMap
-	for (const auto& texture : textures)
+	//leftFace
+	for (int vertexIndex{}; vertexIndex < 4; ++vertexIndex)
 	{
-		this->textures.push_back(texture);
+		Vertex vertex;
+		vertex = vertices[vertexIndex + 16];
+
+		vertex.normal[0] = -1.0f;
+		vertex.coord[0] = originCoord[0] - halCote;
+
+		vertices.push_back(vertex);
+	}
+
+	//indices
+	for (unsigned int cubeFace{}; cubeFace < 6; ++cubeFace)
+	{
+		unsigned int topLeftIndice{ cubeFace * 4 };
+
+		//1st triangle 
+		indices.push_back(topLeftIndice);//topLeft vertex 
+		indices.push_back(topLeftIndice + 1);//bottomLeft vertex 
+		indices.push_back(topLeftIndice + 2);//bottomRight vertex
+
+		//2nd triangle
+		indices.push_back(topLeftIndice);//topLeft vertex 
+		indices.push_back(topLeftIndice + 2);//bottomRight vertex
+		indices.push_back(topLeftIndice + 3);//topRight vertex 
 	}
 
 	//create VAO,EBO,VBO
 	setupCube();
 }
 
-Cube::Cube(float cote, std::array<float, 3> originCoord)
+Cube::Cube(std::vector<Texture> textures, float cote, std::array<float, 3> originCoord) : Cube(cote, originCoord)
 {
-	*this = Cube(cote, originCoord, {});
+	//Assign texturesMap
+	for (const auto& texture : textures)
+	{
+		this->textures.push_back(texture);
+	}
+
 }
 
 Cube::Cube(unsigned int vbo, unsigned int ebo, unsigned int indiceNb)
@@ -863,213 +754,27 @@ void Cube::setupCube()
 
 	//coord attribute
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, coord));
 
 	// normal attribute 
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(6 * sizeof(float) ) );
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 
 	//texture coord attribute
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(9 * sizeof(float) ) );
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, textCoord));
 
 	//vertex number attribute
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)(11 * sizeof(float) ) );
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, vertexNb));
 
 	glBindVertexArray(0);
 }
 
-/*--CUBE MAP CLASS*/
-CubeMap::CubeMap(std::vector<const char*>& texturesPath)
+/*--CubeMap CLASS--*/
+CubeMap::CubeMap(std::vector<const char*>& texturesPath) : Cube(2.0f, { 0.0f,0.0f,0.0f } )
 {
-	std::array<Vertex, 8> cubeVertices{};
-	const float cote{ 2 };
-	std::array<const float, 3> originCoord{ -1, -1, -1 };
-
-	int axisIndex{};
-	for (float axisValue : originCoord)
-	{
-		cubeVertices[0].coord[axisIndex] = axisValue;
-		++axisIndex;
-	}
-
-	for (int faceIndex{ 1 }; faceIndex <= 2; ++faceIndex)
-	{
-		if (faceIndex == 1)
-		{
-			for (int cubeVerticesIndex{ 1 }; cubeVerticesIndex <= 4; ++cubeVerticesIndex)
-			{
-				switch (cubeVerticesIndex)
-				{
-				case 1: //bottomLeft
-					cubeVertices[1].coord[0] = cubeVertices[cubeVerticesIndex - 1].coord[0];
-					cubeVertices[1].coord[1] = cubeVertices[cubeVerticesIndex - 1].coord[1];
-					cubeVertices[1].coord[2] = cote + cubeVertices[cubeVerticesIndex - 1].coord[2];
-					break;
-
-				case 2: //bottomRight
-					cubeVertices[2].coord[0] = cote + cubeVertices[cubeVerticesIndex - 1].coord[0];
-					cubeVertices[2].coord[1] = cubeVertices[cubeVerticesIndex - 1].coord[1];
-					cubeVertices[2].coord[2] = cubeVertices[cubeVerticesIndex - 1].coord[2];
-					break;
-
-				case 3: //topRight
-					cubeVertices[3].coord[0] = cubeVertices[cubeVerticesIndex - 1].coord[0];
-					cubeVertices[3].coord[1] = cubeVertices[cubeVerticesIndex - 1].coord[1];
-					cubeVertices[3].coord[2] = cubeVertices[cubeVerticesIndex - 1].coord[2] - cote;
-					break;
-				}
-			}
-			continue;
-		}
-
-		for (int cubeVerticesIndex{ 0 }; cubeVerticesIndex < 4; ++cubeVerticesIndex)
-		{
-			switch (cubeVerticesIndex)
-			{
-
-			case 0: //topLeft
-				cubeVertices[4].coord[0] = cubeVertices[0].coord[0];
-				cubeVertices[4].coord[1] = cote + cubeVertices[0].coord[1];
-				cubeVertices[4].coord[2] = cubeVertices[0].coord[2];
-				break;
-
-			case 1: //bottomLeft
-				cubeVertices[5].coord[0] = cubeVertices[1].coord[0];
-				cubeVertices[5].coord[1] = cote + cubeVertices[1].coord[1];
-				cubeVertices[5].coord[2] = cubeVertices[1].coord[2];
-				break;
-
-			case 2: //bottomRight
-				cubeVertices[6].coord[0] = cubeVertices[2].coord[0];
-				cubeVertices[6].coord[1] = cote + cubeVertices[2].coord[1];
-				cubeVertices[6].coord[2] = cubeVertices[2].coord[2];
-				break;
-
-			case 3: //topRight
-				cubeVertices[7].coord[0] = cubeVertices[3].coord[0];
-				cubeVertices[7].coord[1] = cote + cubeVertices[3].coord[1];
-				cubeVertices[7].coord[2] = cubeVertices[3].coord[2];
-				break;
-			}
-		}
-	}
-
-	int cubeVerticesIndex{ 0 };
-	for (Vertex& vertex : cubeVertices)
-	{
-		int coolorIndex{};
-		for (int coordIndex{ 2 }; coordIndex >= 0; --coordIndex)
-		{
-			if (vertex.coord[coordIndex] == cubeVertices[0].coord[coordIndex])
-				vertex.coolors[coolorIndex] = 0.0f;
-
-			else
-				vertex.coolors[coolorIndex] = 1.0f;
-
-			++coolorIndex;
-		}
-		++cubeVerticesIndex;
-	}
-
-	cubeVerticesIndex = 0;
-
-	int verticeIndex{};
-	auto assignValue = [this, &cubeVertices, &verticeIndex](int cubeVerticesIndex, int faceVertex, int faceNr)
-		{
-			//facePoint point on the face is : 0=topLeft; 1=bottomLeft; 2=bottomRight 3=topRight
-
-			// assign coord
-			if (verticeIndex == 0)
-				vertices[verticeIndex] = cubeVertices[cubeVerticesIndex].coord[0];
-			else
-				vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[0];
-
-			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[1];
-			vertices[++verticeIndex] = cubeVertices[cubeVerticesIndex].coord[2];
-		};
-
-	for (int faceindex{}; faceindex < 6; ++faceindex)
-	{
-		switch (faceindex)
-		{
-		case 0: //bottomFace
-			for (int pointIndex{}; pointIndex < 4; ++pointIndex)
-			{
-				assignValue(pointIndex, pointIndex, 0);
-			}
-			break;
-	
-		case 1: //topFace
-			for (int pointIndex{ 4 }; pointIndex < 8; ++pointIndex)
-			{
-				assignValue(pointIndex, pointIndex - 4, 1);
-			}
-			break;
-	
-		case 2: //frontFace
-			assignValue(5, 0, 2); //topFace bottomLeft
-			assignValue(1, 1, 2); //bottomFace bottomLeft
-			assignValue(2, 2, 2); //bottomFace bottomRight
-			assignValue(6, 3, 2); //topFace bottomRight
-			break;
-	
-		case 3: //backFace
-			assignValue(4, 0, 3); //topFace topLeft
-			assignValue(0, 1, 3); //bottomFace topLeft
-			assignValue(3, 2, 3); //bottomFace topRight
-			assignValue(7, 3, 3); //topFace topRight
-			break;
-	
-		case 4: //leftFace
-			assignValue(4, 0, 4); //topFace topLeft
-			assignValue(0, 1, 4); //bottomFace topLeft
-			assignValue(1, 2, 4); //bottomFace bottomLeft
-			assignValue(5, 3, 4); //topFace bottomLeft
-			break;
-	
-		case 5: //rightFace
-			assignValue(7, 0, 5); //topFace topRight
-			assignValue(3, 1, 5); //bottomFace topRight
-			assignValue(2, 2, 5); //bottomFace bottomRight
-			assignValue(6, 3, 5); //topFace bottomRight
-			break;
-		}
-	}
-
-	int indicesIndex{};
-	int currentFace{ 0 };
-	while (indicesIndex < 36)
-	{
-		for (int count{}; count < 3; ++count) //first triangle indices
-		{
-			if (count == 2)
-				indices[indicesIndex] = (currentFace * 4) + count + 1;
-			else
-				indices[indicesIndex] = (currentFace * 4) + count;
-
-			++indicesIndex;
-		}
-
-		for (int count{ (currentFace * 4) + 1 }; count <= currentFace * 4 + 3; ++count) //first triangle indices
-		{
-			indices[indicesIndex] = count;
-			++indicesIndex;
-		}
-
-		if (indicesIndex % 6 == 0)
-		{
-			++currentFace;
-		}
-	}
-
-
 	loadTexture(texturesPath);
-
-	//create VAO,EBO,VBO
-	setupCubeMap();
-
 }
 
 void CubeMap::loadTexture(std::vector<const char*>& pathes)
@@ -1133,18 +838,18 @@ void CubeMap::setupCubeMap()
 
 	//coord attribute
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, coord) );
 
 	glBindVertexArray(0);
 }
 
 void CubeMap::draw(Shader& shader)
 {
-	
+
 	glDepthFunc(GL_LEQUAL); //so skybox is visible
 
 	shader.use();
-	glm::mat4 view{glm::mat3(World::view)}; //to disable translation 
+	glm::mat4 view{ glm::mat3(World::view) }; //to disable translation 
 
 	shader.setMat4("view", view);
 	shader.setMat4("projection", World::projection);
@@ -1161,6 +866,7 @@ void CubeMap::draw(Shader& shader)
 	glBindVertexArray(0);
 	glDepthFunc(GL_LESS);
 }
+
 
 /*--SQUARE CLASS--*/
 Square::Square(float cote, std::array<float, 2>& originCoord, Texture texture)
@@ -2201,5 +1907,4 @@ void CubeForHemisphere::draw(Shader& shader)
 	glBindVertexArray(0);
 
 	glDepthFunc(GL_LESS);
-
 }

@@ -147,7 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\Downloads\glad (1)\src\glad.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
     <ClCompile Include="src\renderLoop.cpp" />
     <ClCompile Include="src\tuiWindow.cpp" />
     <ClCompile Include="src\mesh.cpp" />

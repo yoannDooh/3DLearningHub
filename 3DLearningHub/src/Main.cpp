@@ -86,24 +86,23 @@ int main()
 			".\\rsc\\skybox\\back.jpg"
 	};
 
+	//CubeMap skyBox(skyBoxTextPaths);
 	CubeMap skyBox(skyBoxTextPaths);
 
 	//Cube mesh for wood textured cube
-	float cubeEdge{ 2.0f };
-	std::array<float, 3> cubeOriginCoord{ -(cubeEdge / 2.0f), -(cubeEdge / 2.0f), -(cubeEdge / 2.0f) }; //bottomFace topLeft 
-
-	Cube woodCube (2.0f, {-1.0f,-1.0f,-1.0f}, loadTextures({".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png"}, {diffuse,specular,emission}));
+	Cube woodCube(loadTextures({ ".\\rsc\\woodCube\\woodContainer.png",".\\rsc\\woodCube\\specularMap.png" ,".\\rsc\\woodCube\\emissionMap.png" }, { diffuse,specular,emission }));
 	woodCube.activateCubeMap = true;
 	woodCube.activateShadow = true;
 	woodCube.addTexture(skyBox.texture);
-	
+
 	//Cube mesh for light moving Cubes
 	Cube lightCube( woodCube.getVbo(), woodCube.getEbo(),36 );
 
 	//Terrain mesh
 	Terrain terrain(2,".\\rsc\\terrain\\heightMaps\\drole.png");
 	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" }, { diffuse,normal,displacement }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" },  { diffuse,normal,displacement }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+	
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
 	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
 	
@@ -359,8 +358,8 @@ int main()
 			drawScene();
 			drawTerrain();
 		};
-
-	auto drawPointShadow = [&cubeDepthMap,&drawSceneWithEffect,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader,&woodCubeObj,&fbo,&newFrame,&quad,&postProcessShader]()
+	
+	auto drawPointShadow =    [&cubeDepthMap,&drawSceneWithEffect,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader,&woodCubeObj,&fbo,&newFrame,&quad,&postProcessShader]()
 		{
 			cubeDepthMap.genCubeMapLightSpaceMat(25.0f, World::lightPoints[0].pos);
 
