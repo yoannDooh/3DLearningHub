@@ -45,25 +45,23 @@ struct Texture
 
 struct Vertex
 {
-	std::array<float, 3> coord{};     //vertices coord, in order : xyz
-	std::array<float, 3> coolors{};   //color of the vertex
-	std::array<float, 3> normal{};    //normal vector to the plane of the vertice 
-	std::array<float, 2> textCoord{};
+	glm::vec3 coord{};     //vertices coord, in order : xyz
+	glm::vec3 coolors{};   //color of the vertex
+	glm::vec3 normal{};    //normal vector to the plane of the vertice 
+	glm::vec2 textCoord{};
 	float vertexNb{}; // vertex 1 2 3 4 5 6 7 or 8 on a cube 
 };
 
 //terrain Vertex struct 
 struct terrainVertex
 {
-	std::array<float, 3> coord{};     //vertices coord, in order : xyz
-	std::array<float, 2> textCoord{};
+	glm::vec3 coord{};     //vertices coord, in order : xyz
+	glm::vec2 textCoord{};
 };
 
 class Mesh
 {
 public:
-	glm::vec3 tangent{};
-	glm::vec3 bitangent{};
 	std::vector<Vertex> vertices{};
 	std::vector<Texture> textures{};
 	std::vector<unsigned int> indices{};
@@ -96,14 +94,16 @@ private:
 	void setupMesh();
 };
 
-class AssimpModel //MAJORITY OF THE CODE OF THIS CLASS COME FROM LEARNOPENGL
+class Model //MAJORITY OF THE CODE OF THIS CLASS COME FROM LEARNOPENGL
 {
 public : 
 	std::vector<Mesh> meshes;
 	std::string path;
 	std::string directoryName;
-	
-	AssimpModel(std::string path);
+	std::string fileName;
+	 
+	Model(){}
+	Model(std::string path);
 
 	void draw(Shader& shader);
 
@@ -150,6 +150,19 @@ public:
 protected:
 	void loadTexture(std::vector<const char*>& paths);
 	void setupCubeMap();
+};
+
+class Sphere : public Mesh
+{
+public:
+	Sphere() {}
+	Sphere(int sectorCount, int stackCount, float radius = 1.0f, glm::vec3 orginCoord = glm::vec3(1.0f, 1.0f, 1.0f));
+
+private:
+	int sectorCount{};
+	int stackCount{};
+
+	void setupSphere();
 };
 
 class Square : public Mesh
@@ -279,3 +292,4 @@ private:
 //function declaration
 Texture loadTexture(const char* path, TextureMap type);
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
+std::string textureMapToStr(TextureMap textureType);

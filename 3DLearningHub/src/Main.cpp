@@ -72,7 +72,7 @@ int main()
 
 
 	/*MODELS INIT*/
-	AssimpModel backPackModel(".\\rsc\\models\\backpack\\backpack.obj");
+	Model backPackModel(".\\rsc\\models\\backpack\\backpack.obj");
 
 	/*MESHES INIT*/
 
@@ -327,7 +327,7 @@ int main()
 
 			//pass uniforms to objectDirectShadowShader
 			objectDirectShadowShader.use();
-			objectDirectShadowShader.setMat4("model", woodCubeObj.model);
+			objectDirectShadowShader.setMat4("model", woodCubeObj.matModel);
 			objectDirectShadowShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 			woodCube.draw(objectDirectShadowShader);
 			
@@ -369,7 +369,7 @@ int main()
 
 			//pass uniforms to objectPointShadowShader
 			objectPointShadowShader.use();
-			objectPointShadowShader.setMat4("model", woodCubeObj.model);
+			objectPointShadowShader.setMat4("model", woodCubeObj.matModel);
 			objectPointShadowShader.set3Float("lightPos", World::lightPoints[0].pos);
 			objectPointShadowShader.setFloat("farPlane",25.0f);
 

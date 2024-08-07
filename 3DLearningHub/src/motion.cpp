@@ -108,17 +108,17 @@ Object::Object(Mesh* mesh,glm::vec3 pos)
 	genId();
 
 	this->mesh = mesh;
-	model = glm::translate(localOrigin, pos);
+	matModel = glm::translate(localOrigin, pos);
 	basePos = pos;
 	pos = basePos;
 }
 
-Object::Object(AssimpModel* model3d, glm::vec3 pos)
+Object::Object(Model* model3d, glm::vec3 pos)
 {
 	genId();
 
-	this->assimpModel = model3d;
-	this->model = glm::translate(localOrigin, pos);
+	this->model3d = model3d;
+	this->matModel = glm::translate(localOrigin, pos);
 	basePos = pos;
 	pos = basePos;
 }
@@ -129,7 +129,7 @@ Object::Object(const Object& object)
 
 	mesh = object.mesh;
 	shaderOutline = object.shaderOutline;
-	model = object.model;
+	matModel = object.matModel;
 	localOrigin = object.localOrigin;
 	pos = object.pos;
 	basePos = object.basePos;
@@ -138,7 +138,7 @@ Object::Object(const Object& object)
 	enableTranslation = object.enableTranslation;
 	enableRotation = object.enableRotation;
 	enableScale = object.enableScale;
-	enableCollisionShape = object.enableCollisionShape;
+	enableCollision = object.enableCollision;
 	isGlowing = object.isGlowing;
 	enableOutLine = object.enableOutLine;
 	isOrbiting = object.isOrbiting;
@@ -161,7 +161,7 @@ Object& Object::operator=(const Object& object)
 	//same as default exept the object keep it's id
 	mesh = object.mesh;
 	shaderOutline = object.shaderOutline;
-	model = object.model;
+	matModel = object.matModel;
 	localOrigin = object.localOrigin;
 	pos = object.pos;
 	basePos = object.basePos;
@@ -170,7 +170,7 @@ Object& Object::operator=(const Object& object)
 	enableTranslation = object.enableTranslation;
 	enableRotation = object.enableRotation;
 	enableScale = object.enableScale;
-	enableCollisionShape = object.enableCollisionShape;
+	enableCollision = object.enableCollision;
 	isGlowing = object.isGlowing;
 	enableOutLine = object.enableOutLine;
 	isOrbiting = object.isOrbiting;
@@ -254,7 +254,7 @@ bool Object::isSpotLightIndexValid(int index)
 
 void Object::move(glm::vec3 vector)
 {
-	model = model * glm::translate(localOrigin, vector);
+	matModel = matModel * glm::translate(localOrigin, vector);
 	pos = glm::translate(localOrigin, vector) * glm::vec4(pos, 1.0f);
 
 	//should add a parameter to decide how the light position is influenced by the object it's associated with position 
@@ -278,8 +278,8 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 {
 	orientation = orientation + rotateAxis * degree;
 	float rad{ glm::radians(degree) };
-	model = model * glm::rotate(model, rad, rotateAxis);
-	pos = glm::rotate(model, rad, rotateAxis) * glm::vec4(pos, 1.0f);
+	matModel = matModel * glm::rotate(matModel, rad, rotateAxis);
+	pos = glm::rotate(matModel, rad, rotateAxis) * glm::vec4(pos, 1.0f);
 
 	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
@@ -297,7 +297,7 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 
 void Object::scale(glm::vec3 scaleVec)
 {
-	model = model * glm::scale(localOrigin, scaleVec);
+	matModel = matModel * glm::scale(localOrigin, scaleVec);
 	pos = glm::scale(localOrigin, scaleVec) * glm::vec4(pos, 1.0f);
 
 	if (!isLightPointIndexValid(worldLighPointIndex))
@@ -379,7 +379,7 @@ void Object::set(Shader& shader, glm::vec3 translationVec, glm::vec3 rotationAxi
 		move(translationVec);
 
 	shader.use();
-	shader.setMat4("model", model);
+	shader.setMat4("model", matModel);
 	shader.setFloat("material.shininess", materialShininess);
 
 	if (isOrbiting)
@@ -432,7 +432,7 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 		scale(scaleVec);
 
 	shader.use();
-	shader.setMat4("model", model);
+	shader.setMat4("model", matModel);
 
 	if (isGlowing)
 	{
@@ -451,11 +451,11 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 		updateLightPoint(pos, 1);
 
 		shader.set3Float("lightColor", World::lightPoints[worldLighPointIndex].color);
-		shader.setMat4("model", model);
+		shader.setMat4("model", matModel);
 		shader.setMat4("orbit", orbitMat);
 	}
 
-	if (enableCollisionShape && collionShapeShader!=nullptr)
+	if (enableCollision && collionShapeShader!=nullptr)
 	{
 		//exteriorCollisionShape
 		Cube collisionCube(2.0f, { -1.0f,-1.0f,-1.0f });
@@ -485,7 +485,7 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 		//float weight = 0.006f; is the best but need to find a way to extend the lines
 		shaderOutline.setFloat("outLineWeight", weight);
 
-		shaderOutline.setMat4("model", model);
+		shaderOutline.setMat4("model", matModel);
 		mesh->draw(shaderOutline);
 
 		glStencilMask(0xFF);
@@ -497,9 +497,9 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 		return;
 	}
 
-	if (assimpModel != nullptr)
+	if (model3d != nullptr)
 	{
-		assimpModel->draw(shader);
+		model3d->draw(shader);
 		return;
 	}
 

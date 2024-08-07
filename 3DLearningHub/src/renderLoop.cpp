@@ -8,7 +8,7 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 
 	for (int lightCubeIndex{}; lightCubeIndex < 2; ++lightCubeIndex)
 	{
-		lightCubesObject[lightCubeIndex].enableCollisionShape = false;
+		lightCubesObject[lightCubeIndex].enableCollision = false;
 
 		glm::vec3 color{};
 		if (lightCubeIndex == 0)

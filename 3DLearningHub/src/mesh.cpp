@@ -9,10 +9,12 @@
 #include <math.h> 
 #include "../header/stb_image.h"
 #include "../header/motion.h"
+#include "../header/saveFile.h"
 
 # define M_PI 3.141592  /* pi */
+# define M_PI_OVER_2 1.5707963 /* pi/2 */
+# define M_PI_TIMES_2 6.28318530718 //pi*2
 #define UNIFORM_BUFFER_NB 1
-
 
 /*--Texture FUNCTION--*/
 std::vector<Texture> loadTextures(std::vector<const char*> pathes, std::vector<TextureMap> types)
@@ -109,6 +111,46 @@ Texture loadTexture(const char* path, TextureMap type)
 	return texture;
 }
 
+std::string textureMapToStr(TextureMap textureType)
+{
+	switch (textureType)
+	{
+	case diffuse:
+		return "diffuse";
+
+	case specular:
+		return "specular";
+
+	case emission:
+		return "emission";
+
+	case normal:
+		return "normal";
+
+	case roughness:
+		return "roughness";
+
+	case refraction:
+		return "refraction";
+
+	case displacement:
+		return "displacement";
+
+	case heightmap:
+		return "heightmap";
+
+	case shadowMap:
+		return "shadowMap";
+
+	case cubeMap:
+		return "cubeMap";
+
+	case shadowCubeMap:
+		return "shadowCubeMap";
+	}
+	return "";
+}
+
 /*--MESH CLASS--*/
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
 {
@@ -118,6 +160,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
 	setupMesh();
 }
 
+/*
 void Mesh::calcTB()
 {
 	// positions
@@ -152,6 +195,7 @@ void Mesh::calcTB()
 	//[...] // similar procedure for plane’s second triangle
 
 }
+*/
 
 void Mesh::addTexture(Texture texture)
 {
@@ -303,10 +347,12 @@ void Mesh::setEbo(unsigned int ebo)
 }
 
 /*--MODEL CLASS--*/ 
-AssimpModel::AssimpModel(std::string path)
+Model::Model(std::string path)
 {
-	AssimpModel::path = path;
+	Model::path = path;
 	directoryName = direname(path);
+	fileName = getFileName(path);
+
 
 
 	Assimp::Importer importer;
@@ -315,7 +361,7 @@ AssimpModel::AssimpModel(std::string path)
 	loadModel();
 }
 
-void AssimpModel::draw(Shader& shader)
+void Model::draw(Shader& shader)
 {
 	for (Mesh& mesh : meshes)
 	{
@@ -323,7 +369,7 @@ void AssimpModel::draw(Shader& shader)
 	}
 }
 
-void AssimpModel::loadModel()
+void Model::loadModel()
 {
 	Assimp::Importer import;
 	const aiScene * scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -337,7 +383,7 @@ void AssimpModel::loadModel()
 	processNode(scene->mRootNode, scene);
 }
 
-void AssimpModel::processNode(aiNode* node, const aiScene* scene)
+void Model::processNode(aiNode* node, const aiScene* scene)
 {
 	for (unsigned int index = 0; index < node->mNumMeshes; ++index)
 	{
@@ -351,7 +397,7 @@ void AssimpModel::processNode(aiNode* node, const aiScene* scene)
 	}
 }
 
-void AssimpModel::processMesh(aiMesh* mesh, const aiScene* scene)
+void Model::processMesh(aiMesh* mesh, const aiScene* scene)
 {
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -416,7 +462,7 @@ void AssimpModel::processMesh(aiMesh* mesh, const aiScene* scene)
 	meshes.push_back( Mesh(vertices, indices, textures) );
 }
 
-void AssimpModel::loadMaterialTextures(std::vector<Texture>& textures,aiMaterial* material, aiTextureType type, TextureMap textureType)
+void Model::loadMaterialTextures(std::vector<Texture>& textures,aiMaterial* material, aiTextureType type, TextureMap textureType)
 {
 
 	for (unsigned int index = 0; index < material->GetTextureCount(type); ++index)
@@ -437,7 +483,7 @@ void AssimpModel::loadMaterialTextures(std::vector<Texture>& textures,aiMaterial
 
 }
 
-bool AssimpModel::isTextureAlreadyLoad(const char* path,int length)
+bool Model::isTextureAlreadyLoad(const char* path,int length)
 {
 	if (meshes.size() == 0)
 		return false;
@@ -460,7 +506,7 @@ bool AssimpModel::isTextureAlreadyLoad(const char* path,int length)
 	return false;
 }
 
-std::string AssimpModel::direname(std::string& path)
+std::string Model::direname(std::string& path)
 {
 	std::string directory;
 	int direNameEndIndex{ static_cast<int>(path.length()) - 1};
@@ -1653,6 +1699,117 @@ void Terrain::draw(Shader& shader)
 	}
 }
 
+
+/*--Sphere CLASS--*/
+Sphere::Sphere(int sectorCount, int stackCount, float radius, glm::vec3 orginCoord)
+{
+	this->sectorCount = sectorCount;
+	this->stackCount = stackCount;
+
+	vertices.reserve(sizeof(glm::vec3) * sectorCount * stackCount);
+	indices.reserve(sizeof(unsigned int) * sectorCount * (stackCount + 1)); //each vertex belong to 4 square and a square is 2 triangle which has 3 vertex
+
+	float azimuth{};
+	float altitude{};
+
+	//calculates vertices coords
+	for (int stackIndex{}; stackIndex <= stackCount; ++stackIndex)//stack loop
+	{
+		Vertex vertex;
+		vertex.normal = { 0, 0, 0 };
+
+		altitude = M_PI_OVER_2 - M_PI * (static_cast<float>(stackIndex) / static_cast<float>(stackCount));
+
+		vertex.coord.y = radius * sin(altitude);
+		float cosAltitude = cos(altitude);
+
+		for (int sectorIndex{}; sectorIndex <= sectorCount; ++sectorIndex)
+		{
+			azimuth = M_PI_TIMES_2 * (static_cast<float>(sectorIndex) / static_cast<float>(sectorCount));
+
+			//cord of the vertex.coord
+			vertex.coord.z = radius * sin(azimuth) * cosAltitude;
+			vertex.coord.x = radius * cos(azimuth) * cosAltitude;
+
+			vertices.push_back(vertex);
+		}
+	}
+
+	//calculates all face normal
+	for (int topLeftVertexIndex{}; topLeftVertexIndex < vertices.size() - sectorCount - 1; ++topLeftVertexIndex) //the topLeftVertex of a quad is the provokingVertex for the quand normal
+	{
+		glm::vec3 leftVector;
+		glm::vec3 downVector;
+
+		leftVector = vertices[topLeftVertexIndex + 1].coord - vertices[topLeftVertexIndex].coord;
+		downVector = vertices[topLeftVertexIndex + sectorCount + 1].coord - vertices[topLeftVertexIndex].coord;
+
+		vertices[topLeftVertexIndex].normal = (glm::normalize(glm::cross(leftVector, downVector)));
+	}
+
+
+	//gen indices 
+	for (int topLeftVertexIndex{}; topLeftVertexIndex < vertices.size() - sectorCount - 2; ++topLeftVertexIndex)
+	{
+
+		int nextVertex;
+		int belowVertex;
+		int belowNextVertex;
+
+		/*
+		if (topLeftVertexIndex % (sectorCount - 1) == 0 && topLeftVertexIndex!=0)
+		{
+			nextVertex = topLeftVertexIndex - sectorCount+1;
+			belowVertex = topLeftVertexIndex + 1;
+			belowNextVertex = topLeftVertexIndex + 2;
+		}
+		*/
+
+		nextVertex = topLeftVertexIndex + 1;
+		belowVertex = topLeftVertexIndex + sectorCount + 1;
+		belowNextVertex = topLeftVertexIndex + sectorCount + 2;
+
+		//quand 1st triangle 
+		indices.push_back(topLeftVertexIndex);
+		indices.push_back(nextVertex);
+		indices.push_back(belowNextVertex);
+
+		//quand 2nd triangle 
+		indices.push_back(topLeftVertexIndex);
+		indices.push_back(belowVertex);
+		indices.push_back(belowNextVertex);
+	}
+
+	setupSphere();
+}
+
+void Sphere::setupSphere()
+{
+	//VAO
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	//VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+	//EBO
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+	//coord attribute
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+	// normal attribute 
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+	glBindVertexArray(0);
+}
+
 /*--icosahedron CLASS--*/
 Icosahedron::Icosahedron(float radius,glm::vec3 originCoord)
 {
@@ -1752,6 +1909,7 @@ Icosahedron::Icosahedron(float radius,glm::vec3 originCoord)
 
 	setupIcosahedron();
 }
+
 
 void Icosahedron::setupIcosahedron()
 {

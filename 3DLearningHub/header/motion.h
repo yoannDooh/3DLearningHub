@@ -14,11 +14,13 @@
 #include "../header/shader.h"
 #include "../header/mesh.h"
 #include "../header/window.h"
+#include "../header/collision.h"
 
 
 //forward declaration class and struct
 class Cube;
 class Square;
+
 namespace Light
 {
 	struct Material;
@@ -48,9 +50,9 @@ enum DayPhases
 
 enum CollisionShape
 {
-	aabb,
-	obb,
-	sphere
+	aabbColType,
+	obbColType,
+	sphereColType
 };
 
 class FrameBuffer
@@ -160,10 +162,10 @@ public:
 class Object
 {
 	public:
-		AssimpModel* assimpModel{ nullptr };
+		Model* model3d{ nullptr };
 		Mesh* mesh{ nullptr };
 		Shader shaderOutline{};
-		glm::mat4 model{ glm::mat4(1.0f) };
+		glm::mat4 matModel{ glm::mat4(1.0f) };
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
 		glm::vec3 pos{}; //in world unit
 		glm::vec3 basePos{}; //in world unit
@@ -175,7 +177,7 @@ class Object
 		bool enableTranslation { true };
 		bool enableRotation { true };
 		bool enableScale { true };
-		bool enableCollisionShape{ true };
+		bool enableCollision{ true };
 		bool enableOutLine{ false };
 		bool isGlowing{ false };
 		bool isOrbiting{ false };
@@ -185,15 +187,15 @@ class Object
 		//int	lighPointId{ -1 };
 		//int	spotLightId{ -1 };
 
-		CollisionShape exteriorCollisionShape{ aabb  };
+		CollisionShape exteriorCollisionShape{ aabbColType  };
 
 		int worldObjIndex {-1}; //index of the element inside the World::Objects vector
 		int worldLighPointIndex {-1}; //index of the element inside the World::lightPoint vector
 		int worldSpotLightIndex {-1}; //index of the element inside the World::SpotLight vector
 
 		Object() {genId();}
-		Object(AssimpModel* model3d) { genId(); this->assimpModel = model3d; }
-		Object(AssimpModel* model3d, glm::vec3 pos);
+		Object(Model* model3d) { genId(); this->model3d = model3d; }
+		Object(Model* model3d, glm::vec3 pos);
 		Object(Mesh* mesh) { genId(); this->mesh = mesh; }
 		Object(Mesh* mesh,glm::vec3 pos);
 		Object(const Object& object);

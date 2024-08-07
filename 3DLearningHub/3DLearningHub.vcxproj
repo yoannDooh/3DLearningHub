@@ -75,11 +75,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDIr)dependencies\FTXUI\ftxui_x64-windows\include;$(SolutionDIr)dependencies\assimp\assimp_x64-windows\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDIr)dependencies\FTXUI\ftxui_x64-windows\include;$(SolutionDIr)dependencies\assimp\assimp_x64-windows\include;$(SolutionDIr)dependencies\rapidJson\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDIr)dependencies\FTXUI\ftxui_x64-windows\lib;$(SolutionDIr)dependencies\assimp\assimp_x64-windows\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDIr)dependencies\FTXUI\ftxui_x64-windows\include;$(SolutionDIr)dependencies\assimp\assimp_x64-windows\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDIr)dependencies\FTXUI\ftxui_x64-windows\include;$(SolutionDIr)dependencies\assimp\assimp_x64-windows\include;$(SolutionDIr)dependencies\rapidJson\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDIr)dependencies\FTXUI\ftxui_x64-windows\lib;$(SolutionDIr)dependencies\assimp\assimp_x64-windows\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -148,7 +148,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
+    <ClCompile Include="src\collision.cpp" />
     <ClCompile Include="src\renderLoop.cpp" />
+    <ClCompile Include="src\saveFile.cpp" />
     <ClCompile Include="src\tuiWindow.cpp" />
     <ClCompile Include="src\mesh.cpp" />
     <ClCompile Include="src\shader.cpp" />
@@ -162,7 +164,9 @@
     <ClInclude Include="dependencies\GLAD\include\KHR\khrplatform.h" />
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3.h" />
     <ClInclude Include="dependencies\GLFW\include\GLFW\glfw3native.h" />
+    <ClInclude Include="header\collision.h" />
     <ClInclude Include="header\renderLoop.h" />
+    <ClInclude Include="header\saveFile.h" />
     <ClInclude Include="header\tuiWindow.h" />
     <ClInclude Include="header\motion.h" />
     <ClInclude Include="header\mesh.h" />
