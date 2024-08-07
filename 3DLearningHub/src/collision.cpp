@@ -2,67 +2,27 @@
 
 
 /*--AABB CLASS--*/
-void AABB::updateMinMaxAfterRotation(std::vector<Vertex>& vertices, glm::vec3& orientation)
+void AABB::searchMinMax(const std::vector<Vertex>& vertices)
 {
-	glm::mat4 rotMat;
 
-	for (int colIndex{}; colIndex < 3; ++colIndex)
+	for (int index{}; index < vertices.size(); ++index)
 	{
-		rotMat[colIndex].w = 0.0f;
-	}
-	rotMat[3].x = 0.0f;
-	rotMat[3].y = 0.0f;
-	rotMat[3].z = 0.0f;
-	rotMat[3].w = 1.0f;
+		if (vertices[index].coord.x < min.x)
+			min.x = vertices[index].coord.x;
 
-	for (int axisIndex{}; axisIndex < 3; ++axisIndex)
-	{
-		float cos;
-		float sin;
+		if (vertices[index].coord.y < min.y)
+			min.y = vertices[index].coord.y;
 
-		switch (axisIndex)
-		{
-		case 1: //rotX
-			cos = glm::cos(orientation.x);
-			sin = glm::sin(orientation.x);
+		if (vertices[index].coord.z < min.z)
+			min.z = vertices[index].coord.z;
 
-			rotMat[0].x = 1.0f;
-			rotMat[0].y = 0.0f;
-			rotMat[0].z = 0.0f;
+		if (vertices[index].coord.x > max.x)
+			max.x = vertices[index].coord.x;
 
-			rotMat[1].x = 0.0f;
-			rotMat[1].y = cos;
-			rotMat[1].z = sin;
+		if (vertices[index].coord.y > max.y)
+			max.y = vertices[index].coord.y;
 
-
-			rotMat[2].x = 0.0f;
-			rotMat[2].y = -sin;
-			rotMat[2].z = cos;
-			break;
-
-
-		case 2: //rotY
-			cos = glm::cos(orientation.y);
-			sin = glm::sin(orientation.y);
-
-			rotMat[0].x = cos;
-			rotMat[0].y = 0.0f;
-			rotMat[0].z = 0.0f;
-
-			rotMat[1].x = 0.0f;
-			rotMat[1].y = cos;
-			rotMat[1].z = sin;
-
-
-			rotMat[2].x = 0.0f;
-			rotMat[2].y = -sin;
-			rotMat[2].z = cos;
-			break;
-
-		case 3:
-
-			break;
-
-		}
+		if (vertices[index].coord.z > max.z)
+			max.z = vertices[index].coord.z;
 	}
 }

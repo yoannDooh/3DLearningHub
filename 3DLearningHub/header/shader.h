@@ -10,7 +10,10 @@
 #include <array>
 
 
+
 /*SHADER CLASS*/
+
+
 class Shader
 {
 	public:
@@ -38,6 +41,27 @@ class Shader
 	void setMat4(const std::string& name, glm::mat4& mat) const;
 };
 
+/*
+namespace ShadersVar
+{
+	extern Shader objectShader; 
+	extern Shader objectDirectShadowShader; 
+	extern Shader objectPointShadowShader; 
+	extern Shader lightSourcesShader;
+	extern Shader skyboxShader; 
+	extern Shader outlineShader; 
+	extern Shader postProcessShader; 
+	extern Shader geometryShader; 
+	extern Shader circleShader; 
+	extern Shader terrainShader; 
+	extern Shader terrainDirectShadowShader; 
+	extern Shader passThroughShader; 
+	extern Shader sphereShader; 
+	extern Shader hemisphereShader; 
+	extern Shader cloudShader; 
+	extern Shader cubeCollisionShader;
+}
+*/
 
 //UBO AND SSO FUNCTIONS / VARIABLES
 

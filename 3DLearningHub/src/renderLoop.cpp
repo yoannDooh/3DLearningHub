@@ -2,13 +2,13 @@
 #include "../header/tuiWindow.h"
 #include <iostream>
 
-void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject)
+void createAndSetLightCube(Shader& shader, std::array<Object*, 2> lightCubesObject)
 {
 	//create and set lightCube Object
 
 	for (int lightCubeIndex{}; lightCubeIndex < 2; ++lightCubeIndex)
 	{
-		lightCubesObject[lightCubeIndex].enableCollision = false;
+		lightCubesObject[lightCubeIndex]->enableCollision = false;
 
 		glm::vec3 color{};
 		if (lightCubeIndex == 0)
@@ -17,24 +17,24 @@ void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObje
 		if (lightCubeIndex == 1)
 			color = rgb(242, 0, 0);
 
-		lightCubesObject[lightCubeIndex].setLightPoint(color, glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.0014f, 0.000007f);
+		lightCubesObject[lightCubeIndex]->setLightPoint(color, glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.0014f, 0.000007f);
 
-		lightCubesObject[lightCubeIndex].setOrbit(1.0, 30.0f, 30.0f, 6);
-		lightCubesObject[lightCubeIndex].isOrbiting = true;
+		lightCubesObject[lightCubeIndex]->setOrbit(1.0, 30.0f, 30.0f, 6);
+		lightCubesObject[lightCubeIndex]->isOrbiting = true;
 
 
-		lightCubesObject[lightCubeIndex].addToWorldObjects();
+		lightCubesObject[lightCubeIndex]->addToWorldObjects();
 	}
 
 	int index{};
 	for (auto& lightCube : lightCubesObject)
 	{
-		World::objectsRendered[lightCube.worldObjIndex].enableTranslation = false;
-		World::objectsRendered[lightCube.worldObjIndex].enableRotation = false;
+		World::objectsRendered[lightCube->worldObjIndex].enableTranslation = false;
+		World::objectsRendered[lightCube->worldObjIndex].enableRotation = false;
 
-		World::objectsRendered[lightCube.worldObjIndex].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
+		World::objectsRendered[lightCube->worldObjIndex].set(shader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, glm::vec3(0.4f));
 
-		World::objectsRendered[lightCube.worldObjIndex].rotatePlane((index + 1) * 60); //first is 60� and second 120�
+		World::objectsRendered[lightCube->worldObjIndex].rotatePlane((index + 1) * 60); //first is 60� and second 120�
 
 
 		++index;
@@ -51,6 +51,16 @@ void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCub
 	woodCubeObj.shaderOutline = outlineShader;
 	woodCubeObj.setGlow(glm::vec3{ rgb(255, 255, 0) }, 0.25, 0.9);
 	woodCubeObj.set(shader, glm::vec3(0.0f, meterToWorldUnit(0.1f), 0.0f), glm::vec3(0.0f), 0.0f, glm::vec3(10.0f));
+}
+
+void createAndSetBallon(Shader& shader, Shader& outlineShader, Object& ballon)
+{
+	ballon.addToWorldObjects();
+	ballon.enableRotation = false;
+	ballon.enableOutLine = true;
+	ballon.materialShininess = 64.0f;
+	ballon.shaderOutline = outlineShader;
+	ballon.set(shader, glm::vec3(0.0f, meterToWorldUnit(0.4f), 0.0f), glm::vec3(0.2f), 0.0f, glm::vec3(10.0f));
 }
 
 void debugInfo()

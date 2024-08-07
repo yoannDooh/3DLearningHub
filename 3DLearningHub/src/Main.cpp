@@ -9,13 +9,15 @@
 #include "../header/mesh.h"
 #include "../header/tuiWindow.h"
 #include "../header/renderLoop.h"
+#include "../header/saveFile.h"
+
 
 int main()
 {
 
 	glfwWindowHint(GLFW_SAMPLES, 8);
-	Window window(2,2,"3DLearningHub");
-	
+	Window window(2, 2, "3DLearningHub");
+
 	//rendering parameters
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
@@ -36,7 +38,7 @@ int main()
 	genUbo2();
 
 	//init shaders 
-    Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
+	Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
 	Shader objectDirectShadowShader(".\\shader\\objectDirectShadow\\vertex.glsl", ".\\shader\\objectDirectShadow\\fragment.glsl");
 	Shader objectPointShadowShader(".\\shader\\objectPointShadow\\vertex.glsl", ".\\shader\\objectPointShadow\\fragment.glsl", ".\\shader\\objectPointShadow\\geometry.glsl");
 	Shader lightSourcesShader(".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
@@ -44,8 +46,8 @@ int main()
 	Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
 	Shader postProcessShader(".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
 	Shader geometryShader(".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
-	Shader circleShader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
-	Shader terrainShader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
+	Shader circleShader(".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
+	Shader terrainShader(".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
 	Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
 	Shader passThroughShader(".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
 	Shader sphereShader(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
@@ -72,7 +74,8 @@ int main()
 
 
 	/*MODELS INIT*/
-	Model backPackModel(".\\rsc\\models\\backpack\\backpack.obj");
+	//AssimpModel backPackModel(".\\rsc\\models\\backpack\\backpack.obj");
+	//writeModelSaveFile(backPackModel);
 
 	/*MESHES INIT*/
 
@@ -96,18 +99,18 @@ int main()
 	woodCube.addTexture(skyBox.texture);
 
 	//Cube mesh for light moving Cubes
-	Cube lightCube( woodCube.getVbo(), woodCube.getEbo(),36 );
+	Cube lightCube(woodCube.getVbo(), woodCube.getEbo(), 36);
 
 	//Terrain mesh
-	Terrain terrain(2,".\\rsc\\terrain\\heightMaps\\drole.png");
+	Terrain terrain(2, ".\\rsc\\terrain\\heightMaps\\drole.png");
 	//terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\brickWall\\diffuseMap.jpg",".\\rsc\\terrain\\brickWall\\normalMap.jpg" }, { diffuse,normal }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
-	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" },  { diffuse,normal,displacement }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
-	
+	terrain.addArea(0, loadTextures({ ".\\rsc\\terrain\\coralStoneWall\\diffuseMap.jpg",".\\rsc\\terrain\\coralStoneWall\\normalMap.jpg",".\\rsc\\terrain\\coralStoneWall\\displacementMap.jpg" }, { diffuse,normal,displacement }), { meterToWorldUnit(-9), meterToWorldUnit(9) }, { meterToWorldUnit(-9),meterToWorldUnit(9) }, { 0.0f, 0.0f });
+
 	terrain.addChunk(0, north, 2, ".\\rsc\\terrain\\heightMaps\\heightMap2.jpeg");
 	//terrain.addChunk(1, west, 2, ".\\rsc\\terrain\\heightMaps\\b.jpg");
-	
+
 	//icoSphere mesh
-	Icosahedron icosahedron(1.0f,glm::vec3(0.0f,0.0f,0.0f));
+	Icosahedron icosahedron(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 	//quad for geometry Shader 
 	Points quadPoints({
@@ -115,9 +118,9 @@ int main()
 	0.5f, 0.5f,0.0f, // top-right
 	0.5f, -0.5f,0.0f, // bottom-right
 	-0.5f, -0.5f, 0.0f,// bottom-left
-	});
+		});
 
-	Points circle({0.0f, 0.0f,0.0f,});
+	Points circle({ 0.0f, 0.0f,0.0f, });
 
 	//square mesh for postProcess
 	std::array<float, 2> origin{ 1.0f,1.0f };
@@ -129,23 +132,36 @@ int main()
 	//hemisphere mesh
 	CubeForHemisphere hemisphere;
 
-	
+
+	//SPHERE 
+	Sphere sphere(20, 20);
+	Object* ballon = new Object(&sphere);
+
+
 	/*OBJECTS INIT*/
- 	std::array<Object, 2> lightCubesObject{&lightCube,&lightCube};
-	Object woodCubeObj(&woodCube);
-	Object woodBackObj(&backPackModel);
-	woodBackObj.set(objectShader);
+	std::array<Object*, 2> lightCubesObject = { new Object (&lightCube), new Object(&lightCube) };
+	Object* woodCubeObj = new Object(&woodCube);
+	//Object woodBackObj(&backPackModel);
+	//woodBackObj.set(objectShader);
+
 
 	//set models	
-	createAndSetWoodCube(objectShader, outlineShader, woodCubeObj);
-	createAndSetLightCube(lightSourcesShader,lightCubesObject);
+	createAndSetWoodCube(objectShader, outlineShader, *woodCubeObj);
+	createAndSetLightCube(lightSourcesShader, lightCubesObject);
+	createAndSetBallon(objectShader, outlineShader, *ballon);
+
+	writeObjectSaveFile(*woodCubeObj);
+	std::string path{ ".\\saveFiles\\objectFiles\\ID-4_objectSave.json" };
+	Object* test = new Object();
+	test = readObjectSaveFile(path);
+
 
 	/*TEXTURES*/
 
 	//shadowMap
 	Texture shadowMap;
 	shadowMap.type = TextureMap::shadowMap;
-	
+
 	//cubeShadowMap
 	Texture cubeShadowMap;
 	cubeShadowMap.type = TextureMap::shadowCubeMap;
@@ -180,7 +196,7 @@ int main()
 	hemisphereShader.setMat4("model", hemisphereModel);
 
 	/*LAMBDA FUNCTIONS FOR RENDER LOOP*/
-	auto newFrame = [&window,&postProcessShader]()
+	auto newFrame = [&window, &postProcessShader]()
 		{
 			processInput(window.windowPtr);
 
@@ -200,7 +216,7 @@ int main()
 			updateViewProject();
 			calcDirectLightAttrib();
 			checkUsrRenderParameter(postProcessShader);
-		}; 
+		};
 
 	auto swapBuffer = [&window]()
 		{
@@ -220,7 +236,7 @@ int main()
 			++Time::currentFrame;
 			++Time::totalFrame;
 		};
-	 
+
 	auto drawHouse = [&geometryShader, &quadPoints]()
 		{
 			geometryShader.use();
@@ -271,35 +287,42 @@ int main()
 			terrain.draw(terrainShader);
 		};
 
-	auto drawScene = [&lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader,&lightCubesObject,&woodCubeObj,&drawTerrain,&drawSkyDome,&woodBackObj,&cubeCollisionShader]()
-		{	
-			
+	auto drawScene = [&lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &lightCubesObject, &woodCubeObj, &drawTerrain, &drawSkyDome/*,&woodBackObj*/, &cubeCollisionShader, &ballon]()
+		{
+
 			for (auto& lightCubeObj : lightCubesObject)
 			{
-				World::objectsRendered[lightCubeObj.worldObjIndex].enableTranslation = false;
-				World::objectsRendered[lightCubeObj.worldObjIndex].enableRotation = false;
-				World::objectsRendered[lightCubeObj.worldObjIndex].enableScale = false;
+				World::objectsRendered[lightCubeObj->worldObjIndex].enableTranslation = false;
+				World::objectsRendered[lightCubeObj->worldObjIndex].enableRotation = false;
+				World::objectsRendered[lightCubeObj->worldObjIndex].enableScale = false;
 
 
-				World::objectsRendered[lightCubeObj.worldObjIndex].animate(lightSourcesShader);
+				World::objectsRendered[lightCubeObj->worldObjIndex].animate(lightSourcesShader);
 			}
-			
-			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
-			woodCubeObj.enableScale = false;
-			woodCubeObj.enableRotation = false;
-			woodCubeObj.enableTranslation = false;
-			woodCubeObj.enableOutLine = false;
-			woodCubeObj.animate(objectShader,&cubeCollisionShader);
 
-			woodBackObj.animate(objectShader,&cubeCollisionShader);
+			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
+			woodCubeObj->enableScale = false;
+			woodCubeObj->enableRotation = false;
+			woodCubeObj->enableTranslation = false;
+			woodCubeObj->enableOutLine = false;
+			woodCubeObj->animate(objectShader, &cubeCollisionShader);
+
+
+
+			ballon->enableTranslation = false;
+			ballon->enableRotation = false;
+			ballon->enableScale = false;
+			ballon->animate(objectShader, &cubeCollisionShader);
+
+			//woodBackObj.animate(objectShader,&cubeCollisionShader);
 
 			drawTerrain();
-			
+
 			//DRAW IN Last
 			drawSkyDome();
 		};
 
-	auto drawSceneWithEffect = [&drawScene,&fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &quad, &postProcessShader, &newFrame]()
+	auto drawSceneWithEffect = [&drawScene, &fbo, &lightSourcesShader, &lightCube, &objectShader, &outlineShader, &skyBox, &woodCube, &skyboxShader, &quad, &postProcessShader, &newFrame]()
 		{
 			//BindFbo
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
@@ -316,10 +339,10 @@ int main()
 			glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 		};
 
-	auto drawShadow = [&idMat,&objectDirectShadowShader,&terrainDirectShadowShader,&depthMap,&shadowMap,&woodCube,&objectShader,&drawScene,&terrainShader,&drawTerrain,&terrain,&woodCubeObj]()
+	auto drawShadow = [&idMat, &objectDirectShadowShader, &terrainDirectShadowShader, &depthMap, &shadowMap, &woodCube, &objectShader, &drawScene, &terrainShader, &drawTerrain, &terrain, &woodCubeObj]()
 		{
 
-			depthMap.genDepthMapLightSpaceMat(1000.0f,glm::vec3(500*World::sunPos.x, 500*World::sunPos.y, 500*World::sunPos.z), glm::vec3(0.0f));
+			depthMap.genDepthMapLightSpaceMat(1000.0f, glm::vec3(500 * World::sunPos.x, 500 * World::sunPos.y, 500 * World::sunPos.z), glm::vec3(0.0f));
 
 			//setup viewPort size dans fbo
 			setupShadowMap(depthMap);
@@ -327,18 +350,18 @@ int main()
 
 			//pass uniforms to objectDirectShadowShader
 			objectDirectShadowShader.use();
-			objectDirectShadowShader.setMat4("model", woodCubeObj.matModel);
+			objectDirectShadowShader.setMat4("model", woodCubeObj->matModel);
 			objectDirectShadowShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 			woodCube.draw(objectDirectShadowShader);
-			
+
 
 			//pass uniforms to terrainDirectShadowShader
-			
+
 			terrainDirectShadowShader.use();
 			terrainDirectShadowShader.setMat4("model", idMat);
 			terrainDirectShadowShader.setMat4("lightSpaceMat", depthMap.depthMapLightSpaceMat);
 			terrain.drawChunk(0, terrainDirectShadowShader);
-			
+
 			glCullFace(GL_BACK);
 
 
@@ -351,15 +374,15 @@ int main()
 			shadowMap.ID = depthMap.texId;
 			woodCube.addTexture(shadowMap);
 			terrain.addShadowMap(0, shadowMap);
-			 
+
 			//render scene as usual
 			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			drawScene();
 			drawTerrain();
 		};
-	
-	auto drawPointShadow =    [&cubeDepthMap,&drawSceneWithEffect,&objectPointShadowShader,&woodCube,&lightSourcesShader,&lightCube,&cubeShadowMap,&drawScene,&drawTerrain,&terrain,&terrainShader,&woodCubeObj,&fbo,&newFrame,&quad,&postProcessShader]()
+
+	auto drawPointShadow = [&cubeDepthMap, &drawSceneWithEffect, &objectPointShadowShader, &woodCube, &lightSourcesShader, &lightCube, &cubeShadowMap, &drawScene, &drawTerrain, &terrain, &terrainShader, &woodCubeObj, &fbo, &newFrame, &quad, &postProcessShader]()
 		{
 			cubeDepthMap.genCubeMapLightSpaceMat(25.0f, World::lightPoints[0].pos);
 
@@ -369,9 +392,9 @@ int main()
 
 			//pass uniforms to objectPointShadowShader
 			objectPointShadowShader.use();
-			objectPointShadowShader.setMat4("model", woodCubeObj.matModel);
+			objectPointShadowShader.setMat4("model", woodCubeObj->matModel);
 			objectPointShadowShader.set3Float("lightPos", World::lightPoints[0].pos);
-			objectPointShadowShader.setFloat("farPlane",25.0f);
+			objectPointShadowShader.setFloat("farPlane", 25.0f);
 
 			//pass to it lightSpaceMat
 			std::string name{};
@@ -381,7 +404,7 @@ int main()
 				name += std::to_string(matIndex);
 				name += "]";
 
-				objectPointShadowShader.setMat4(name,cubeDepthMap.cubeMapLightSpaceMat[matIndex]);
+				objectPointShadowShader.setMat4(name, cubeDepthMap.cubeMapLightSpaceMat[matIndex]);
 			}
 
 			woodCube.draw(objectPointShadowShader);
@@ -392,12 +415,12 @@ int main()
 
 			terrainShader.use();
 			terrainShader.setFloat("pointLightFarPlane", 25.0f);
-			
+
 			//render scene as usual
 			glCullFace(GL_BACK);
 			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
-			if (UsrParameters::currentEffect==none)
+			if (UsrParameters::currentEffect == none)
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				newFrame();
@@ -421,7 +444,7 @@ int main()
 			}
 		};
 
-	auto drawIcosphere = [&skyboxShader, &sphereModel, &passThroughShader, &icosahedron, &skyBox,&sphereShader,&sphereDiffuse/*&sphereEmission*/]()
+	auto drawIcosphere = [&skyboxShader, &sphereModel, &passThroughShader, &icosahedron, &skyBox, &sphereShader, &sphereDiffuse/*&sphereEmission*/]()
 		{
 			updateViewProject();
 			sphereShader.use();
@@ -443,9 +466,9 @@ int main()
 
 			icosahedron.draw();
 			//skyBox.draw(skyboxShader);		
-		}; 
+		};
 
-	auto drawCloud = [&cloudModel,&cloudQuad,&cloudShader,&skyFbo]()
+	auto drawCloud = [&cloudModel, &cloudQuad, &cloudShader, &skyFbo]()
 		{
 
 			glm::mat4 view{ glm::mat3(World::view) }; //to disable translation 
@@ -459,11 +482,12 @@ int main()
 			cloudShader.setInt("skyTexture", 1);
 			glBindTexture(GL_TEXTURE_2D, skyFbo.texId);
 
-			glDepthFunc(GL_LEQUAL); 
-			cloudQuad.drawInstanced(cloudShader, "cloudTexture",4);
+			glDepthFunc(GL_LEQUAL);
+			cloudQuad.drawInstanced(cloudShader, "cloudTexture", 4);
 			glDepthFunc(GL_LESS);
 		};
 
+	/*
 	auto drawBackPack = [&objectShader,&backPackModel]()
 		{
 			glm::mat4 idendity{ (1.0f) };
@@ -474,22 +498,23 @@ int main()
 			objectShader.setMat4("model", idendity);
 			backPackModel.draw(objectShader);
 		};
+	*/
 
 	//openDebugFile();
-	
+
 	//TUI renderloop
-	std::thread cliThread (displayTuiWindow);
+	std::thread cliThread(displayTuiWindow);
 
 	glfwSetTime(0);
 	while (!glfwWindowShouldClose(window.windowPtr))
-	{	
+	{
 		drawPointShadow();
 		swapBuffer();
 	}
 
 	cliThread.~thread();
 	glfwTerminate();
- 	return 0;
+	return 0;
 }
 
 

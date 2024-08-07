@@ -111,6 +111,9 @@ Object::Object(Mesh* mesh,glm::vec3 pos)
 	matModel = glm::translate(localOrigin, pos);
 	basePos = pos;
 	pos = basePos;
+
+	if (enableCollision)
+		aabb = new AABB();
 }
 
 Object::Object(Model* model3d, glm::vec3 pos)
@@ -128,6 +131,8 @@ Object::Object(const Object& object)
 	id = -1;
 
 	mesh = object.mesh;
+	model3d = object.model3d;
+	aabb = object.aabb;
 	shaderOutline = object.shaderOutline;
 	matModel = object.matModel;
 	localOrigin = object.localOrigin;
@@ -160,6 +165,8 @@ Object& Object::operator=(const Object& object)
 {
 	//same as default exept the object keep it's id
 	mesh = object.mesh;
+	model3d = object.model3d;
+	aabb = object.aabb;
 	shaderOutline = object.shaderOutline;
 	matModel = object.matModel;
 	localOrigin = object.localOrigin;
@@ -254,8 +261,13 @@ bool Object::isSpotLightIndexValid(int index)
 
 void Object::move(glm::vec3 vector)
 {
-	matModel = matModel * glm::translate(localOrigin, vector);
-	pos = glm::translate(localOrigin, vector) * glm::vec4(pos, 1.0f);
+	glm::mat4 trans{ glm::translate(localOrigin, vector) };
+
+	matModel = matModel * trans;
+	pos = trans * glm::vec4(pos, 1.0f);
+
+	if (aabb != nullptr)
+		aabb->matModel = matModel * trans;
 
 	//should add a parameter to decide how the light position is influenced by the object it's associated with position 
 	//by default the light has the same position as the object 
@@ -279,7 +291,6 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 	orientation = orientation + rotateAxis * degree;
 	float rad{ glm::radians(degree) };
 	matModel = matModel * glm::rotate(matModel, rad, rotateAxis);
-	pos = glm::rotate(matModel, rad, rotateAxis) * glm::vec4(pos, 1.0f);
 
 	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
@@ -297,8 +308,12 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 
 void Object::scale(glm::vec3 scaleVec)
 {
-	matModel = matModel * glm::scale(localOrigin, scaleVec);
-	pos = glm::scale(localOrigin, scaleVec) * glm::vec4(pos, 1.0f);
+	glm::mat4 scale{ glm::scale(localOrigin, scaleVec) };
+
+	matModel = matModel * scale;
+
+	if (aabb!=nullptr)
+		aabb->matModel = matModel * scale;
 
 	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
@@ -453,15 +468,6 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 		shader.set3Float("lightColor", World::lightPoints[worldLighPointIndex].color);
 		shader.setMat4("model", matModel);
 		shader.setMat4("orbit", orbitMat);
-	}
-
-	if (enableCollision && collionShapeShader!=nullptr)
-	{
-		//exteriorCollisionShape
-		Cube collisionCube(2.0f, { -1.0f,-1.0f,-1.0f });
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		collisionCube.draw(*collionShapeShader);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 	if (enableOutLine)

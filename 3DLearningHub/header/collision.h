@@ -16,10 +16,8 @@ public:
 
 	Cube* cube;
 	glm::mat4 matModel{ glm::mat4(1.0f) }; //should be named matModel
-	glm::mat4 localOrigin{ glm::mat4(1.0f) };
-	glm::vec3 pos{}; //in world unit
 
-	void updateMinMaxAfterRotation(std::vector<Vertex>& vertices, glm::vec3& orientation);
+	void searchMinMax(const std::vector<Vertex>& vertices);
 
 	AABB() {}
 

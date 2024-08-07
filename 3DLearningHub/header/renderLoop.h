@@ -5,7 +5,8 @@
 #include "../header/mesh.h"
 #include "../header/shader.h"
 
-void createAndSetLightCube(Shader& shader, std::array<Object, 2>& lightCubesObject);
+void createAndSetLightCube(Shader& shader, std::array<Object*, 2> lightCubesObject);
 void createAndSetWoodCube(Shader& shader, Shader& outlineShader, Object& woodCubeObj);
+void createAndSetBallon(Shader& shader, Shader& outlineShader, Object& ballon);
 void debugInfo();
 void checkUsrRenderParameter(Shader& postProcessShader);

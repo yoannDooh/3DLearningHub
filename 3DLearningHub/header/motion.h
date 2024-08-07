@@ -17,9 +17,10 @@
 #include "../header/collision.h"
 
 
-//forward declaration class and struct
+//forward declarations
 class Cube;
 class Square;
+class AABB;
 
 namespace Light
 {
@@ -164,6 +165,7 @@ class Object
 	public:
 		Model* model3d{ nullptr };
 		Mesh* mesh{ nullptr };
+		AABB* aabb{ nullptr };
 		Shader shaderOutline{};
 		glm::mat4 matModel{ glm::mat4(1.0f) };
 		glm::mat4 localOrigin{ glm::mat4(1.0f) };
