@@ -178,6 +178,7 @@
     <None Include="assimp-vc143-mt.dll" />
     <None Include="dependencies\assimp\assimp_x64-windows\bin\assimp-vc143-mt.dll" />
     <None Include="openGl.props" />
+    <None Include="shader\aabb\compute.glsl" />
     <None Include="shader\circle\fragment.glsl" />
     <None Include="shader\circle\geometry.glsl" />
     <None Include="shader\circle\vertex.glsl" />

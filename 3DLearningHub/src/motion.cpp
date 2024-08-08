@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cmath>
 
+# define COMPUTE_SHADER_LOCAL_GROUP_NB 8 
+
 namespace Mouse
 {
 	float sensitivity = 0.15f;
@@ -111,9 +113,13 @@ Object::Object(Mesh* mesh,glm::vec3 pos)
 	matModel = glm::translate(localOrigin, pos);
 	basePos = pos;
 	pos = basePos;
+	
 
 	if (enableCollision)
 		aabb = new AABB();
+
+	aabb->searchMinMax(mesh->vertices);
+
 }
 
 Object::Object(Model* model3d, glm::vec3 pos)
@@ -124,6 +130,14 @@ Object::Object(Model* model3d, glm::vec3 pos)
 	this->matModel = glm::translate(localOrigin, pos);
 	basePos = pos;
 	pos = basePos;
+
+	if (enableCollision)
+		aabb = new AABB();
+
+	for (const auto& mesh : model3d->meshes)
+	{
+		aabb->searchMinMax(mesh.vertices);
+	}
 }
 
 Object::Object(const Object& object)
@@ -291,6 +305,73 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 	orientation = orientation + rotateAxis * degree;
 	float rad{ glm::radians(degree) };
 	matModel = matModel * glm::rotate(matModel, rad, rotateAxis);
+
+	/*
+	//handle aabb after rotation
+	if (enableCollision)
+	{
+		int workGroupNb{};
+
+		if (mesh != nullptr) // no model3d
+		{
+			std::vector<glm::vec3>verticesCoords;
+			verticesCoords.reserve( mesh->vertices.size() );
+			
+			for (const auto& vertex: mesh->vertices) //fill array with coords
+			{
+				verticesCoords.push_back(vertex.coord);
+			}
+
+			fillUbo3(id,mesh->vertices.size(), verticesCoords);
+
+			workGroupNb = mesh->vertices.size() / COMPUTE_SHADER_LOCAL_GROUP_NB;
+			if (mesh->vertices.size() % COMPUTE_SHADER_LOCAL_GROUP_NB != 0)
+				++workGroupNb;
+
+			Shaders::aabbCompute.use();
+			Shaders::aabbCompute.callComputeShader(workGroupNb, 1, 1);
+			
+
+			//get back data
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffersId[3] );
+			std::vector<glm::vec3> vertices;
+			//glm::vec3* vertices = new glm::vec3[mesh->vertices.size()];
+			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 8, mesh->vertices.size()* sizeof(glm::vec3),&vertices);
+
+			//updateMinMax
+
+		}
+
+		if (model3d != nullptr)
+		{
+			int verticesNb{};
+			std::vector<glm::vec3> verticesCoords;
+
+			for (const auto& mesh : model3d->meshes)
+			{
+				verticesNb += mesh.vertices.size();
+
+				for (const auto& vertex : mesh.vertices)
+				{
+					verticesCoords.push_back(vertex.coord);
+				}
+			}
+
+			workGroupNb = verticesNb / COMPUTE_SHADER_LOCAL_GROUP_NB;
+
+			fillUbo3(id, verticesNb, verticesCoords);
+
+			Shaders::aabbCompute.use();
+			Shaders::aabbCompute.callComputeShader(workGroupNb, 1, 1);
+
+			//get back data
+			glm::vec3* vertices = new glm::vec3[verticesNb];
+			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 8, verticesNb * sizeof(glm::vec3),vertices);
+
+			//updateMinMax
+		}
+	}
+	*/
 
 	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
@@ -502,6 +583,20 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 
 		return;
 	}
+
+	/*
+	if (enableCollision)
+	{
+		aabb->constructCube();
+		Shaders::object.use();
+		Shaders::object.setMat4("model", matModel);
+
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		aabb->cube->draw(Shaders::object);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+	*/
 
 	if (model3d != nullptr)
 	{

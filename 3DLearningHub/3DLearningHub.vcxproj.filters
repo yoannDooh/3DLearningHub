@@ -10,6 +10,8 @@
     <ClCompile Include="src\tuiWindow.cpp" />
     <ClCompile Include="src\renderLoop.cpp" />
     <ClCompile Include="..\..\..\..\..\..\..\..\..\librairie\openGl\glad\src\glad.c" />
+    <ClCompile Include="src\collision.cpp" />
+    <ClCompile Include="src\saveFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\GLAD\include\glad\glad.h" />
@@ -23,6 +25,8 @@
     <ClInclude Include="header\window.h" />
     <ClInclude Include="header\tuiWindow.h" />
     <ClInclude Include="header\renderLoop.h" />
+    <ClInclude Include="header\collision.h" />
+    <ClInclude Include="header\saveFile.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\object\fragment.glsl" />
@@ -67,6 +71,7 @@
     <None Include="dependencies\assimp\assimp_x64-windows\bin\assimp-vc143-mt.dll" />
     <None Include="shader\cubeCollisionShape\vertex.glsl" />
     <None Include="shader\cubeCollisionShape\fragment.glsl" />
+    <None Include="shader\aabb\compute.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="dependencies\GLFW\lib-vc2022\glfw3.lib" />

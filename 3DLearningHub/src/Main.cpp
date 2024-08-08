@@ -55,6 +55,7 @@ int main()
 	Shader cloudShader(".\\shader\\clouds\\vertex.glsl", ".\\shader\\clouds\\fragment.glsl");
 	Shader cubeCollisionShader(".\\shader\\cubeCollisionShape\\vertex.glsl", ".\\shader\\cubeCollisionShape\\fragment.glsl");
 
+	initShaders();
 
 	//init Framebuffers
 	FrameBuffer fbo(true, true);
@@ -74,7 +75,7 @@ int main()
 
 
 	/*MODELS INIT*/
-	//AssimpModel backPackModel(".\\rsc\\models\\backpack\\backpack.obj");
+	//Model* backPackModel = new Model(".\\rsc\\models\\backpack\\backpack.obj");
 	//writeModelSaveFile(backPackModel);
 
 	/*MESHES INIT*/

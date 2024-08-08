@@ -26,3 +26,11 @@ void AABB::searchMinMax(const std::vector<Vertex>& vertices)
 			max.z = vertices[index].coord.z;
 	}
 }
+
+void AABB::constructCube()
+{
+	float cote{ glm::distance(min,max) / sqrt(3.0f) };
+	glm::vec3 originCoord{ max-min / 2.0f};
+
+	cube = new Cube(cote, glmVec3ToArray(originCoord) );
+}

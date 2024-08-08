@@ -151,6 +151,17 @@ std::string textureMapToStr(TextureMap textureType)
 	return "";
 }
 
+std::array<float, 3> glmVec3ToArray(glm::vec3& vec)
+{
+	std::array<float, 3> arr;
+
+	arr[0] = vec.x;
+	arr[1] = vec.y;
+	arr[2] = vec.z;
+
+	return arr;
+}
+
 /*--MESH CLASS--*/
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
 {

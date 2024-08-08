@@ -18,8 +18,9 @@ public:
 	glm::mat4 matModel{ glm::mat4(1.0f) }; //should be named matModel
 
 	void searchMinMax(const std::vector<Vertex>& vertices);
-
+	void constructCube();
 	AABB() {}
+
 
 
 };

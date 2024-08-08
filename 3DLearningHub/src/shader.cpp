@@ -3,31 +3,32 @@
 #include <iostream>
 #include <fstream>
 
-#define UNIFORM_BUFFER_NB 3
 #define MAX_LIGHTS_NB 200
 #define DIRECT_LIGHTS_NB 1
+#define MAX_OBJECT_VERTICES_NB 10000000
 
-/*
-namespace ShadersVar
+
+namespace Shaders
 {
-    Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
-    Shader objectDirectShadowShader(".\\shader\\objectDirectShadow\\vertex.glsl", ".\\shader\\objectDirectShadow\\fragment.glsl");
-    Shader objectPointShadowShader(".\\shader\\objectPointShadow\\vertex.glsl", ".\\shader\\objectPointShadow\\fragment.glsl", ".\\shader\\objectPointShadow\\geometry.glsl");
-    Shader lightSourcesShader(".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
-    Shader skyboxShader(".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
-    Shader outlineShader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
-    Shader postProcessShader(".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
-    Shader geometryShader(".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
-    Shader circleShader(".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
-    Shader terrainShader(".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
-    Shader terrainDirectShadowShader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
-    Shader passThroughShader(".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
-    Shader sphereShader(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
-    Shader hemisphereShader(".\\shader\\hemisphere\\vertex.glsl", ".\\shader\\hemisphere\\fragment.glsl", ".\\shader\\hemisphere\\TCS.glsl", ".\\shader\\hemisphere\\TES.glsl");
-    Shader cloudShader(".\\shader\\clouds\\vertex.glsl", ".\\shader\\clouds\\fragment.glsl");
-    Shader cubeCollisionShader(".\\shader\\cubeCollisionShape\\vertex.glsl", ".\\shader\\cubeCollisionShape\\fragment.glsl");
+    Shader object{} ;
+    Shader objectDirectShadow{} ;
+    Shader objectPointShadow{} ;
+    Shader lightSources{} ;
+    Shader skybox{} ;
+    Shader outline{} ;
+    Shader postProcess{} ;
+    Shader geometry{} ;
+    Shader circle{} ;
+    Shader terrain{} ;
+    Shader terrainDirectShadow{} ;
+    Shader passThrough{} ;
+    Shader sphere{} ;
+    Shader hemisphere{} ;
+    Shader cloud{} ;
+    Shader cubeCollision{} ;
+    Shader aabbCompute{} ;
 }
-*/
+
 
 /*--SHADER CLASSE--*/
 static std::string readGlslFile(std::string filePath)
@@ -248,6 +249,52 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* tes
     glDeleteShader(tessellationEvaluationShader);
 }
 
+Shader::Shader(const char* computePath)
+{
+    isComputeShader = true;
+
+    std::string computeShaderCppStr{ readGlslFile(computePath) };
+    const char* computeShaderSrc{ computeShaderCppStr.c_str() };
+
+    unsigned int computeShader{ glCreateShader(GL_COMPUTE_SHADER) };
+    glShaderSource(computeShader, 1, &computeShaderSrc, NULL);
+    glCompileShader(computeShader);
+
+    int success;
+    char infoLog[512];
+    glGetShaderiv(computeShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(computeShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::COMPUTE::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+    }
+
+    //link shaders
+    Shader::ID = { glCreateProgram() };
+    glAttachShader(ID, computeShader);
+    glLinkProgram(ID);
+
+    //debug shader program
+    glGetProgramiv(ID, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(ID, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" <<
+            infoLog << std::endl;
+    }
+
+    //delete shaders
+    glDeleteShader(computeShader);
+}
+
+void Shader::callComputeShader(int x, int y, int z)
+{
+    assert(x > 0 && y > 0 && z > 0);
+
+    glDispatchCompute(x,y, z);
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+}
+
 void Shader::use()
 {
     glUseProgram(ID);
@@ -302,12 +349,44 @@ void Shader::setMat4(const std::string& name, glm::mat4& mat) const
 
 }
 
+
+void initShaders()
+{
+    Shaders::object = Shader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
+    Shaders::objectDirectShadow = Shader(".\\shader\\objectDirectShadow\\vertex.glsl", ".\\shader\\objectDirectShadow\\fragment.glsl");
+    Shaders::objectPointShadow = Shader (".\\shader\\objectPointShadow\\vertex.glsl", ".\\shader\\objectPointShadow\\fragment.glsl", ".\\shader\\objectPointShadow\\geometry.glsl");
+    Shaders::lightSources = Shader (".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
+    Shaders::skybox = Shader (".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
+    Shaders::outline = Shader (".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
+    Shaders::postProcess = Shader (".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
+    Shaders::geometry = Shader (".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
+    Shaders::circle = Shader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
+    Shaders::terrain = Shader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
+    Shaders::terrainDirectShadow = Shader (".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
+    Shaders::passThrough = Shader (".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
+    Shaders::sphere = Shader (".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
+    Shaders::hemisphere = Shader (".\\shader\\hemisphere\\vertex.glsl", ".\\shader\\hemisphere\\fragment.glsl", ".\\shader\\hemisphere\\TCS.glsl", ".\\shader\\hemisphere\\TES.glsl");
+    Shaders::cloud = Shader (".\\shader\\clouds\\vertex.glsl", ".\\shader\\clouds\\fragment.glsl");
+    Shaders::cubeCollision = Shader (".\\shader\\cubeCollisionShape\\vertex.glsl", ".\\shader\\cubeCollisionShape\\fragment.glsl");
+    Shaders::aabbCompute = Shader(".\\shader\\aabb\\compute.glsl");
+}
+
 //UBO AND SSO FUNCTIONS / VARIABLES
 
-std::array<unsigned int, UNIFORM_BUFFER_NB> buffersId{};
+std::array<unsigned int, UNIFORM_BUFFER_NB> buffersId{}; //en vrai c'est vraiment inutile 
 
 void genUbo0()
 {
+    /*
+    * layout(std140, binding = 0) uniform camAndProject
+    * {
+    *     mat4 view;
+    *     mat4 projection;
+    *     vec4 viewPosition;
+    * };
+    * 
+    */
+
     std::size_t size{ 2 * sizeof(glm::mat4) + sizeof(glm::vec4) };
 
     unsigned int uniformBuff;
@@ -370,6 +449,14 @@ void genUbo1()
         //total-size : 96 bits
     };
     */
+
+   /*
+   * 
+   * layout(std140, binding = 1) buffer pointLightBuff
+   *    {
+   *        PointLight pointLights[];
+   *    };
+   */
 
     std::size_t size{ MAX_LIGHTS_NB*96 };
 
@@ -507,6 +594,14 @@ void genUbo2()
     };
    */
 
+   /*
+   *
+   * layout(std140, binding = 2) uniform directLightBuff
+   *    {
+   *        DirectLight sunLight;
+   *    };
+   */
+
     std::size_t size{ DIRECT_LIGHTS_NB*80 };
 
     unsigned int uniformBuff;
@@ -558,6 +653,8 @@ void fillUbo2(int lightIndex,int dataToFill)
         offset += 16;
         glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(glm::vec3), &World::directLights[lightIndex].specular);
 
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
         return;
     }
 
@@ -593,4 +690,55 @@ void fillUbo2(int lightIndex,int dataToFill)
     }
 
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void genUbo3()
+{
+  /*
+  *
+  * layout(std140, binding = 3) uniform aabbBuff
+  *     {
+  *         int objId;  // offset 0
+  *         int verticesNb; // offset 4 (+4)
+  *         vec3 verticesCoords[]; // offset 8 (+4)
+  *        
+            //total-size : 8  + verticesCoords.length()* sizeof(glm::vec4) [which is 16bits] bits
+
+  *     };
+  */
+  
+   std::size_t size{ 2*sizeof(int) + sizeof(glm::vec4)* MAX_OBJECT_VERTICES_NB };
+
+   unsigned int ssbo;
+   glGenBuffers(1, &ssbo);
+   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+   glBufferData(GL_SHADER_STORAGE_BUFFER, size, NULL, GL_STATIC_DRAW);
+   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
+
+   glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+   buffersId[3] = ssbo;
+}
+
+void fillUbo3(int id, int verticeNb, std::vector<glm::vec3>verticesCoords) 
+{
+  
+    int offset{};
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffersId[3]); //en vrai c'est vraiment inutile 
+
+
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(int), &id);
+    offset += 4;
+
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(int), &verticeNb);
+    offset += 4;
+
+    for (int vertexIndex{}; vertexIndex < verticesCoords.size(); ++vertexIndex)
+    {
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &verticesCoords[vertexIndex]);
+        offset += 16;
+    }
+
 }

@@ -247,6 +247,7 @@ class Object
 private :
 
 	void genId();
+	void updateAabbAfterRot(); //update aabb after rotation
 
 	//outline parameters
 	glm::vec3 outlineColor{};

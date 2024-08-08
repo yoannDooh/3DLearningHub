@@ -293,3 +293,6 @@ private:
 Texture loadTexture(const char* path, TextureMap type);
 std::vector<Texture> loadTextures(std::vector<const char*> paths, std::vector<TextureMap> types);
 std::string textureMapToStr(TextureMap textureType);
+
+//use template there
+std::array<float, 3> glmVec3ToArray(glm::vec3& vec);

@@ -8,7 +8,9 @@
 #include <string>
 #include <string_view> 
 #include <array>
+#include <vector>
 
+#define UNIFORM_BUFFER_NB 4
 
 
 /*SHADER CLASS*/
@@ -17,14 +19,19 @@
 class Shader
 {
 	public:
+	
 	// constructor reads and builds the shader
 	Shader(const char* vertexPath, const char* fragmentPath);
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
 	Shader(const char* vertexPath, const char* fragmentPath, const char* tessellationControl, const char* tessellationEvaluation);
+	Shader(const char* computePath);
 	Shader(){}
 
 	// the program ID
 	unsigned int ID{};
+	bool isComputeShader{false};
+
+	void callComputeShader(int x, int y, int z);
 
 	// use/activate the shader
 	void use();
@@ -41,27 +48,29 @@ class Shader
 	void setMat4(const std::string& name, glm::mat4& mat) const;
 };
 
-/*
-namespace ShadersVar
+
+namespace Shaders
 {
-	extern Shader objectShader; 
-	extern Shader objectDirectShadowShader; 
-	extern Shader objectPointShadowShader; 
-	extern Shader lightSourcesShader;
-	extern Shader skyboxShader; 
-	extern Shader outlineShader; 
-	extern Shader postProcessShader; 
-	extern Shader geometryShader; 
-	extern Shader circleShader; 
-	extern Shader terrainShader; 
-	extern Shader terrainDirectShadowShader; 
-	extern Shader passThroughShader; 
-	extern Shader sphereShader; 
-	extern Shader hemisphereShader; 
-	extern Shader cloudShader; 
-	extern Shader cubeCollisionShader;
+	extern Shader object; 
+	extern Shader objectDirectShadow;
+	extern Shader objectPointShadow; 
+	extern Shader lightSources;
+	extern Shader skybox; 
+	extern Shader outline; 
+	extern Shader postProcess; 
+	extern Shader geometry; 
+	extern Shader circle; 
+	extern Shader terrain; 
+	extern Shader terrainDirectShadow; 
+	extern Shader passThrough; 
+	extern Shader sphere; 
+	extern Shader hemisphere; 
+	extern Shader cloud; 
+	extern Shader cubeCollision;
+	extern Shader aabbCompute;
 }
-*/
+
+extern std::array<unsigned int, UNIFORM_BUFFER_NB> buffersId;
 
 //UBO AND SSO FUNCTIONS / VARIABLES
 
@@ -77,4 +86,9 @@ void fillUbo1(int lightIndex, int dataToFill); //dataToFill it's value specify t
 
 void genUbo2(); // for direct lights
 void fillUbo2(int lightIndex,int dataToFill); //dataToFill it's value specify the member of struct to pass, 1 color etc.. -1 indicates to pass all member to buffer
+
+void genUbo3(); // for aabb
+void fillUbo3(int id, int verticeNb, std::vector<glm::vec3> verticesCoords); //dataToFill it's value specify the member of struct to pass, 1 color etc.. -1 indicates to pass all member to buffer
+
+void initShaders();
 
