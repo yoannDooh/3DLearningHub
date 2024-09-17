@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #define POINT_LIGHTS_NB 2
 #define DIRECT_LIGHTS_NB 1
@@ -56,6 +56,13 @@ enum CollisionShape
 	sphereColType
 };
 
+enum Axes
+{
+	x,
+	y,
+	z,
+};
+
 class FrameBuffer
 {
 public:
@@ -64,7 +71,7 @@ public:
 	unsigned int renderId{};
 
 	FrameBuffer(bool activateBufferTex, bool activateRenderBuff);
-	FrameBuffer() {} 
+	FrameBuffer() {}
 
 protected:
 	void genFrameBuffTex(int width, int height);
@@ -77,7 +84,7 @@ public:
 	ShadowBuffer() {}
 
 	glm::mat4 depthMapLightSpaceMat{};
-	std::array<glm::mat4,6> cubeMapLightSpaceMat{}; // in order : +x,-x,+y,-y,+z,-z
+	std::array<glm::mat4, 6> cubeMapLightSpaceMat{}; // in order : +x,-x,+y,-y,+z,-z
 
 	unsigned int SHADOW_WIDTH{};
 	unsigned int SHADOW_HEIGHT{};
@@ -86,7 +93,7 @@ public:
 	void genDepthMapTex(int width, int height);
 	void genDepthMapLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);
 
-	
+
 	void genCubeMapBuff();
 	void genCubeMapTex(int width, int height);
 	void genCubeMapLightSpaceMat(float lightRange, glm::vec3 lightPos);
@@ -157,94 +164,95 @@ public:
 	glm::vec3 up{};
 	float speed{};
 	float yawAngle{ -90.0f };
-	float pitchAngle{}; 
+	float pitchAngle{};
 };
 
 class Object
 {
-	public:
-		Model* model3d{ nullptr };
-		Mesh* mesh{ nullptr };
-		AABB* aabb{ nullptr };
-		Shader shaderOutline{};
-		glm::mat4 matModel{ glm::mat4(1.0f) };
-		glm::mat4 localOrigin{ glm::mat4(1.0f) };
-		glm::vec3 pos{}; //in world unit
-		glm::vec3 basePos{}; //in world unit
-		glm::vec3 orientation{}; //in degree
+public:
+	Model* model3d{ nullptr };
+	Mesh* mesh{ nullptr };
+	AABB* aabb{ nullptr };
+	Shader shaderOutline{};
+	glm::mat4 matModel{ glm::mat4(1.0f) };
+	glm::mat4 localOrigin{ glm::mat4(1.0f) };
+	glm::mat4 rotations{ glm::mat4(1.0f) }; //temp
+	glm::vec3 pos{}; //in world unit
+	glm::vec3 basePos{}; //in world unit
+	glm::vec3 orientation{}; //in degree
 
 
-		float materialShininess{};
+	float materialShininess{};
 
-		bool enableTranslation { true };
-		bool enableRotation { true };
-		bool enableScale { true };
-		bool enableCollision{ true };
-		bool enableOutLine{ false };
-		bool isGlowing{ false };
-		bool isOrbiting{ false };
-		
-		
-		int id;
-		//int	lighPointId{ -1 };
-		//int	spotLightId{ -1 };
+	bool enableTranslation{ true };
+	bool enableRotation{ true };
+	bool enableScale{ true };
+	bool enableCollision{ true };
+	bool enableOutLine{ false };
+	bool isGlowing{ false };
+	bool isOrbiting{ false };
 
-		CollisionShape exteriorCollisionShape{ aabbColType  };
 
-		int worldObjIndex {-1}; //index of the element inside the World::Objects vector
-		int worldLighPointIndex {-1}; //index of the element inside the World::lightPoint vector
-		int worldSpotLightIndex {-1}; //index of the element inside the World::SpotLight vector
+	int id;
+	//int	lighPointId{ -1 };
+	//int	spotLightId{ -1 };
 
-		Object() {genId();}
-		Object(Model* model3d) { genId(); this->model3d = model3d; }
-		Object(Model* model3d, glm::vec3 pos);
-		Object(Mesh* mesh) { genId(); this->mesh = mesh; }
-		Object(Mesh* mesh,glm::vec3 pos);
-		Object(const Object& object);
-		Object& operator=(const Object& object);
-		~Object();
+	CollisionShape exteriorCollisionShape{ aabbColType };
 
-		bool isObjIndexValid(int index);
-		bool isLightPointIndexValid(int index);
-		bool isSpotLightIndexValid(int index);
+	int worldObjIndex{ -1 }; //index of the element inside the World::Objects vector
+	int worldLighPointIndex{ -1 }; //index of the element inside the World::lightPoint vector
+	int worldSpotLightIndex{ -1 }; //index of the element inside the World::SpotLight vector
 
-		void move(glm::vec3 vector);
-		void rotate(float degree,glm::vec3 rotateAxis); //in degree
-		void scale(glm::vec3 scaleVec);
-		void rotatePlane(float degree);
-		void updateLightPoint(glm::vec3 newValue,int memberIndex); //memberIndex : 0 for color ... 4 for specular 
+	Object() { genId(); }
+	Object(Model* model3d, bool enableCollision = true);
+	Object(Model* model3d, glm::vec3 pos, bool enableCollision = true);
+	Object(Mesh* mesh, bool enableCollision = true);
+	Object(Mesh* mesh, glm::vec3 pos, bool enableCollision = true);
+	Object(const Object& object);
+	Object& operator=(const Object& object);
+	~Object();
 
-		void set(Shader& shader, glm::vec3 translationVec = glm::vec3(0.0f,0.0f,0.0f), glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 0.0f), float rotationDegree = 0.0f, glm::vec3 scaleVec = glm::vec3(0.0f, 0.0f, 0.0f) );//call once, before the renderLoop
+	bool isObjIndexValid(int index);
+	bool isLightPointIndexValid(int index);
+	bool isSpotLightIndexValid(int index);
 
-		void animate(Shader& shader,Shader*collionShape=nullptr,glm::vec3 translationVec = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 0.0f), float rotationDegree = 0.0f, glm::vec3 scaleVec = glm::vec3(0.0f, 0.0f, 0.0f)); //call every frame, inside the renderLoop
+	void move(glm::vec3 vector);
+	void rotate(float degree, glm::vec3 rotateAxis); //in degree
+	void scale(glm::vec3 scaleVec);
+	void rotatePlane(float degree);
+	void updateLightPoint(glm::vec3 newValue, int memberIndex); //memberIndex : 0 for color ... 4 for specular 
 
-		void setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse, glm::vec3 specular, float constant, float linearCoef, float squareCoef);
+	void set(Shader& shader, glm::vec3 translationVec = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 0.0f), float rotationDegree = 0.0f, glm::vec3 scaleVec = glm::vec3(0.0f, 0.0f, 0.0f));//call once, before the renderLoop
 
-		void setOuline(Shader& shaderOutline, glm::vec3 outlineColor,float outlineWeight)
-		{
-			Object::shaderOutline = shaderOutline;
-			Object::outlineColor = outlineColor;
-			Object::outlineWeight = outlineWeight;
-		}
+	void animate(Shader& shader, Shader* collionShape = nullptr, glm::vec3 translationVec = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 0.0f), float rotationDegree = 0.0f, glm::vec3 scaleVec = glm::vec3(0.0f, 0.0f, 0.0f)); //call every frame, inside the renderLoop
 
-		void setGlow(glm::vec3 glowColor,float glowStrenghtMax, float glowDuration)
-		{
-			Object::glowColor = glowColor;
-			Object::glowStrenghtMax = glowStrenghtMax;
-			Object::glowDuration = glowDuration;
-		}	
+	void setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse, glm::vec3 specular, float constant, float linearCoef, float squareCoef);
 
-		void setOrbit(float distFromCenter,float orbitHorizontalAxis, float orbitVerticalAxis,float orbitDuration)
-		{
-			Object::distFromCenter = distFromCenter;
-			Object::orbitHorizontalAxis = orbitHorizontalAxis;
-			Object::orbitVerticalAxis = orbitVerticalAxis;
-			Object::orbitDuration = orbitDuration;
-		}
+	void setOuline(Shader& shaderOutline, glm::vec3 outlineColor, float outlineWeight)
+	{
+		Object::shaderOutline = shaderOutline;
+		Object::outlineColor = outlineColor;
+		Object::outlineWeight = outlineWeight;
+	}
 
-		void addToWorldObjects();
+	void setGlow(glm::vec3 glowColor, float glowStrenghtMax, float glowDuration)
+	{
+		Object::glowColor = glowColor;
+		Object::glowStrenghtMax = glowStrenghtMax;
+		Object::glowDuration = glowDuration;
+	}
 
-private :
+	void setOrbit(float distFromCenter, float orbitHorizontalAxis, float orbitVerticalAxis, float orbitDuration)
+	{
+		Object::distFromCenter = distFromCenter;
+		Object::orbitHorizontalAxis = orbitHorizontalAxis;
+		Object::orbitVerticalAxis = orbitVerticalAxis;
+		Object::orbitDuration = orbitDuration;
+	}
+
+	void addToWorldObjects();
+
+private:
 
 	void genId();
 	void updateAabbAfterRot(); //update aabb after rotation
@@ -268,6 +276,10 @@ private :
 	float orbitDuration{};
 };
 
+bool compObjPosX(Object* obj1, Object* obj2);
+bool compObjPosY(Object* obj1, Object* obj2);
+bool compObjPosZ(Object* obj1, Object* obj2);
+
 namespace Mouse
 {
 	extern float sensitivity;
@@ -287,7 +299,7 @@ namespace Time
 		int hour{};
 		int day{};
 
-		
+
 		Time(int hour, int min)
 		{
 			Time::hour = hour;
@@ -310,7 +322,7 @@ namespace Time
 	extern float fps;
 	extern Time timeInGame;
 	extern DayPhases dayPhase;
-	extern std::map<DayPhases, std::array<Time,2> > dayPhasesTime;
+	extern std::map<DayPhases, std::array<Time, 2> > dayPhasesTime;
 	extern int totalMinInGame;
 	extern float timeAccelerator; //accelerate or slow time, change le nom
 	extern float currentPhaseNextPhaseDist;
@@ -404,17 +416,17 @@ namespace Light
 		float constant{};
 		float linearCoef{};
 		float squareCoef{};
-	};	
+	};
 }
 
-namespace UsrParameters //nom à changer 
+namespace UsrParameters //nom ï¿½ changer 
 {
 	enum InfoOption
 	{
-		position, 
-		eyeDirection,	
+		position,
+		eyeDirection,
 		time,
-		fps	
+		fps
 	};
 
 	extern Effects currentEffect;
@@ -426,7 +438,7 @@ namespace UsrParameters //nom à changer
 //lighting 
 void setLighting();
 
-void updateTimeInGame(); 
+void updateTimeInGame();
 
 //shadows functions
 glm::mat4 toDirectionalLightSpaceMat(float lightRange, glm::vec3 lightPos, glm::vec3 lookAtLocation);

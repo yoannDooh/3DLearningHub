@@ -171,6 +171,19 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
 	setupMesh();
 }
 
+Mesh::Mesh(Mesh* orignalMesh)
+{
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, orignalMesh->VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, orignalMesh->EBO);
+
+	Mesh::indices.resize(orignalMesh->indices.size());
+
+	glBindVertexArray(0);
+}
+
 /*
 void Mesh::calcTB()
 {
@@ -212,6 +225,8 @@ void Mesh::addTexture(Texture texture)
 {
 	textures.push_back(texture);
 }
+
+Mesh* Mesh::getOriginalMesh() { return originalMesh; }
 
 void Mesh::draw(Shader& shader)
 {
@@ -772,13 +787,19 @@ Cube::Cube(std::vector<Texture> textures, float cote, std::array<float, 3> origi
 
 }
 
-Cube::Cube(unsigned int vbo, unsigned int ebo, unsigned int indiceNb)
+Cube::Cube(glm::vec3& min, glm::vec3& max)
+{
+	Cube(max.x - min.x, {max.x-min.x,max.y-min.y,max.z-min.z});
+}
+
+Cube::Cube(Cube* cube)
 {
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBindBuffer(GL_ARRAY_BUFFER, cube->VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube->EBO);
+
 
 	//coord attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)0);
@@ -788,7 +809,7 @@ Cube::Cube(unsigned int vbo, unsigned int ebo, unsigned int indiceNb)
 	glVertexAttribPointer(1, 1, GL_INT, GL_FALSE, 12 * sizeof(float), (void*)(11 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	Mesh::indices.resize(indiceNb);
+	Mesh::indices.resize(cube->indices.size());
 
 	glBindVertexArray(0);
 }

@@ -70,7 +70,7 @@ public:
 	Mesh() {}
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, bool cubeMapPresence);
-
+	Mesh(Mesh* orignalMesh);
 
 	void addTexture(Texture texture);
 	void draw(Shader& shader);
@@ -78,7 +78,7 @@ public:
 	unsigned int getVao();
 	unsigned int getVbo();
 	unsigned int getEbo();
-
+	Mesh* getOriginalMesh();
 	void setVao(unsigned int vao);
 	void setVbo(unsigned int vbo);
 	void setEbo(unsigned int ebo);
@@ -88,6 +88,7 @@ public:
 
 protected:
 	// render data
+	Mesh* originalMesh{ nullptr };
 	unsigned int VAO{}, VBO{}, EBO {};
 
 private: 
@@ -125,12 +126,13 @@ public:
 	Cube() {}
 	Cube(float cote, std::array<float, 3>);
 	Cube(std::vector<Texture> textures, float cote = 2.0f, std::array<float, 3> centerCoord = { 0.0f,0.0f,0.0f });
+	Cube(glm::vec3& min, glm::vec3& max);
 	//generate VAO,VBO and EBO from the provided cote and originCoor
 	//there is 5 attribute, in order : coord(3 floats) -> coolors coord (https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/RGB_color_solid_cube.png/220px-RGB_color_solid_cube.png) (3 floats)
 	//->normal vector (3 float) -> texture coord (2 float) -> the vertex number within the 8 vertices of the cube (1 float) 
 	//originCoord is bottomFace topLeft vertex 
 
-	Cube(unsigned int vbo, unsigned int ebo, unsigned int indiceNb); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
+	Cube(Cube* cube); //generate VAO, bind the vbo and ebo passed as argument, and attrib pointer for coord and vertex number 
 
 protected:
 	void setupCube();

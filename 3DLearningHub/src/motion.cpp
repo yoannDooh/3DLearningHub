@@ -38,11 +38,11 @@ namespace Time
 	};
 
 	int totalMinInGame{};
-	float timeAccelerator{1.0f};
+	float timeAccelerator{ 1.0f };
 
 	float currentPhaseNextPhaseDist{};
 	float currentHourCurrentPhaseBaseHourDist{};
-	
+
 }
 
 namespace World
@@ -53,10 +53,10 @@ namespace World
 
 	float CameraSpeed{ 40.5 };
 	Camera camera{ glm::vec3(-26.2968f, 46.3522f, -40.89f),  glm::vec3(26.2968f, -46.3522f, 40.89f), glm::vec3(0.0f, 1.0f, 0.0f), CameraSpeed };
-	glm::mat4 view { glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
-	glm::mat4 projection {  glm::perspective(glm::radians(Mouse::fov), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT),projectionNear, projectionFar)  };
+	glm::mat4 view{ glm::lookAt(camera.pos, camera.pos + camera.front, camera.up) };
+	glm::mat4 projection{ glm::perspective(glm::radians(Mouse::fov), projectionWidth / projectionHeight,projectionNear, projectionFar) };
 
-	float projectionWidth { 800.0f };
+	float projectionWidth{ 800.0f };
 	float projectionHeight{ 600.0f };
 	float projectionNear{ 0.1f };
 	float projectionFar{ 1000.0f };
@@ -76,27 +76,27 @@ namespace World
 		}
 	};
 
-	 Object sunObj;
-	 glm::vec3 sunPos{}; //in a sphere of a radius 1
-	 float sunAzimuth{90};
-	 float sunAltitude{35};
+	Object sunObj;
+	glm::vec3 sunPos{}; //in a sphere of a radius 1
+	float sunAzimuth{ 90 };
+	float sunAltitude{ 35 };
 
-	 std::map<DayPhases, glm::vec3>sunLightColor{
-		 {dawn,rgb(254, 197, 185)},
-		 {daytime,rgb(252, 252, 253)},
-		 {sunset,rgb(111, 1, 0) },
-		 {night,rgb(9, 8, 28)}
-	 };
+	std::map<DayPhases, glm::vec3>sunLightColor{
+		{dawn,rgb(254, 197, 185)},
+		{daytime,rgb(252, 252, 253)},
+		{sunset,rgb(111, 1, 0) },
+		{night,rgb(9, 8, 28)}
+	};
 
 	int mapWidth{};
 	int mapHeight{};
 }
 
-namespace UsrParameters 
+namespace UsrParameters
 {
-	Effects currentEffect{none};
-	bool activateWireframe{false};
-	std::map<InfoOption, bool> infoOptions {
+	Effects currentEffect{ none };
+	bool activateWireframe{ false };
+	std::map<InfoOption, bool> infoOptions{
 				{position,false},
 				{eyeDirection,false},
 				{time,false},
@@ -105,38 +105,82 @@ namespace UsrParameters
 }
 
 //OBJECT CLASS
-Object::Object(Mesh* mesh,glm::vec3 pos)
+
+Object::Object(Model* model3d, bool enableCollision)
+{
+	genId();
+	this->model3d = model3d;
+	this->enableCollision = enableCollision;
+
+	if (enableCollision)
+	{
+		aabb = new AABB();
+
+		for (const auto& mesh : model3d->meshes)
+		{
+			aabb->searchMinMax(mesh.vertices);
+		}
+	}
+}
+
+Object::Object(Mesh* mesh, bool enableCollision)
+{
+	genId();
+	this->mesh = mesh;
+	this->enableCollision = enableCollision;
+
+	if (enableCollision)
+	{
+		aabb = new AABB();
+		
+		if (mesh->getOriginalMesh() != nullptr)
+		{
+			aabb->searchMinMax(mesh->getOriginalMesh()->vertices);
+			return;
+		}
+
+		if(mesh!=nullptr)
+			aabb->searchMinMax(mesh->vertices);
+	}
+}
+
+Object::Object(Mesh* mesh, glm::vec3 pos, bool enableCollision)
 {
 	genId();
 
 	this->mesh = mesh;
+	this->enableCollision = enableCollision;
 	matModel = glm::translate(localOrigin, pos);
 	basePos = pos;
 	pos = basePos;
-	
+
 
 	if (enableCollision)
+	{
 		aabb = new AABB();
-
-	aabb->searchMinMax(mesh->vertices);
+		aabb->searchMinMax(mesh->vertices);
+	}
 
 }
 
-Object::Object(Model* model3d, glm::vec3 pos)
+Object::Object(Model* model3d, glm::vec3 pos, bool enableCollision)
 {
 	genId();
 
 	this->model3d = model3d;
 	this->matModel = glm::translate(localOrigin, pos);
+	this->enableCollision = enableCollision;
 	basePos = pos;
 	pos = basePos;
 
 	if (enableCollision)
+	{
 		aabb = new AABB();
 
-	for (const auto& mesh : model3d->meshes)
-	{
-		aabb->searchMinMax(mesh.vertices);
+		for (const auto& mesh : model3d->meshes)
+		{
+			aabb->searchMinMax(mesh.vertices);
+		}
 	}
 }
 
@@ -161,8 +205,8 @@ Object::Object(const Object& object)
 	isGlowing = object.isGlowing;
 	enableOutLine = object.enableOutLine;
 	isOrbiting = object.isOrbiting;
-	worldObjIndex = object.worldObjIndex; 
-	worldLighPointIndex = object.worldLighPointIndex; 
+	worldObjIndex = object.worldObjIndex;
+	worldLighPointIndex = object.worldLighPointIndex;
 	worldSpotLightIndex = object.worldSpotLightIndex;
 	outlineColor = object.outlineColor;
 	outlineWeight = object.outlineWeight;
@@ -219,16 +263,16 @@ Object::~Object()
 	World::freeIDs.push_back(id);
 
 	World::objects.erase(id);
-	
+
 	if (isObjIndexValid(worldObjIndex))
 		World::objectsRendered.erase(World::objectsRendered.begin() + worldObjIndex);
 
 
-	if (isLightPointIndexValid(worldLighPointIndex) )
+	if (isLightPointIndexValid(worldLighPointIndex))
 		World::lightPoints.erase(World::lightPoints.begin() + worldLighPointIndex);
-	
 
-	if (isSpotLightIndexValid(worldSpotLightIndex) )
+
+	if (isSpotLightIndexValid(worldSpotLightIndex))
 		World::spotLights.erase(World::spotLights.begin() + worldSpotLightIndex);
 }
 
@@ -281,7 +325,10 @@ void Object::move(glm::vec3 vector)
 	pos = trans * glm::vec4(pos, 1.0f);
 
 	if (aabb != nullptr)
+	{
 		aabb->matModel = matModel * trans;
+		aabb->centroidPos = trans * glm::vec4(aabb->centroidPos, 1.0f);
+	}
 
 	//should add a parameter to decide how the light position is influenced by the object it's associated with position 
 	//by default the light has the same position as the object 
@@ -304,9 +351,10 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 {
 	orientation = orientation + rotateAxis * degree;
 	float rad{ glm::radians(degree) };
-	matModel = matModel * glm::rotate(matModel, rad, rotateAxis);
+	matModel = /*matModel * */ glm::rotate(matModel, rad, rotateAxis);
+	rotations *= glm::rotate(matModel, rad, rotateAxis);
 
-	/*
+
 	//handle aabb after rotation
 	if (enableCollision)
 	{
@@ -314,38 +362,41 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 
 		if (mesh != nullptr) // no model3d
 		{
-			std::vector<glm::vec3>verticesCoords;
-			verticesCoords.reserve( mesh->vertices.size() );
-			
-			for (const auto& vertex: mesh->vertices) //fill array with coords
+			std::vector<glm::vec4>verticesCoords;
+			verticesCoords.reserve(mesh->vertices.size());
+
+			for (const auto& vertex : mesh->vertices) //fill array with coords
 			{
-				verticesCoords.push_back(vertex.coord);
+				verticesCoords.push_back(glm::vec4(vertex.coord, 1.0f));
 			}
 
-			fillUbo3(id,mesh->vertices.size(), verticesCoords);
+			//fillUbo3(id, mesh->vertices.size(), verticesCoords);
 
 			workGroupNb = mesh->vertices.size() / COMPUTE_SHADER_LOCAL_GROUP_NB;
 			if (mesh->vertices.size() % COMPUTE_SHADER_LOCAL_GROUP_NB != 0)
 				++workGroupNb;
 
 			Shaders::aabbCompute.use();
+			Shaders::aabbCompute.setMat4("model", rotations);
 			Shaders::aabbCompute.callComputeShader(workGroupNb, 1, 1);
-			
+
 
 			//get back data
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffersId[3] );
-			std::vector<glm::vec3> vertices;
-			//glm::vec3* vertices = new glm::vec3[mesh->vertices.size()];
-			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 8, mesh->vertices.size()* sizeof(glm::vec3),&vertices);
+			std::vector<glm::vec3> vertices(mesh->vertices.size(), { 0.0f,0.0f,0.0f });
+
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffersId[3]);
+			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 8, mesh->vertices.size() * sizeof(glm::vec3), &vertices[0]);
 
 			//updateMinMax
-
+			aabb->searchMinMax(vertices, true);
 		}
+
+
 
 		if (model3d != nullptr)
 		{
 			int verticesNb{};
-			std::vector<glm::vec3> verticesCoords;
+			std::vector<glm::vec4> verticesCoords;
 
 			for (const auto& mesh : model3d->meshes)
 			{
@@ -353,25 +404,28 @@ void Object::rotate(float degree, glm::vec3 rotateAxis)
 
 				for (const auto& vertex : mesh.vertices)
 				{
-					verticesCoords.push_back(vertex.coord);
+					verticesCoords.push_back(glm::vec4(vertex.coord, 1.0f));
 				}
 			}
 
 			workGroupNb = verticesNb / COMPUTE_SHADER_LOCAL_GROUP_NB;
 
-			fillUbo3(id, verticesNb, verticesCoords);
+			//fillUbo3(id, verticesNb, verticesCoords); bleme surr fillUbo3
 
 			Shaders::aabbCompute.use();
+			Shaders::aabbCompute.setMat4("model", matModel);
 			Shaders::aabbCompute.callComputeShader(workGroupNb, 1, 1);
 
 			//get back data
-			glm::vec3* vertices = new glm::vec3[verticesNb];
-			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 8, verticesNb * sizeof(glm::vec3),vertices);
+			std::vector<glm::vec3> vertices(verticesNb, { 0.0f,0.0f,0.0f });
+
+			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 8, verticesNb * sizeof(glm::vec3), &vertices[0]);
 
 			//updateMinMax
+			aabb->searchMinMax(vertices, false);
 		}
 	}
-	*/
+
 
 	if (!isLightPointIndexValid(worldLighPointIndex))
 		return;
@@ -393,7 +447,7 @@ void Object::scale(glm::vec3 scaleVec)
 
 	matModel = matModel * scale;
 
-	if (aabb!=nullptr)
+	if (aabb != nullptr)
 		aabb->matModel = matModel * scale;
 
 	if (!isLightPointIndexValid(worldLighPointIndex))
@@ -412,7 +466,7 @@ void Object::scale(glm::vec3 scaleVec)
 
 void Object::rotatePlane(float degree)
 {
-	degree = glm::radians(degree) ;
+	degree = glm::radians(degree);
 
 	glm::mat4 rot{
 		glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
@@ -427,7 +481,7 @@ void Object::updateLightPoint(glm::vec3 newValue, int memberIndex)
 {
 	try
 	{
-		if( !isLightPointIndexValid(worldLighPointIndex) )
+		if (!isLightPointIndexValid(worldLighPointIndex))
 			throw(-1);
 
 		switch (memberIndex)
@@ -515,7 +569,7 @@ void Object::setLightPoint(glm::vec3 color, glm::vec3 ambiant, glm::vec3 diffuse
 	}
 }
 
-void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
+void Object::animate(Shader& shader, Shader* collionShapeShader, glm::vec3 translationVec, glm::vec3 rotationAxis, float rotationDegree, glm::vec3 scaleVec)
 {
 	if (enableTranslation)
 		move(translationVec);
@@ -532,7 +586,7 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 
 	if (isGlowing)
 	{
-		shader.setFloat("emmissionStrength", glow() );
+		shader.setFloat("emmissionStrength", glow());
 		shader.set3Float("emmissionColor", glowColor);
 	}
 
@@ -551,7 +605,36 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 		shader.setMat4("orbit", orbitMat);
 	}
 
-	if (enableOutLine)
+
+	if (enableCollision)
+	{
+
+		aabb->constructCube();
+		Shaders::object.use();
+		//Shaders::object.setMat4("model", aabb->matModel); marche pas bien jsp pk
+
+		Shaders::object.setMat4("model", matModel);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		aabb->cube->draw(Shaders::object);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		shader.use();
+	}
+
+
+	if (model3d != nullptr)
+	{
+		model3d->draw(shader);
+		return;
+	}
+
+	if (mesh != nullptr)
+	{
+		mesh->draw(shader);
+		return;
+	}
+
+	if (enableOutLine) //only works for mesh 
 	{
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 		glStencilMask(0xFF);
@@ -581,32 +664,6 @@ void Object::animate(Shader& shader,Shader* collionShapeShader, glm::vec3 transl
 
 		glDepthFunc(GL_LESS);
 
-		return;
-	}
-
-	/*
-	if (enableCollision)
-	{
-		aabb->constructCube();
-		Shaders::object.use();
-		Shaders::object.setMat4("model", matModel);
-
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		aabb->cube->draw(Shaders::object);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-	*/
-
-	if (model3d != nullptr)
-	{
-		model3d->draw(shader);
-		return;
-	}
-
-	if (mesh!=nullptr)
-	{
-		mesh->draw(shader);
 		return;
 	}
 
@@ -662,6 +719,10 @@ void setupShadowMap(ShadowBuffer depthMap)
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
+bool compObjPosX(Object* obj1, Object* obj2) { return (obj1->pos.x > obj2->pos.x) ? true : false; }
+bool compObjPosY(Object* obj1, Object* obj2) { return (obj1->pos.y > obj2->pos.y) ? true : false; }
+bool compObjPosZ(Object* obj1, Object* obj2) { return (obj1->pos.z > obj2->pos.z) ? true : false; }
+
 //frameBuffer CLASS
 FrameBuffer::FrameBuffer(bool activateBufferTex, bool activateRenderBuff)
 {
@@ -669,7 +730,7 @@ FrameBuffer::FrameBuffer(bool activateBufferTex, bool activateRenderBuff)
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 
 	if (activateBufferTex)
-		genFrameBuffTex(SCR_WIDTH,SCR_HEIGHT);
+		genFrameBuffTex(SCR_WIDTH, SCR_HEIGHT);
 
 	if (activateRenderBuff)
 		genRenderBuff();
@@ -689,13 +750,13 @@ void FrameBuffer::genFrameBuffTex(int width, int height)
 	glBindTexture(GL_TEXTURE_2D, texId);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	
-	
+
+
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
 }
 
@@ -717,19 +778,19 @@ void ShadowBuffer::genDepthMapBuff()
 	SHADOW_HEIGHT = 1024;
 	glGenFramebuffers(1, &id);
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
-	
+
 
 	genDepthMapTex(SHADOW_WIDTH, SHADOW_HEIGHT);
-	
+
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
-	
+
 	if (!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE))
 	{
 		auto error{ glCheckFramebufferStatus(GL_FRAMEBUFFER) };
 		std::cerr << "ShadowBuffer failed, error : " << error << std::endl;
 	}
-	
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -782,7 +843,7 @@ void ShadowBuffer::genCubeMapTex(int width, int height)
 
 	for (unsigned int faceIndex = 0; faceIndex < 6; ++faceIndex)
 	{
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceIndex, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT,GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceIndex, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -791,7 +852,7 @@ void ShadowBuffer::genCubeMapTex(int width, int height)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-	
+
 	//float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
@@ -815,7 +876,7 @@ void ShadowBuffer::genCubeMapLightSpaceMat(float lightRange, glm::vec3 lightPos)
 	float near_plane = 1.0f;
 	float farPlane = lightRange;
 
-	glm::mat4 projection = glm::perspective(glm::radians(90.0f),aspect, near_plane, farPlane);
+	glm::mat4 projection = glm::perspective(glm::radians(90.0f), aspect, near_plane, farPlane);
 
 	//set view for 6 faces 
 	cubeMapLightSpaceMat[0] = projection * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
@@ -830,11 +891,11 @@ void setLighting()
 {
 	//directional light
 	fillUbo2(0, -1);
-	
+
 
 	for (int lightIndex{}; lightIndex < World::lightPoints.size(); ++lightIndex)
 	{
-		fillUbo1(lightIndex,-1);
+		fillUbo1(lightIndex, -1);
 	}
 
 	//do the same for spotLights
@@ -855,7 +916,7 @@ void updateTimeInGame()
 
 		if (Time::timeInGame.sec > 61)
 		{
-			int currentSec{ abs (60 - static_cast<int>(Time::timeInGame.sec) ) };
+			int currentSec{ abs(60 - static_cast<int>(Time::timeInGame.sec)) };
 			Time::timeInGame.sec = currentSec;
 		}
 	}
@@ -863,7 +924,7 @@ void updateTimeInGame()
 	while (Time::timeInGame.min >= 60)
 	{
 		++Time::timeInGame.hour;
-		Time::timeInGame.min=0;
+		Time::timeInGame.min = 0;
 	}
 
 	while (Time::timeInGame.hour >= 24)
@@ -871,7 +932,7 @@ void updateTimeInGame()
 		++Time::timeInGame.day;
 		Time::timeInGame.hour = 0;
 	}
-	
+
 
 	Time::dayPhase = night;
 
@@ -884,7 +945,7 @@ void updateTimeInGame()
 
 	}
 
-	if (Time::timeInGame.hour > 8 && Time::timeInGame.hour <= 17 )
+	if (Time::timeInGame.hour > 8 && Time::timeInGame.hour <= 17)
 	{
 		Time::dayPhase = daytime;
 
@@ -936,7 +997,7 @@ void calcDirectLightAttrib()
 {
 	glm::vec3 newColor{};
 
-	glm::vec3 currentDayPhaseColor { World::sunLightColor[Time::dayPhase] };
+	glm::vec3 currentDayPhaseColor{ World::sunLightColor[Time::dayPhase] };
 
 	DayPhases nextDayPhase{ };
 	bool sameDay1{ true };
@@ -969,13 +1030,13 @@ void calcDirectLightAttrib()
 		sameDay2 = false;
 
 	//linear interpolation of color 
-	Time::currentPhaseNextPhaseDist = timeToHour( timeDist(Time::dayPhasesTime[nextDayPhase][0],Time::dayPhasesTime[Time::dayPhase][0],sameDay1) ) ;
-	Time::currentHourCurrentPhaseBaseHourDist  = timeToHour( timeDist(Time::timeInGame,Time::dayPhasesTime[Time::dayPhase][0],sameDay2) ) ;
+	Time::currentPhaseNextPhaseDist = timeToHour(timeDist(Time::dayPhasesTime[nextDayPhase][0], Time::dayPhasesTime[Time::dayPhase][0], sameDay1));
+	Time::currentHourCurrentPhaseBaseHourDist = timeToHour(timeDist(Time::timeInGame, Time::dayPhasesTime[Time::dayPhase][0], sameDay2));
 
 	newColor.r = currentDayPhaseColor.r + Time::currentHourCurrentPhaseBaseHourDist * ((nextDayPhaseColor.r - currentDayPhaseColor.r) / Time::currentPhaseNextPhaseDist);
 	newColor.g = currentDayPhaseColor.g + Time::currentHourCurrentPhaseBaseHourDist * ((nextDayPhaseColor.g - currentDayPhaseColor.g) / Time::currentPhaseNextPhaseDist);
 	newColor.b = currentDayPhaseColor.b + Time::currentHourCurrentPhaseBaseHourDist * ((nextDayPhaseColor.b - currentDayPhaseColor.b) / Time::currentPhaseNextPhaseDist);
-	
+
 	World::directLights[0].color = newColor;
 
 	//calcPos and so direction
@@ -983,12 +1044,12 @@ void calcDirectLightAttrib()
 	float altitude{};
 
 	float currentTimeInHours{ timeToHour(Time::timeInGame) };
-	float sunRiseInHours{ timeToHour(Time::dayPhasesTime[dawn][0] ) }; //and so moonSet
+	float sunRiseInHours{ timeToHour(Time::dayPhasesTime[dawn][0]) }; //and so moonSet
 	float sunSetInHours{ timeToHour(Time::dayPhasesTime[sunset][1]) }; //and and so moonRising
 
-	if ( currentTimeInHours > 6.5 && currentTimeInHours < 19.5) //we calc sun azimuth and altitude 
+	if (currentTimeInHours > 6.5 && currentTimeInHours < 19.5) //we calc sun azimuth and altitude 
 	{
-		float timeRatio { (currentTimeInHours - sunRiseInHours) / (sunSetInHours- sunRiseInHours) }; //ration between 
+		float timeRatio{ (currentTimeInHours - sunRiseInHours) / (sunSetInHours - sunRiseInHours) }; //ration between 
 		altitude = (glm::radians(180.0f) / 26.0f) * 13.0f * timeRatio * Time::timeAccelerator;
 
 		azimuth = (glm::radians(180.0f) / 13.0f) * 13.0f * timeRatio * Time::timeAccelerator;
@@ -998,11 +1059,11 @@ void calcDirectLightAttrib()
 
 	else //we calc moon azimuth and altitude 
 	{
-		float nightDurationInHours { timeToHour ( timeDist(Time::dayPhasesTime[sunset][1],Time::dayPhasesTime[dawn][0],false) ) };
+		float nightDurationInHours{ timeToHour(timeDist(Time::dayPhasesTime[sunset][1],Time::dayPhasesTime[dawn][0],false)) };
 
 		float nightStartCurrentTimeDistInHours{ timeToHour(timeDist(Time::dayPhasesTime[sunset][1],Time::timeInGame,false)) };
 
-		float timeRatio { nightStartCurrentTimeDistInHours / nightDurationInHours };
+		float timeRatio{ nightStartCurrentTimeDistInHours / nightDurationInHours };
 
 		altitude = (glm::radians(180.0f) / 22.0f) * 11.0f * timeRatio * Time::timeAccelerator;
 
@@ -1015,12 +1076,12 @@ void calcDirectLightAttrib()
 	World::directLights[0].direction = direcLightDirection;
 }
 
-Time::Time timeDist(Time::Time time1, Time::Time time2,bool sameDay)
+Time::Time timeDist(Time::Time time1, Time::Time time2, bool sameDay)
 {
 	Time::Time result;
-	
-	result.sec =  abs ( time1.sec - time2.sec );
-	result.min =  abs ( time1.min - time2.min );
+
+	result.sec = abs(time1.sec - time2.sec);
+	result.min = abs(time1.min - time2.min);
 
 	if (!sameDay)
 	{

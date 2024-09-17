@@ -36,6 +36,7 @@ int main()
 	genUbo0();
 	genUbo1();
 	genUbo2();
+	genUbo3();
 
 	//init shaders 
 	Shader objectShader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
@@ -100,7 +101,7 @@ int main()
 	woodCube.addTexture(skyBox.texture);
 
 	//Cube mesh for light moving Cubes
-	Cube lightCube(woodCube.getVbo(), woodCube.getEbo(), 36);
+	Cube lightCube(&woodCube);
 
 	//Terrain mesh
 	Terrain terrain(2, ".\\rsc\\terrain\\heightMaps\\drole.png");
@@ -135,12 +136,12 @@ int main()
 
 
 	//SPHERE 
-	Sphere sphere(20, 20);
+	Sphere sphere(3, 3);
 	Object* ballon = new Object(&sphere);
 
 
 	/*OBJECTS INIT*/
-	std::array<Object*, 2> lightCubesObject = { new Object (&lightCube), new Object(&lightCube) };
+	std::array<Object*, 2> lightCubesObject = { new Object(&lightCube,false), new Object(&lightCube,false) };
 	Object* woodCubeObj = new Object(&woodCube);
 	//Object woodBackObj(&backPackModel);
 	//woodBackObj.set(objectShader);
@@ -303,10 +304,10 @@ int main()
 
 			//animateWoodCubeAndOutline(objectShader, outlineShader, woodCube);
 			woodCubeObj->enableScale = false;
-			woodCubeObj->enableRotation = false;
+			woodCubeObj->enableRotation = true;
 			woodCubeObj->enableTranslation = false;
 			woodCubeObj->enableOutLine = false;
-			woodCubeObj->animate(objectShader, &cubeCollisionShader);
+			woodCubeObj->animate(objectShader, &cubeCollisionShader, { 0.0f,0.0f ,0.0f }, { 0.0f,0.0f,1.0f }, 0.5f);
 
 
 

@@ -5,28 +5,28 @@
 
 #define MAX_LIGHTS_NB 200
 #define DIRECT_LIGHTS_NB 1
-#define MAX_OBJECT_VERTICES_NB 10000000
+#define MAX_OBJECT_VERTICES_NB 10000
 
 
 namespace Shaders
 {
-    Shader object{} ;
-    Shader objectDirectShadow{} ;
-    Shader objectPointShadow{} ;
-    Shader lightSources{} ;
-    Shader skybox{} ;
-    Shader outline{} ;
-    Shader postProcess{} ;
-    Shader geometry{} ;
-    Shader circle{} ;
-    Shader terrain{} ;
-    Shader terrainDirectShadow{} ;
-    Shader passThrough{} ;
-    Shader sphere{} ;
-    Shader hemisphere{} ;
-    Shader cloud{} ;
-    Shader cubeCollision{} ;
-    Shader aabbCompute{} ;
+    Shader object{};
+    Shader objectDirectShadow{};
+    Shader objectPointShadow{};
+    Shader lightSources{};
+    Shader skybox{};
+    Shader outline{};
+    Shader postProcess{};
+    Shader geometry{};
+    Shader circle{};
+    Shader terrain{};
+    Shader terrainDirectShadow{};
+    Shader passThrough{};
+    Shader sphere{};
+    Shader hemisphere{};
+    Shader cloud{};
+    Shader cubeCollision{};
+    Shader aabbCompute{};
 }
 
 
@@ -118,7 +118,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geo
     glCompileShader(vertexShader);
 
     //geometry shader
-    unsigned int geometryShader { glCreateShader(GL_GEOMETRY_SHADER) };
+    unsigned int geometryShader{ glCreateShader(GL_GEOMETRY_SHADER) };
     glShaderSource(geometryShader, 1, &geometryShaderSrc, NULL);
     glCompileShader(geometryShader);
 
@@ -193,7 +193,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* tes
     glCompileShader(tessellationControlShader);
 
     //tessellationEvaluation shader
-    unsigned int tessellationEvaluationShader { glCreateShader(GL_TESS_EVALUATION_SHADER) };
+    unsigned int tessellationEvaluationShader{ glCreateShader(GL_TESS_EVALUATION_SHADER) };
     glShaderSource(tessellationEvaluationShader, 1, &teShaderSrc, NULL);
     glCompileShader(tessellationEvaluationShader);
 
@@ -291,7 +291,7 @@ void Shader::callComputeShader(int x, int y, int z)
 {
     assert(x > 0 && y > 0 && z > 0);
 
-    glDispatchCompute(x,y, z);
+    glDispatchCompute(x, y, z);
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 }
 
@@ -321,7 +321,7 @@ void Shader::set2Float(const std::string& name, glm::vec2& value) const
 
 }
 
-void Shader::set2Float(const std::string& name,  std::array<float,2>values) const
+void Shader::set2Float(const std::string& name, std::array<float, 2>values) const
 {
     glUniform2f(glGetUniformLocation(ID, name.c_str()), values[0], values[1]);
 }
@@ -345,7 +345,7 @@ void Shader::set4Float(const std::string& name, float values[4]) const
 
 void Shader::setMat4(const std::string& name, glm::mat4& mat) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str() ), 1, GL_FALSE, glm::value_ptr(mat));
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
 
 }
 
@@ -354,20 +354,20 @@ void initShaders()
 {
     Shaders::object = Shader(".\\shader\\object\\vertex.glsl", ".\\shader\\object\\fragment.glsl");
     Shaders::objectDirectShadow = Shader(".\\shader\\objectDirectShadow\\vertex.glsl", ".\\shader\\objectDirectShadow\\fragment.glsl");
-    Shaders::objectPointShadow = Shader (".\\shader\\objectPointShadow\\vertex.glsl", ".\\shader\\objectPointShadow\\fragment.glsl", ".\\shader\\objectPointShadow\\geometry.glsl");
-    Shaders::lightSources = Shader (".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
-    Shaders::skybox = Shader (".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
-    Shaders::outline = Shader (".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
-    Shaders::postProcess = Shader (".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
-    Shaders::geometry = Shader (".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
-    Shaders::circle = Shader (".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
-    Shaders::terrain = Shader (".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
-    Shaders::terrainDirectShadow = Shader (".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
-    Shaders::passThrough = Shader (".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
-    Shaders::sphere = Shader (".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
-    Shaders::hemisphere = Shader (".\\shader\\hemisphere\\vertex.glsl", ".\\shader\\hemisphere\\fragment.glsl", ".\\shader\\hemisphere\\TCS.glsl", ".\\shader\\hemisphere\\TES.glsl");
-    Shaders::cloud = Shader (".\\shader\\clouds\\vertex.glsl", ".\\shader\\clouds\\fragment.glsl");
-    Shaders::cubeCollision = Shader (".\\shader\\cubeCollisionShape\\vertex.glsl", ".\\shader\\cubeCollisionShape\\fragment.glsl");
+    Shaders::objectPointShadow = Shader(".\\shader\\objectPointShadow\\vertex.glsl", ".\\shader\\objectPointShadow\\fragment.glsl", ".\\shader\\objectPointShadow\\geometry.glsl");
+    Shaders::lightSources = Shader(".\\shader\\lightSources\\vertex.glsl", ".\\shader\\lightSources\\fragment.glsl");
+    Shaders::skybox = Shader(".\\shader\\skyBox\\vertex.glsl", ".\\shader\\skyBox\\fragment.glsl");
+    Shaders::outline = Shader(".\\shader\\outline\\vertex.glsl", ".\\shader\\outline\\fragment.glsl");
+    Shaders::postProcess = Shader(".\\shader\\postProcess\\vertex.glsl", ".\\shader\\postProcess\\fragment.glsl");
+    Shaders::geometry = Shader(".\\shader\\house\\vertex.glsl", ".\\shader\\house\\fragment.glsl", ".\\shader\\house\\geometry.glsl");
+    Shaders::circle = Shader(".\\shader\\circle\\vertex.glsl", ".\\shader\\circle\\fragment.glsl", ".\\shader\\circle\\geometry.glsl");
+    Shaders::terrain = Shader(".\\shader\\terrain\\vertex.glsl", ".\\shader\\terrain\\fragment.glsl", ".\\shader\\terrain\\TCS.glsl", ".\\shader\\terrain\\TES.glsl");
+    Shaders::terrainDirectShadow = Shader(".\\shader\\terrainDirectShadow\\vertex.glsl", ".\\shader\\terrainDirectShadow\\fragment.glsl", ".\\shader\\terrainDirectShadow\\TCS.glsl", ".\\shader\\terrainDirectShadow\\TES.glsl");
+    Shaders::passThrough = Shader(".\\shader\\passThrough\\vertex.glsl", ".\\shader\\passThrough\\fragment.glsl");
+    Shaders::sphere = Shader(".\\shader\\sphere\\vertex.glsl", ".\\shader\\sphere\\fragment.glsl", ".\\shader\\sphere\\TCS.glsl", ".\\shader\\sphere\\TES.glsl");
+    Shaders::hemisphere = Shader(".\\shader\\hemisphere\\vertex.glsl", ".\\shader\\hemisphere\\fragment.glsl", ".\\shader\\hemisphere\\TCS.glsl", ".\\shader\\hemisphere\\TES.glsl");
+    Shaders::cloud = Shader(".\\shader\\clouds\\vertex.glsl", ".\\shader\\clouds\\fragment.glsl");
+    Shaders::cubeCollision = Shader(".\\shader\\cubeCollisionShape\\vertex.glsl", ".\\shader\\cubeCollisionShape\\fragment.glsl");
     Shaders::aabbCompute = Shader(".\\shader\\aabb\\compute.glsl");
 }
 
@@ -384,7 +384,7 @@ void genUbo0()
     *     mat4 projection;
     *     vec4 viewPosition;
     * };
-    * 
+    *
     */
 
     std::size_t size{ 2 * sizeof(glm::mat4) + sizeof(glm::vec4) };
@@ -392,7 +392,7 @@ void genUbo0()
     unsigned int uniformBuff;
     glGenBuffers(1, &uniformBuff);
     glBindBuffer(GL_UNIFORM_BUFFER, uniformBuff);
-    glBufferData(GL_UNIFORM_BUFFER,size, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, size, NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, uniformBuff);
 
@@ -401,30 +401,30 @@ void genUbo0()
     buffersId[0] = uniformBuff;
 }
 
-void fillUbo0(int dataToFill) 
+void fillUbo0(int dataToFill)
 {
     glm::vec4 cameraPos{};
 
-    glBindBuffer(GL_UNIFORM_BUFFER, buffersId[0] );
+    glBindBuffer(GL_UNIFORM_BUFFER, buffersId[0]);
 
     switch (dataToFill)
     {
-        case 0 : 
-            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(World::view));
-            break;
+    case 0:
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(World::view));
+        break;
 
-        case 1:
-            glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(World::projection));
-            break;
+    case 1:
+        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(World::projection));
+        break;
 
-        case 2:
-            cameraPos = glm::vec4(World::camera.pos, 0.0f);
-            glBufferSubData(GL_UNIFORM_BUFFER,2*sizeof(glm::mat4), sizeof(glm::vec4), glm::value_ptr(cameraPos));
-            break;
-             
-        default : 
-            std::cerr << "INCORECT INDEX FOR UBO 0";
-            break;
+    case 2:
+        cameraPos = glm::vec4(World::camera.pos, 0.0f);
+        glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::vec4), glm::value_ptr(cameraPos));
+        break;
+
+    default:
+        std::cerr << "INCORECT INDEX FOR UBO 0";
+        break;
     }
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -436,29 +436,29 @@ void genUbo1()
     {
         vec3 color; // offset 0
         vec3 pos;   // offset 16 (+16)
-    
+
         vec3 ambient;  // offset 32 (+16)
         vec3 diffuse;  // offset 48 (+16)
         vec3 specular;  // offset 64 (+16)
-    
+
         float constant;  // offset 76 (+12)
         float linearCoef; // offset 80 (+4)
         float squareCoef; // offset 84 (+4)
-    
+
         //bottom-padding: +12, to be the next multiple of 16 (size of vec4)
         //total-size : 96 bits
     };
     */
 
-   /*
-   * 
-   * layout(std140, binding = 1) buffer pointLightBuff
-   *    {
-   *        PointLight pointLights[];
-   *    };
-   */
+    /*
+    *
+    * layout(std140, binding = 1) buffer pointLightBuff
+    *    {
+    *        PointLight pointLights[];
+    *    };
+    */
 
-    std::size_t size{ MAX_LIGHTS_NB*96 };
+    std::size_t size{ MAX_LIGHTS_NB * 96 };
 
     unsigned int ssbo;
     glGenBuffers(1, &ssbo);
@@ -475,9 +475,9 @@ void genUbo1()
 void fillUbo1(int lightIndex, int dataToFill)
 {
     /* STD140 layout rules
-    struct PointLight size/offset : 
+    struct PointLight size/offset :
     {
-        vec3 color; // offset 0 
+        vec3 color; // offset 0
         vec3 pos;   // offset 16 (+16)
 
         vec3 ambient;  // offset 32 (+16)
@@ -528,50 +528,50 @@ void fillUbo1(int lightIndex, int dataToFill)
 
     switch (dataToFill)
     {
-        case 0:
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].color);
-            break;
+    case 0:
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].color);
+        break;
 
-        case 1:
-            offset += 16;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].pos);
-            break;
+    case 1:
+        offset += 16;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].pos);
+        break;
 
-        case 2:
-            offset += 16 * 2;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].ambient);
-            break;
+    case 2:
+        offset += 16 * 2;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].ambient);
+        break;
 
-        case 3:
-            offset += 16 * 3;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].diffuse);
-            break;
+    case 3:
+        offset += 16 * 3;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].diffuse);
+        break;
 
-        case 4:
-            offset += 16 * 4;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].specular);
-            break;
+    case 4:
+        offset += 16 * 4;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &World::lightPoints[lightIndex].specular);
+        break;
 
-        case 5:
-            offset += 16 * 4 + 12;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &World::lightPoints[lightIndex].constant);
-            break;
-       
-       
-        case 6:
-            offset += 16 * 4 + 12 + 4;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &World::lightPoints[lightIndex].linearCoef);
-            break;
+    case 5:
+        offset += 16 * 4 + 12;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &World::lightPoints[lightIndex].constant);
+        break;
 
 
-        case 7:
-            offset += 16 * 4 + 12 + 4*2;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &World::lightPoints[lightIndex].squareCoef);
-            break;
-       
-        default:
-            std::cerr << "UKNOWN INDEX OF DATA TO FILL FOR UBO2" << std::endl;
-            break;
+    case 6:
+        offset += 16 * 4 + 12 + 4;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &World::lightPoints[lightIndex].linearCoef);
+        break;
+
+
+    case 7:
+        offset += 16 * 4 + 12 + 4 * 2;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &World::lightPoints[lightIndex].squareCoef);
+        break;
+
+    default:
+        std::cerr << "UKNOWN INDEX OF DATA TO FILL FOR UBO2" << std::endl;
+        break;
     }
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -581,14 +581,14 @@ void fillUbo1(int lightIndex, int dataToFill)
 void genUbo2()
 {
     /* STD140 layout rules
-    struct DirectLight { 
+    struct DirectLight {
     vec3 color;  // offset 0
     vec3 direction; // offset 16 (+16)
 
-    vec3 ambient; // offset 32 (+16) 
+    vec3 ambient; // offset 32 (+16)
     vec3 diffuse; // offset 48 (+16)
     vec3 specular; // offset 64 (+16)
-    
+
     //bottom-padding: +16, to be the next multiple of 16 (size of vec4)
     //total-size : 80 bits
     };
@@ -602,7 +602,7 @@ void genUbo2()
    *    };
    */
 
-    std::size_t size{ DIRECT_LIGHTS_NB*80 };
+    std::size_t size{ DIRECT_LIGHTS_NB * 80 };
 
     unsigned int uniformBuff;
     glGenBuffers(1, &uniformBuff);
@@ -616,7 +616,7 @@ void genUbo2()
     buffersId[2] = uniformBuff;
 }
 
-void fillUbo2(int lightIndex,int dataToFill) 
+void fillUbo2(int lightIndex, int dataToFill)
 {
     /*STD140 layout rules
        struct DirectLight {
@@ -627,11 +627,11 @@ void fillUbo2(int lightIndex,int dataToFill)
        vec3 diffuse; // offset 48 (+16)
        vec3 specular; // offset 64 (+16)
 
-       +16 
+       +16
        //total-size : 64 bits
        };
       */
-    
+
     int structSize{ 64 }; //refer to std140 layout rule 
     int offset{ lightIndex * structSize }; //refer to std140 layout rule 
 
@@ -694,39 +694,39 @@ void fillUbo2(int lightIndex,int dataToFill)
 
 void genUbo3()
 {
-  /*
-  *
-  * layout(std140, binding = 3) uniform aabbBuff
-  *     {
-  *         int objId;  // offset 0
-  *         int verticesNb; // offset 4 (+4)
-  *         vec3 verticesCoords[]; // offset 8 (+4)
-  *        
-            //total-size : 8  + verticesCoords.length()* sizeof(glm::vec4) [which is 16bits] bits
+    /*
+    *
+    * layout(std140, binding = 3) uniform aabbBuff
+    *     {
+    *         int objId;  // offset 0
+    *         int verticesNb; // offset 4 (+4)
+    *         vec3 verticesCoords[]; // offset 8 (+4)
+    *
+              //total-size : 8  + verticesCoords.length()* sizeof(glm::vec4) [which is 16bits] bits
 
-  *     };
-  */
-  
-   std::size_t size{ 2*sizeof(int) + sizeof(glm::vec4)* MAX_OBJECT_VERTICES_NB };
+    *     };
+    */
 
-   unsigned int ssbo;
-   glGenBuffers(1, &ssbo);
-   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-   glBufferData(GL_SHADER_STORAGE_BUFFER, size, NULL, GL_STATIC_DRAW);
-   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
+    std::size_t size{ 2 * sizeof(int) + sizeof(glm::vec4) * MAX_OBJECT_VERTICES_NB };
 
-   glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    unsigned int ssbo;
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
 
-   buffersId[3] = ssbo;
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    buffersId[3] = ssbo;
 }
 
-void fillUbo3(int id, int verticeNb, std::vector<glm::vec3>verticesCoords) 
+void fillUbo3(int id, int verticeNb, std::vector<glm::vec4> verticesCoords)
 {
-  
+
     int offset{};
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffersId[3]); //en vrai c'est vraiment inutile 
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffersId[3]);
 
 
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(int), &id);
@@ -735,10 +735,7 @@ void fillUbo3(int id, int verticeNb, std::vector<glm::vec3>verticesCoords)
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(int), &verticeNb);
     offset += 4;
 
-    for (int vertexIndex{}; vertexIndex < verticesCoords.size(); ++vertexIndex)
-    {
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec3), &verticesCoords[vertexIndex]);
-        offset += 16;
-    }
+    //offset += 8;
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(glm::vec4) * verticeNb, &verticesCoords[0]);
 
 }
